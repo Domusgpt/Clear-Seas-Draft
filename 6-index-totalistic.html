@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Seas Solutions - Totalistic Reactivity</title>
+    <link rel="stylesheet" href="styles/consolidated-styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <!-- CLEAR SEAS CONTEXT POOL - INTELLIGENT WEBGL MANAGEMENT -->
+    <script type="module" src="src/ClearSeasContextPool.js"></script>
+    
+    <!-- EXPERIENCE CHOREOGRAPHER - ORCHESTRATES ENTIRE USER JOURNEY -->
+    <script type="module" src="src/ExperienceChoreographer.js"></script>
+    
+    <style>
+        /* ENHANCED TOTALISTIC REACTIVITY STYLES */
+        
+        /* EXPERIENCE CHOREOGRAPHY SYSTEM */
+        .hero-section, .technology-section, .work-section, .publications-section {
+            position: relative;
+            transform-style: preserve-3d;
+            perspective: 1000px;
+        }
+        
+        /* CHOREOGRAPHED CARD TRANSFORMATIONS */
+        .unified-card {
+            transition: all var(--duration-normal) var(--ease-out);
+            transform-style: preserve-3d;
+            perspective: var(--perspective);
+            will-change: transform, box-shadow, background;
+            position: relative;
+            overflow: hidden;
+            
+            /* Choreography variables */
+            --tilt-x: 0deg;
+            --tilt-y: 0deg;
+            --morph-progress: 0;
+            --intensity: 1;
+        }
+        
+        .unified-card {
+            transform: 
+                translateY(var(--float-y, 0px))
+                scale(var(--card-scale, 1))
+                rotateX(calc(var(--card-tilt-x, 0deg) + var(--tilt-x)))
+                rotateY(calc(var(--card-tilt-y, 0deg) + var(--tilt-y)))
+                translateZ(var(--float-z, 0px));
+        }
+        
+        /* LAYERED VISUALIZER INTEGRATION */
+        .layered-vib34d-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            border-radius: inherit;
+        }
+        
+        .vib34d-layer-stack {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .vib34d-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: inherit;
+        }
+        
+        /* BLEND MODES FOR LAYERED SYSTEM */
+        .vib34d-background-layer { mix-blend-mode: normal; }
+        .vib34d-shadow-layer { mix-blend-mode: multiply; }
+        .vib34d-content-layer { mix-blend-mode: screen; }
+        .vib34d-highlight-layer { mix-blend-mode: overlay; }
+        .vib34d-accent-layer { mix-blend-mode: soft-light; }
+        
+        /* DYNAMIC EXPERIENCE VARIABLES */
+        :root {
+            --experience-intensity: 1;
+            --transformation-progress: 0;
+        }
+        
+        /* SCROLL-BASED CHOREOGRAPHY */
+        body {
+            background: radial-gradient(circle at 50% calc(50% + var(--transformation-progress) * 50%), 
+                rgba(var(--active-hue-rgb, 100, 150, 255), calc(var(--experience-intensity) * 0.1)) 0%, 
+                transparent 70%);
+            transition: background var(--duration-slow) var(--ease-out);
+        }
+        
+        /* MORPHING CARD STATES */
+        .unified-card[data-morphing="true"] {
+            filter: 
+                hue-rotate(calc(var(--morph-progress) * 60deg))
+                saturate(calc(1 + var(--intensity) * 0.5))
+                brightness(calc(1 + var(--intensity) * 0.2));
+        }
+        
+        /* Dynamic card morphing and 3D effects */
+        .unified-card {
+            transition: all var(--duration-normal) var(--ease-out);
+            transform-style: preserve-3d;
+            perspective: var(--perspective);
+            will-change: transform, box-shadow, background;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .unified-card::before {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            background: linear-gradient(45deg, 
+                transparent, 
+                rgba(var(--theme-primary-rgb), 0.3), 
+                transparent, 
+                rgba(var(--theme-secondary-rgb), 0.3), 
+                transparent);
+            background-size: 200% 200%;
+            border-radius: inherit;
+            z-index: -1;
+            transition: all var(--duration-normal) var(--ease-out);
+            opacity: 0;
+            animation: borderFlow 4s ease-in-out infinite;
+        }
+        
+        .unified-card.is-hovering {
+            transform: 
+                translateZ(var(--pop-out-translate-z)) 
+                rotateX(var(--card-tilt-x, 0deg)) 
+                rotateY(var(--card-tilt-y, 0deg))
+                scale(var(--pop-out-scale));
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.4),
+                0 8px 20px rgba(var(--theme-primary-rgb), 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+        
+        .unified-card.is-hovering::before {
+            opacity: 1;
+        }
+        
+        /* Totalistic page reactions */
+        body.totalistic-reaction-active {
+            background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                rgba(var(--active-hue-rgb), 0.1) 0%, 
+                transparent 50%);
+            transition: background var(--duration-slow) var(--ease-out);
+        }
+        
+        /* Advanced parallax scroll effects */
+        .parallax-container {
+            transform-style: preserve-3d;
+            perspective: var(--perspective);
+        }
+        
+        .parallax-layer {
+            will-change: transform;
+            transition: transform var(--duration-normal) var(--ease-out);
+        }
+        
+        /* Dynamic visualizer reactions */
+        .card-visualizer {
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px;
+            transition: all var(--duration-normal) var(--ease-out);
+        }
+        
+        .card-visualizer .layered-vib34d-container {
+            transition: all var(--duration-normal) var(--ease-out);
+            filter: 
+                hue-rotate(var(--visualizer-hue-shift, 0deg))
+                saturate(var(--visualizer-saturation, 1))
+                brightness(var(--visualizer-brightness, 1))
+                contrast(var(--visualizer-contrast, 1));
+        }
+        
+        /* CLEAN VISUALIZER EMBEDDING */
+        .card-visualizer {
+            width: 100%;
+            height: 200px;
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        
+        .hero-visualizer {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.7;
+            transform: scale(1.1);
+        }
+        
+        .hero-visualizer .layered-vib34d-container {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .visualizer-overlay {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            opacity: 0;
+            transition: opacity var(--duration-fast) var(--ease-out);
+            z-index: 10;
+        }
+        
+        .card-visualizer:hover .visualizer-overlay {
+            opacity: 1;
+        }
+        
+        .visualizer-overlay a {
+            color: var(--theme-primary);
+            text-decoration: none;
+            font-size: 12px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 4px 8px;
+            border-radius: 4px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .card-visualizer::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(45deg, 
+                rgba(var(--theme-primary-rgb), var(--overlay-opacity, 0)) 0%,
+                rgba(var(--theme-secondary-rgb), var(--overlay-opacity, 0)) 100%);
+            z-index: 1;
+            pointer-events: none;
+            transition: all var(--duration-normal) var(--ease-out);
+        }
+        
+        /* System-specific visual identities */
+        [data-vib-system="FACETED"] .card-visualizer {
+            --visualizer-hue-shift: 0deg;
+            --theme-primary-rgb: 0, 212, 255;
+        }
+        
+        [data-vib-system="QUANTUM"] .card-visualizer {
+            --visualizer-hue-shift: 60deg;
+            --theme-primary-rgb: 255, 0, 110;
+        }
+        
+        [data-vib-system="HOLOGRAPHIC"] .card-visualizer {
+            --visualizer-hue-shift: 120deg;
+            --theme-primary-rgb: 255, 51, 0;
+        }
+        
+        [data-vib-system="POLYCHORA"] .card-visualizer {
+            --visualizer-hue-shift: 180deg;
+            --theme-primary-rgb: 51, 255, 0;
+        }
+        
+        /* Morphing text effects */
+        .morphing-title {
+            background: linear-gradient(45deg, 
+                var(--theme-primary), 
+                var(--theme-secondary), 
+                var(--theme-tertiary));
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: textFlow 3s ease-in-out infinite;
+        }
+        
+        @keyframes borderFlow {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        @keyframes textFlow {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        /* Cinematic scroll presentation zones */
+        .presentation-zone {
+            opacity: var(--zone-opacity, 0.6);
+            transform: translateY(var(--zone-translate-y, 20px)) scale(var(--zone-scale, 0.95));
+            transition: all var(--duration-slow) var(--ease-out);
+        }
+        
+        .presentation-zone.in-view {
+            --zone-opacity: 1;
+            --zone-translate-y: 0px;
+            --zone-scale: 1;
+        }
+        
+        /* Intelligent scroll reactions */
+        .scroll-reactive {
+            --scroll-progress: 0;
+            transform: translateY(calc(var(--scroll-progress) * -50px));
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section with Multi-System Background -->
+    <section id="hero" class="hero-section parallax-container" data-scene="technology">
+        <div class="parallax-layer hero-content">
+            <h1 class="hero-title morphing-title">Clear Seas Solutions</h1>
+            <p class="hero-subtitle">Advanced Polytopal Projection Technology</p>
+            
+            <!-- Multi-System Background Visualizers -->
+            <div class="hero-visualizer-stack">
+                <!-- Primary Background - Switches based on focus -->
+                <canvas id="hero-primary" 
+                        class="hero-visualizer active"
+                        style="width: 100%; height: 100%; border: none; border-radius: 8px;"
+                        data-geometry="0" data-gridDensity="15" data-morphFactor="1.0" data-chaos="0.2" 
+                        data-speed="1.0" data-hue="200" data-intensity="0.8" data-saturation="0.6">
+                </canvas>
+                
+                <!-- Secondary layers for depth -->
+                <canvas id="hero-secondary" 
+                        class="hero-visualizer secondary"
+                        style="width: 100%; height: 100%; border: none; border-radius: 8px;"
+                        data-geometry="7" data-gridDensity="8" data-morphFactor="0.5" data-chaos="0.1" 
+                        data-speed="0.3" data-hue="320" data-intensity="0.4" data-saturation="0.8">
+                </canvas>
+            </div>
+        </div>
+    </section>
+
+    <!-- Technology Cards Section with Advanced Reactivity -->
+    <section id="technology" class="technology-section presentation-zone" data-scene="technology">
+        <div class="container">
+            <h2 class="section-title scroll-reactive">Our Technology</h2>
+            
+            <div class="tech-cards-grid parallax-container">
+                <!-- FACETED System Card -->
+                <div id="tech-card-faceted" 
+                     class="unified-card tech-card parallax-layer" 
+                     data-profile="tech-card"
+                     data-vib-system="FACETED">
+                    <div class="card-header">
+                        <h3>Faceted Projections</h3>
+                        <div class="card-visualizer">
+                            <div class="layered-vib34d-container" data-vib-system="FACETED" data-geometry="0" data-grid-density="20" data-morph-factor="1.2" data-chaos="0.25" data-speed="0.8" data-hue="200" data-intensity="0.9" data-saturation="0.7">
+                                <div class="vib34d-layer-stack">
+                                    <!-- 5 transparent layers will be injected here by ClearSeasContextPool -->
+                                </div>
+                            </div>
+                            <div class="visualizer-overlay" style="display: none;">
+                                <a href="https://domusgpt.github.io/vib34d-ultimate-viewer/?system=FACETED&geometry=0" 
+                                   target="_blank">
+                                    Explore Full →
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <p>Clean 2D geometric patterns with crystalline precision</p>
+                        <ul>
+                            <li>Simple geometric clarity</li>
+                            <li>Crystalline pattern generation</li>
+                            <li>Mathematical purity</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- QUANTUM System Card -->
+                <div id="tech-card-quantum" 
+                     class="unified-card tech-card parallax-layer" 
+                     data-profile="tech-card"
+                     data-vib-system="QUANTUM">
+                    <div class="card-header">
+                        <h3>Quantum Lattice Systems</h3>
+                        <div class="card-visualizer">
+                            <div class="layered-vib34d-container" data-vib-system="QUANTUM" data-geometry="3" data-grid-density="25" data-morph-factor="2.0" data-chaos="0.4" data-speed="1.2" data-hue="280" data-intensity="1.1" data-saturation="0.9">
+                                <div class="vib34d-layer-stack">
+                                    <!-- 5 transparent layers will be injected here by ClearSeasContextPool -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <p>Enhanced holographic effects with complex 3D lattice functions</p>
+                        <ul>
+                            <li>Volumetric holographic effects</li>
+                            <li>Complex lattice mathematics</li>
+                            <li>Dynamic intensity modulation</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- HOLOGRAPHIC System Card -->
+                <div id="tech-card-holographic" 
+                     class="unified-card tech-card parallax-layer" 
+                     data-profile="tech-card"
+                     data-vib-system="HOLOGRAPHIC">
+                    <div class="card-header">
+                        <h3>Holographic Matrices</h3>
+                        <div class="card-visualizer">
+                            <div class="layered-vib34d-container" data-vib-system="HOLOGRAPHIC" data-geometry="7" data-grid-density="30" data-morph-factor="1.8" data-chaos="0.5" data-speed="1.5" data-hue="330" data-intensity="1.2" data-saturation="1.0">
+                                <div class="vib34d-layer-stack">
+                                    <!-- 5 transparent layers will be injected here by ClearSeasContextPool -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <p>Rich volumetric effects with audio-reactive capabilities</p>
+                        <ul>
+                            <li>Real-time audio analysis</li>
+                            <li>Frequency-reactive parameters</li>
+                            <li>Rich volumetric rendering</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- POLYCHORA System Card -->
+                <div id="tech-card-polychora" 
+                     class="unified-card tech-card parallax-layer" 
+                     data-profile="tech-card"
+                     data-vib-system="POLYCHORA">
+                    <div class="card-header">
+                        <h3>4D Polychora</h3>
+                        <div class="card-visualizer">
+                            <div class="layered-vib34d-container" data-vib-system="POLYCHORA" data-geometry="1" data-grid-density="35" data-morph-factor="2.5" data-chaos="0.3" data-speed="0.6" data-hue="120" data-intensity="1.0" data-saturation="0.8">
+                                <div class="vib34d-layer-stack">
+                                    <!-- 5 transparent layers will be injected here by ClearSeasContextPool -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <p>True 4D polytope mathematics with glassmorphic rendering</p>
+                        <ul>
+                            <li>4D geometric projections</li>
+                            <li>Glassmorphic visual effects</li>
+                            <li>Advanced polytope mathematics</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Portfolio Section -->
+    <section id="portfolio" class="portfolio-section presentation-zone" data-scene="portfolio">
+        <div class="container">
+            <h2 class="section-title scroll-reactive">Our Work</h2>
+            
+            <div class="portfolio-grid">
+                <div class="portfolio-item unified-card" data-profile="portfolio-card" data-vib-system="QUANTUM">
+                    <div class="portfolio-header">
+                        <h3>Interactive Visualization Platform</h3>
+                        <div class="card-visualizer">
+                            <div class="layered-vib34d-container" data-vib-system="FACETED" data-geometry="2" data-grid-density="18" data-morph-factor="1.0" data-chaos="0.25" data-speed="0.6" data-hue="120" data-intensity="0.8" data-saturation="0.6">
+                                <div class="vib34d-layer-stack">
+                                    <!-- 5 transparent layers will be injected here by ClearSeasContextPool -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="portfolio-content">
+                        <p>Real-time 4D mathematical visualization with user interaction</p>
+                    </div>
+                </div>
+                
+                <div class="portfolio-item unified-card" data-profile="portfolio-card" data-vib-system="POLYCHORA">
+                    <div class="portfolio-header">
+                        <h3>AI-Driven Polytopal Analysis</h3>
+                        <div class="card-visualizer">
+                            <div class="layered-vib34d-container" data-vib-system="QUANTUM" data-geometry="4" data-grid-density="22" data-morph-factor="1.6" data-chaos="0.35" data-speed="1.1" data-hue="60" data-intensity="0.9" data-saturation="0.7">
+                                <div class="vib34d-layer-stack">
+                                    <!-- 5 transparent layers will be injected here by ClearSeasContextPool -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="portfolio-content">
+                        <p>Machine learning enhanced dimensional analysis systems</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Research Section -->
+    <section id="research" class="research-section presentation-zone" data-scene="research">
+        <div class="container">
+            <h2 class="section-title scroll-reactive">Research Publications</h2>
+            
+            <div class="research-grid">
+                <div class="paper-card unified-card" data-profile="research-card" data-vib-system="HOLOGRAPHIC">
+                    <div class="paper-header">
+                        <h3>4D Polytope Projection Algorithms</h3>
+                        <div class="card-visualizer">
+                            <div class="layered-vib34d-container" data-vib-system="HOLOGRAPHIC" data-geometry="6" data-grid-density="28" data-morph-factor="0.8" data-chaos="0.15" data-speed="0.4" data-hue="300" data-intensity="0.7" data-saturation="0.5">
+                                <div class="vib34d-layer-stack">
+                                    <!-- 5 transparent layers will be injected here by ClearSeasContextPool -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="paper-content">
+                        <p><strong>Abstract:</strong> Novel algorithms for real-time 4D polytope projection with holographic visualization...</p>
+                        <p><strong>Published:</strong> Journal of Computational Geometry, 2024</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="contact-section presentation-zone">
+        <div class="container">
+            <h2 class="section-title morphing-title">Contact</h2>
+            <div class="contact-content">
+                <p>Ready to explore advanced polytopal projection technology?</p>
+                <a href="mailto:contact@clearseas.solutions" class="btn primary">Get in Touch</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Enhanced Reactivity System -->
+    <script src="scripts/polytopal-reactivity-json.js"></script>
+
+    <!-- Totalistic Experience Engine -->
+    <script>
+        class TotalisticExperienceEngine {
+            constructor() {
+                this.mouseX = 0;
+                this.mouseY = 0;
+                this.scrollY = 0;
+                this.activeSystem = 'FACETED';
+                this.isReacting = false;
+                
+                this.init();
+            }
+            
+            init() {
+                this.setupMouseTracking();
+                this.setupScrollEffects();
+                this.setupIntersectionObserver();
+                this.setupTotalisticReactions();
+                
+                console.log('🌟 Totalistic Experience Engine - Advanced reactivity online');
+            }
+            
+            setupMouseTracking() {
+                document.addEventListener('mousemove', (e) => {
+                    this.mouseX = (e.clientX / window.innerWidth) * 100;
+                    this.mouseY = (e.clientY / window.innerHeight) * 100;
+                    
+                    document.body.style.setProperty('--mouse-x', `${this.mouseX}%`);
+                    document.body.style.setProperty('--mouse-y', `${this.mouseY}%`);
+                });
+            }
+            
+            setupScrollEffects() {
+                let ticking = false;
+                
+                window.addEventListener('scroll', () => {
+                    if (!ticking) {
+                        requestAnimationFrame(() => {
+                            this.updateScrollEffects();
+                            ticking = false;
+                        });
+                        ticking = true;
+                    }
+                });
+            }
+            
+            updateScrollEffects() {
+                this.scrollY = window.pageYOffset;
+                const scrollProgress = this.scrollY / (document.body.scrollHeight - window.innerHeight);
+                
+                // Update scroll-reactive elements
+                document.querySelectorAll('.scroll-reactive').forEach(el => {
+                    el.style.setProperty('--scroll-progress', scrollProgress);
+                });
+                
+                // Parallax layers
+                document.querySelectorAll('.parallax-layer').forEach((layer, index) => {
+                    const speed = (index + 1) * 0.5;
+                    const yPos = -(this.scrollY * speed);
+                    layer.style.transform = `translate3d(0, ${yPos}px, 0)`;
+                });
+            }
+            
+            setupIntersectionObserver() {
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('in-view');
+                        }
+                    });
+                }, { threshold: 0.1 });
+                
+                document.querySelectorAll('.presentation-zone').forEach(zone => {
+                    observer.observe(zone);
+                });
+            }
+            
+            setupTotalisticReactions() {
+                document.querySelectorAll('.unified-card').forEach(card => {
+                    card.addEventListener('mouseenter', (e) => {
+                        this.triggerTotalisticReaction(card, 'enter');
+                    });
+                    
+                    card.addEventListener('mouseleave', (e) => {
+                        this.triggerTotalisticReaction(card, 'leave');
+                    });
+                    
+                    card.addEventListener('mousemove', (e) => {
+                        this.updateCardTilt(card, e);
+                    });
+                });
+            }
+            
+            triggerTotalisticReaction(card, type) {
+                const system = card.dataset.vibSystem;
+                const cardRect = card.getBoundingClientRect();
+                const cardCenterX = ((cardRect.left + cardRect.width / 2) / window.innerWidth) * 100;
+                const cardCenterY = ((cardRect.top + cardRect.height / 2) / window.innerHeight) * 100;
+                
+                if (type === 'enter') {
+                    // Card reactions
+                    card.classList.add('is-hovering');
+                    
+                    // Background system switch
+                    this.switchHeroSystem(system);
+                    
+                    // Totalistic page reaction
+                    document.body.classList.add('totalistic-reaction-active');
+                    document.body.style.setProperty('--active-hue-rgb', this.getSystemColor(system));
+                    document.body.style.setProperty('--mouse-x', `${cardCenterX}%`);
+                    document.body.style.setProperty('--mouse-y', `${cardCenterY}%`);
+                    
+                    // Sibling card reactions
+                    this.reactSiblingCards(card, 'dimmed');
+                    
+                    // Enhanced visualizer effects
+                    this.enhanceVisualizerEffects(card, system);
+                    
+                } else if (type === 'leave') {
+                    // Reset all reactions
+                    card.classList.remove('is-hovering');
+                    document.body.classList.remove('totalistic-reaction-active');
+                    this.reactSiblingCards(card, 'normal');
+                    this.resetVisualizerEffects(card);
+                }
+            }
+            
+            updateCardTilt(card, event) {
+                const rect = card.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+                
+                const rotateY = ((x / rect.width) - 0.5) * 20; // Max 10 degrees
+                const rotateX = -((y / rect.height) - 0.5) * 20; // Max 10 degrees
+                
+                card.style.setProperty('--card-tilt-x', `${rotateX}deg`);
+                card.style.setProperty('--card-tilt-y', `${rotateY}deg`);
+            }
+            
+            switchHeroSystem(system) {
+                console.log('🔄 Switching hero system to:', system);
+                
+                // Remove active class from all hero visualizers
+                const heroVisualizers = document.querySelectorAll('.hero-visualizer');
+                heroVisualizers.forEach(vis => vis.classList.remove('active'));
+                
+                // Update layered VIB34D visualizers with morphing reactions
+                if (window.clearSeasLayeredVIB34D && window.clearSeasLayeredVIB34D.isInitialized) {
+                    // Switch hero visualizers to the focused system
+                    window.clearSeasLayeredVIB34D.switchHeroSystem(system);
+                    
+                    // Trigger system-wide morphing reaction
+                    window.clearSeasLayeredVIB34D.triggerSystemMorphing(system, 1.0);
+                    
+                    console.log('✨ Triggered Layered VIB34D morphing reaction for:', system);
+                }
+                
+                // Activate hero primary
+                const targetVisualizer = document.getElementById('hero-primary');
+                if (targetVisualizer) {
+                    targetVisualizer.classList.add('active');
+                }
+            }
+            
+            getSystemParameters(system) {
+                const systemConfigs = {
+                    'FACETED': {
+                        primary: { geometry: 0, hue: 280, intensity: 1.2, speed: 1.5, morphFactor: 1.8 },
+                        secondary: { geometry: 1, hue: 300, intensity: 0.8, speed: 0.8, morphFactor: 1.2 }
+                    },
+                    'QUANTUM': {
+                        primary: { geometry: 3, hue: 60, intensity: 1.4, speed: 2.0, morphFactor: 2.2 },
+                        secondary: { geometry: 4, hue: 80, intensity: 0.9, speed: 1.2, morphFactor: 1.6 }
+                    },
+                    'HOLOGRAPHIC': {
+                        primary: { geometry: 2, hue: 150, intensity: 1.6, speed: 1.8, morphFactor: 2.5 },
+                        secondary: { geometry: 5, hue: 170, intensity: 1.0, speed: 1.0, morphFactor: 1.8 }
+                    },
+                    'POLYCHORA': {
+                        primary: { geometry: 6, hue: 200, intensity: 1.8, speed: 2.5, morphFactor: 3.0 },
+                        secondary: { geometry: 7, hue: 220, intensity: 1.2, speed: 1.5, morphFactor: 2.0 }
+                    }
+                };
+                
+                return systemConfigs[system] || systemConfigs['FACETED'];
+            }
+            
+            reactSiblingCards(activeCard, state) {
+                document.querySelectorAll('.unified-card').forEach(card => {
+                    if (card !== activeCard) {
+                        if (state === 'dimmed') {
+                            card.style.opacity = '0.6';
+                            card.style.transform = 'scale(0.95)';
+                            card.style.filter = 'blur(2px)';
+                        } else {
+                            card.style.opacity = '';
+                            card.style.transform = '';
+                            card.style.filter = '';
+                        }
+                    }
+                });
+            }
+            
+            enhanceVisualizerEffects(card, system) {
+                const visualizer = card.querySelector('.card-visualizer');
+                if (visualizer) {
+                    const hueShift = this.getSystemHueShift(system);
+                    visualizer.style.setProperty('--visualizer-hue-shift', `${hueShift}deg`);
+                    visualizer.style.setProperty('--visualizer-saturation', '1.3');
+                    visualizer.style.setProperty('--visualizer-brightness', '1.1');
+                    visualizer.style.setProperty('--overlay-opacity', '0.2');
+                    
+                    // Update the layered VIB34D visualizer if it exists
+                    const layerStack = visualizer.querySelector('.vib34d-layer-stack');
+                    if (layerStack && window.clearSeasLayeredVIB34D && window.clearSeasLayeredVIB34D.isInitialized) {
+                        window.clearSeasLayeredVIB34D.triggerSystemMorphing(system, 1.8);
+                        console.log('🌟 Enhanced Layered VIB34D morphing for:', system);
+                    }
+                }
+            }
+            
+            resetVisualizerEffects(card) {
+                const visualizer = card.querySelector('.card-visualizer');
+                if (visualizer) {
+                    visualizer.style.setProperty('--visualizer-saturation', '1');
+                    visualizer.style.setProperty('--visualizer-brightness', '1');
+                    visualizer.style.setProperty('--overlay-opacity', '0');
+                    
+                    // Reset the layered VIB34D visualizer if it exists
+                    const layerStack = visualizer.querySelector('.vib34d-layer-stack');
+                    if (layerStack && window.clearSeasLayeredVIB34D && window.clearSeasLayeredVIB34D.isInitialized) {
+                        window.clearSeasLayeredVIB34D.resetAllSystems();
+                        console.log('🔄 Reset all Layered VIB34D systems');
+                    }
+                }
+            }
+            
+            getOriginalParams(canvas) {
+                // Get original params from data attributes or use defaults
+                const defaults = {
+                    geometry: 0,
+                    gridDensity: 15,
+                    morphFactor: 1.0,
+                    chaos: 0.2,
+                    speed: 1.0,
+                    hue: 200,
+                    intensity: 0.8,
+                    saturation: 0.6
+                };
+                
+                const params = {};
+                Object.keys(defaults).forEach(key => {
+                    const dataValue = canvas.dataset[key] || canvas.dataset[key.toLowerCase()];
+                    params[key] = dataValue ? parseFloat(dataValue) : defaults[key];
+                });
+                
+                return params;
+            }
+            
+            getSystemHue(system) {
+                const systemHues = {
+                    'FACETED': 280,
+                    'QUANTUM': 60,
+                    'HOLOGRAPHIC': 150,
+                    'POLYCHORA': 200
+                };
+                return systemHues[system] || 200;
+            }
+            
+            getSystemColor(system) {
+                const colors = {
+                    'FACETED': '0, 212, 255',
+                    'QUANTUM': '255, 0, 110', 
+                    'HOLOGRAPHIC': '255, 51, 0',
+                    'POLYCHORA': '51, 255, 0'
+                };
+                return colors[system] || '0, 212, 255';
+            }
+            
+            getSystemHueShift(system) {
+                const shifts = {
+                    'FACETED': 0,
+                    'QUANTUM': 60,
+                    'HOLOGRAPHIC': 120,
+                    'POLYCHORA': 180
+                };
+                return shifts[system] || 0;
+            }
+            
+            getComplementarySystem(system) {
+                const complements = {
+                    'FACETED': 'HOLOGRAPHIC',
+                    'QUANTUM': 'POLYCHORA',
+                    'HOLOGRAPHIC': 'FACETED',
+                    'POLYCHORA': 'QUANTUM'
+                };
+                return complements[system] || 'FACETED';
+            }
+        }
+        
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Initialize Totalistic Experience Engine
+            window.totalisticEngine = new TotalisticExperienceEngine();
+            
+            // Initialize ClearSeas Context Pool with Layered VIB34D System
+            console.log('🎯 Initializing ClearSeas Context Pool...');
+            
+            // Wait for context pool to be available
+            if (typeof window.ClearSeasContextPool !== 'undefined') {
+                window.contextPool = new window.ClearSeasContextPool();
+                await window.contextPool.initialize();
+                
+                // Setup lazy loading with Intersection Observer
+                const containers = document.querySelectorAll('.layered-vib34d-container');
+                console.log(`🌊 Found ${containers.length} layered visualizer containers - setting up lazy loading`);
+                
+                // Create intersection observer for lazy loading
+                const observerOptions = {
+                    root: null,
+                    rootMargin: '50px', // Start loading 50px before visible (reduced)
+                    threshold: 0.3 // Load when 30% visible (more restrictive)
+                };
+                
+                const lazyLoadObserver = new IntersectionObserver(async (entries) => {
+                    for (const entry of entries) {
+                        if (entry.isIntersecting) {
+                            const container = entry.target;
+                            
+                            // Skip if already initialized
+                            if (container.dataset.initialized === 'true') continue;
+                            
+                            const system = container.dataset.vibSystem;
+                            const visualizerId = `visualizer-${container.id || Math.random().toString(36).substr(2, 9)}`;
+                            
+                            console.log(`🎯 Lazy loading ${system} visualizer: ${visualizerId}`);
+                            
+                            try {
+                                await window.contextPool.createMultiLayerVisualizer(visualizerId, system, container);
+                                container.dataset.initialized = 'true';
+                                container.dataset.visualizerId = visualizerId;
+                                console.log(`✨ Lazy loaded ${system} visualizer: ${visualizerId}`);
+                            } catch (error) {
+                                console.error(`❌ Failed to lazy load visualizer:`, error);
+                            }
+                            
+                            // Stop observing this container
+                            lazyLoadObserver.unobserve(container);
+                        }
+                    }
+                }, observerOptions);
+                
+                // Setup viewport exit observer for smart destruction
+                const exitObserver = new IntersectionObserver((entries) => {
+                    for (const entry of entries) {
+                        if (!entry.isIntersecting) {
+                            const container = entry.target;
+                            const visualizerId = container.dataset.visualizerId;
+                            
+                            if (visualizerId && window.contextPool.visualizers.has(visualizerId)) {
+                                // Mark for potential cleanup (but don't destroy immediately)
+                                setTimeout(() => {
+                                    const bounds = container.getBoundingClientRect();
+                                    const isStillOffScreen = bounds.bottom < 0 || bounds.top > window.innerHeight;
+                                    
+                                    if (isStillOffScreen && window.contextPool.visualizers.has(visualizerId)) {
+                                        console.log(`🗑️ Smart cleanup: destroying off-screen visualizer ${visualizerId}`);
+                                        const visualizer = window.contextPool.visualizers.get(visualizerId);
+                                        visualizer.destroy();
+                                        window.contextPool.visualizers.delete(visualizerId);
+                                        container.dataset.initialized = 'false';
+                                        container.dataset.visualizerId = '';
+                                        
+                                        // Re-observe for potential re-entry
+                                        lazyLoadObserver.observe(container);
+                                    }
+                                }, 2000); // 2 second delay before cleanup
+                            }
+                        }
+                    }
+                }, { threshold: 0 });
+                
+                // Determine which containers are initially visible
+                const initiallyVisibleContainers = [];
+                containers.forEach((container, index) => {
+                    const rect = container.getBoundingClientRect();
+                    const isVisible = rect.top < window.innerHeight && 
+                                     rect.bottom > 0 && 
+                                     rect.left < window.innerWidth && 
+                                     rect.right > 0;
+                    
+                    if (isVisible) {
+                        initiallyVisibleContainers.push({ container, index });
+                        console.log(`📍 Initially visible container ${index}: ${container.dataset.vibSystem}`);
+                    }
+                });
+                
+                // Load only the first initially visible container immediately
+                // to avoid overwhelming the WebGL context limit at startup
+                if (initiallyVisibleContainers.length > 0) {
+                    const { container } = initiallyVisibleContainers[0];
+                    const system = container.dataset.vibSystem;
+                    const visualizerId = `visualizer-${Math.random().toString(36).substr(2, 9)}`;
+                    
+                    try {
+                        console.log(`🎯 Loading primary visible visualizer: ${system}`);
+                        await window.contextPool.createMultiLayerVisualizer(visualizerId, system, container);
+                        container.dataset.initialized = 'true';
+                        container.dataset.visualizerId = visualizerId;
+                    } catch (error) {
+                        console.error(`❌ Failed to load primary visualizer:`, error);
+                    }
+                }
+                
+                // Start observing all containers for lazy loading
+                containers.forEach(container => {
+                    lazyLoadObserver.observe(container);
+                    exitObserver.observe(container);
+                });
+                
+                // Start the render loop
+                window.contextPool.startRenderLoop();
+                console.log('🚀 ClearSeas Context Pool fully initialized and rendering!');
+                
+            } else {
+                console.error('❌ ClearSeasContextPool not available - check script loading');
+            }
+        });
+    </script>
+</body>
+</html><!-- GitHub Pages deployment trigger Thu Sep  4 11:46:16 EDT 2025 -->

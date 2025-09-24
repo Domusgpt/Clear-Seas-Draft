@@ -1,0 +1,569 @@
+/*
+ * Advanced Parallax 2025 Design System
+ * Ultra-modern scroll-driven animations with depth layers
+ * Based on cutting-edge web flow and parallax patterns
+ */
+
+:root {
+  /* Parallax depth variables */
+  --parallax-y: 0;
+  --visibility-ratio: 1;
+  --scroll-velocity: 0;
+  --scroll-progress: 0;
+  --viewport-center-distance: 0;
+  
+  /* Inverse effect variables */
+  --inverse-intensity: 0;
+  --focus-glow: 0;
+  --background-dim: 1;
+  
+  /* Motion variables */
+  --float-offset-y: 0;
+  --rotation-3d: 0deg;
+  --morph-progress: 0;
+  
+  /* 2025 design tokens */
+  --depth-near: 200px;
+  --depth-mid: 0px;
+  --depth-far: -200px;
+  --parallax-intensity: 1;
+  --motion-reduced: 0;
+}
+
+/* ===== SCROLL-DRIVEN PARALLAX LAYERS ===== */
+
+.parallax-container {
+  position: relative;
+  transform-style: preserve-3d;
+  perspective: 1500px;
+  overflow: visible;
+}
+
+/* Deep background layer */
+.parallax-layer-deep {
+  transform: 
+    translateZ(var(--depth-far)) 
+    translateY(calc(var(--parallax-y) * -50px * var(--parallax-intensity)))
+    scale(0.8);
+  opacity: calc(0.4 + var(--visibility-ratio) * 0.3);
+  filter: blur(calc((1 - var(--visibility-ratio)) * 3px));
+  transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* Mid ground layer */
+.parallax-layer-mid {
+  transform: 
+    translateZ(var(--depth-mid))
+    translateY(calc(var(--parallax-y) * -25px * var(--parallax-intensity)));
+  opacity: calc(0.7 + var(--visibility-ratio) * 0.3);
+  transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* Near foreground layer */
+.parallax-layer-near {
+  transform: 
+    translateZ(var(--depth-near))
+    translateY(calc(var(--parallax-y) * -10px * var(--parallax-intensity)))
+    scale(calc(1 + var(--visibility-ratio) * 0.1));
+  opacity: calc(0.9 + var(--visibility-ratio) * 0.1);
+  transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* ===== SCROLL-MORPHING CARDS ===== */
+
+.morph-card {
+  --card-morph: 0;
+  --card-depth: calc(var(--visibility-ratio) * 100px);
+  
+  transform-origin: center center;
+  transform: 
+    perspective(1200px)
+    translateZ(var(--card-depth))
+    translateY(calc((1 - var(--visibility-ratio)) * 100px))
+    rotateX(calc((0.5 - var(--parallax-y)) * 15deg))
+    rotateY(calc(var(--scroll-velocity) * 0.1deg))
+    scale(calc(0.8 + var(--visibility-ratio) * 0.2));
+  
+  opacity: calc(0.3 + var(--visibility-ratio) * 0.7);
+  filter: 
+    blur(calc((1 - var(--visibility-ratio)) * 2px))
+    brightness(calc(0.8 + var(--visibility-ratio) * 0.4));
+  
+  transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: transform, opacity, filter;
+}
+
+/* Card entering from bottom */
+.morph-card[data-entrance="bottom"] {
+  animation: enter-from-bottom 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+}
+
+@keyframes enter-from-bottom {
+  from {
+    transform: 
+      translateZ(-300px)
+      translateY(200px)
+      rotateX(-30deg)
+      scale(0.5);
+    opacity: 0;
+  }
+  to {
+    transform: 
+      translateZ(var(--card-depth))
+      translateY(0)
+      rotateX(0)
+      scale(1);
+    opacity: 1;
+  }
+}
+
+/* Card exiting from top */
+.morph-card[data-exit="top"] {
+  animation: exit-from-top 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+}
+
+@keyframes exit-from-top {
+  from {
+    transform: 
+      translateZ(var(--card-depth))
+      translateY(0)
+      rotateX(0)
+      scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: 
+      translateZ(-300px)
+      translateY(-200px)
+      rotateX(30deg)
+      scale(0.5);
+    opacity: 0;
+  }
+}
+
+/* ===== INVERSE COMPLEMENTARY EFFECTS ===== */
+
+/* Focused card enhancement */
+.morph-card.focused {
+  --focus-glow: 1;
+  --inverse-intensity: 1;
+  
+  z-index: 100;
+  transform: 
+    translateZ(150px)
+    scale(1.1);
+  
+  filter: 
+    brightness(1.3)
+    contrast(1.2)
+    saturate(1.5)
+    drop-shadow(0 0 50px rgba(0, 255, 255, 0.8));
+  
+  box-shadow:
+    0 0 100px rgba(0, 255, 255, 0.6),
+    0 0 200px rgba(255, 0, 255, 0.3),
+    inset 0 0 50px rgba(255, 255, 255, 0.1);
+}
+
+/* Background dimming when card focused */
+.inverse-background {
+  --background-dim: 0.3;
+  
+  filter: 
+    brightness(var(--background-dim))
+    blur(calc(var(--inverse-intensity) * 5px))
+    hue-rotate(calc(var(--inverse-intensity) * 180deg));
+  
+  transition: filter 0.6s ease;
+}
+
+/* Complementary cards (non-focused) */
+.morph-card.complementary {
+  --inverse-intensity: 0.5;
+  
+  transform: 
+    translateZ(calc(var(--card-depth) * 0.5))
+    scale(0.95);
+  
+  filter: 
+    brightness(0.7)
+    contrast(0.9)
+    saturate(0.5)
+    hue-rotate(180deg);
+  
+  opacity: 0.6;
+}
+
+/* ===== UFO NAVIGATION BUTTONS ===== */
+
+.ufo-nav-container {
+  position: fixed;
+  bottom: 40px;
+  right: 40px;
+  z-index: 1000;
+  perspective: 1000px;
+}
+
+.ufo-button {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin: 15px;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  animation: ufo-float 3s ease-in-out infinite;
+}
+
+@keyframes ufo-float {
+  0%, 100% { transform: translateY(0) rotateZ(0deg); }
+  25% { transform: translateY(-10px) rotateZ(2deg); }
+  75% { transform: translateY(5px) rotateZ(-2deg); }
+}
+
+/* UFO body */
+.ufo-body {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(ellipse at center, 
+      rgba(0, 255, 255, 0.3) 0%, 
+      rgba(0, 255, 255, 0.1) 40%,
+      transparent 70%);
+  border-radius: 50%;
+  box-shadow:
+    0 0 40px rgba(0, 255, 255, 0.6),
+    inset 0 0 20px rgba(255, 255, 255, 0.3),
+    0 10px 30px rgba(0, 0, 0, 0.3);
+  
+  transform-style: preserve-3d;
+  animation: ufo-spin 4s linear infinite;
+}
+
+@keyframes ufo-spin {
+  from { transform: rotateY(0deg) rotateX(10deg); }
+  to { transform: rotateY(360deg) rotateX(10deg); }
+}
+
+/* UFO disc */
+.ufo-disc {
+  position: absolute;
+  top: 35%;
+  left: -10%;
+  width: 120%;
+  height: 30%;
+  background: 
+    linear-gradient(90deg,
+      rgba(0, 255, 255, 0.8) 0%,
+      rgba(255, 0, 255, 0.6) 50%,
+      rgba(0, 255, 255, 0.8) 100%);
+  border-radius: 50%;
+  transform: rotateX(75deg);
+  box-shadow:
+    0 0 20px rgba(0, 255, 255, 0.8),
+    0 0 40px rgba(255, 0, 255, 0.4);
+  
+  animation: ufo-disc-pulse 2s ease-in-out infinite;
+}
+
+@keyframes ufo-disc-pulse {
+  0%, 100% { transform: rotateX(75deg) scale(1); }
+  50% { transform: rotateX(75deg) scale(1.1); }
+}
+
+/* UFO lights */
+.ufo-lights {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.ufo-light {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+  animation: light-blink 1.5s ease-in-out infinite;
+}
+
+.ufo-light:nth-child(1) { top: 20%; left: 50%; animation-delay: 0s; }
+.ufo-light:nth-child(2) { top: 50%; left: 80%; animation-delay: 0.3s; }
+.ufo-light:nth-child(3) { top: 80%; left: 50%; animation-delay: 0.6s; }
+.ufo-light:nth-child(4) { top: 50%; left: 20%; animation-delay: 0.9s; }
+
+@keyframes light-blink {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.5); }
+}
+
+/* UFO hover state */
+.ufo-button:hover {
+  transform: translateY(-20px) scale(1.1);
+}
+
+.ufo-button:hover .ufo-body {
+  box-shadow:
+    0 0 60px rgba(0, 255, 255, 0.9),
+    inset 0 0 30px rgba(255, 255, 255, 0.5),
+    0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.ufo-button:hover .ufo-disc {
+  box-shadow:
+    0 0 40px rgba(0, 255, 255, 1),
+    0 0 80px rgba(255, 0, 255, 0.6);
+}
+
+/* UFO beam effect on click */
+.ufo-button.beaming::after {
+  content: '';
+  position: absolute;
+  top: 70%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200%;
+  height: 300px;
+  background: 
+    linear-gradient(180deg,
+      rgba(0, 255, 255, 0.4) 0%,
+      rgba(0, 255, 255, 0.2) 30%,
+      transparent 100%);
+  clip-path: polygon(40% 0%, 60% 0%, 80% 100%, 20% 100%);
+  animation: beam-down 0.6s ease-out;
+  pointer-events: none;
+}
+
+@keyframes beam-down {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) scaleY(0);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) scaleY(1);
+  }
+}
+
+/* ===== TOUCH-REACTIVE VISUAL CHANGES ===== */
+
+/* Touch interaction states */
+.touch-active {
+  --touch-scale: 1.05;
+  --touch-glow: 1;
+  
+  transform: scale(var(--touch-scale));
+  box-shadow: 0 0 30px rgba(0, 255, 255, var(--touch-glow));
+}
+
+/* Density changes on touch */
+.morph-canvas {
+  transition: filter 0.3s ease;
+}
+
+.morph-canvas.touch-dense {
+  filter: contrast(1.3) brightness(1.2);
+}
+
+/* ===== SCROLL VELOCITY EFFECTS ===== */
+
+/* Fast scroll motion blur */
+.velocity-blur {
+  filter: blur(calc(abs(var(--scroll-velocity)) * 0.02px));
+  transform: scaleY(calc(1 + abs(var(--scroll-velocity)) * 0.001));
+}
+
+/* Scroll direction indicators */
+.scroll-indicator {
+  position: fixed;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 100px;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(0, 255, 255, 0.3) 50%,
+    transparent 100%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.scroll-indicator.active {
+  opacity: 1;
+  animation: scroll-pulse 1s ease-in-out infinite;
+}
+
+@keyframes scroll-pulse {
+  0%, 100% { transform: translateY(-50%) scaleY(1); }
+  50% { transform: translateY(-50%) scaleY(1.2); }
+}
+
+/* ===== 2025 MAGNETIC HOVER EFFECTS ===== */
+
+.magnetic-element {
+  position: relative;
+  transition: transform 0.2s cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+.magnetic-element::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  pointer-events: none;
+}
+
+.magnetic-element:hover {
+  transform: 
+    translateX(calc((var(--mouse-x) - 50) * 0.3px))
+    translateY(calc((var(--mouse-y) - 50) * 0.3px));
+}
+
+/* ===== SMOOTH SCROLL SECTIONS ===== */
+
+.scroll-section {
+  position: relative;
+  min-height: 100vh;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+.scroll-container {
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+  overscroll-behavior-y: contain;
+}
+
+/* ===== UNIFIED SCROLL SYSTEM INTEGRATION ===== */
+
+.fluid-dynamics-container {
+  --fluid-wave-amplitude: 0;
+  --fluid-wave-frequency: 1;
+  --fluid-turbulence: 0;
+  --fluid-viscosity: 0.8;
+}
+
+/* Prevent page-level transforms that cause tilting */
+body, html {
+  transform: none !important;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* Ensure scroll container is stable */
+.scroll-container {
+  scroll-snap-type: y proximity;
+  scroll-behavior: smooth;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.fluid-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: -10;
+  background: 
+    radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+      rgba(0, 255, 255, calc(var(--fluid-wave-amplitude) * 0.1)) 0%, 
+      transparent 50%);
+  opacity: var(--scroll-progress, 0);
+  transform: 
+    scale(calc(1 + var(--fluid-wave-amplitude) * 0.1))
+    rotate(calc(var(--scroll-velocity) * 0.1deg));
+  transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.particle-system {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: -5;
+  opacity: calc(abs(var(--scroll-velocity)) * 0.001);
+}
+
+/* ===== PERFORMANCE OPTIMIZATIONS ===== */
+
+.morph-card,
+.parallax-layer-deep,
+.parallax-layer-mid,
+.parallax-layer-near,
+.fluid-background,
+.particle-system {
+  will-change: transform, opacity, filter;
+  transform: translateZ(0); /* Force GPU layer */
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-reduced: 1;
+    --parallax-intensity: 0.2;
+  }
+  
+  .morph-card,
+  .ufo-button,
+  .parallax-layer-deep,
+  .parallax-layer-mid,
+  .parallax-layer-near {
+    animation: none !important;
+    transition-duration: 0.1s !important;
+  }
+}
+
+/* ===== RESPONSIVE PARALLAX ===== */
+
+@media (max-width: 768px) {
+  :root {
+    --parallax-intensity: 0.5;
+    --depth-near: 100px;
+    --depth-far: -100px;
+  }
+  
+  .morph-card {
+    transform: 
+      translateZ(calc(var(--card-depth) * 0.5))
+      translateY(calc((1 - var(--visibility-ratio)) * 50px))
+      scale(calc(0.9 + var(--visibility-ratio) * 0.1));
+  }
+  
+  .ufo-nav-container {
+    bottom: 20px;
+    right: 20px;
+  }
+  
+  .ufo-button {
+    width: 60px;
+    height: 60px;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --parallax-intensity: 0.3;
+  }
+  
+  .morph-card {
+    transform: 
+      translateY(calc((1 - var(--visibility-ratio)) * 30px))
+      scale(calc(0.95 + var(--visibility-ratio) * 0.05));
+  }
+}

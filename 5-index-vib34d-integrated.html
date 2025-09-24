@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Seas Solutions - Advanced VIB34D Integration</title>
+    
+    <!-- VIB34D Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <!-- VIB34D Core Styles -->
+    <link rel="stylesheet" href="styles/base.css">
+    <link rel="stylesheet" href="styles/header.css">
+    <link rel="stylesheet" href="styles/controls.css">
+    <link rel="stylesheet" href="styles/reactivity.css">
+    <link rel="stylesheet" href="styles/mobile.css">
+    <link rel="stylesheet" href="styles/animations.css">
+    
+    <!-- Clear Seas Custom Integration Styles -->
+    <style>
+        /* CLEAR SEAS INTEGRATION LAYER */
+        body {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            font-family: 'Orbitron', monospace;
+        }
+        
+        .clear-seas-section {
+            min-height: 100vh;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .clear-seas-hero {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            text-align: center;
+            color: #fff;
+        }
+        
+        .clear-seas-title {
+            font-size: 4rem;
+            font-weight: 900;
+            background: linear-gradient(45deg, #00ffff, #ff00ff, #ffff00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+        
+        .clear-seas-subtitle {
+            font-size: 1.5rem;
+            color: #00ffff;
+            margin-bottom: 2rem;
+        }
+        
+        .vib34d-embedded-visualizer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.6;
+        }
+        
+        .technology-showcase {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            padding: 2rem;
+        }
+        
+        .tech-card {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 15px;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .tech-card h3 {
+            color: #00ffff;
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+        }
+        
+        .tech-visualizer-container {
+            width: 100%;
+            height: 300px;
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+        
+        .control-overlay {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 5px;
+            padding: 0.5rem;
+        }
+        
+        .system-selector {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .system-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid #00ffff;
+            background: transparent;
+            color: #00ffff;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Orbitron', monospace;
+            transition: all 0.3s ease;
+        }
+        
+        .system-btn.active {
+            background: #00ffff;
+            color: #000;
+        }
+        
+        .system-btn:hover {
+            background: rgba(0, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="loading">
+    
+    <!-- Hero Section with Full VIB34D Background -->
+    <section class="clear-seas-section clear-seas-hero">
+        <!-- VIB34D Canvas Container (Full System) -->
+        <div class="canvas-container" id="canvasContainer">
+            <div class="holographic-layers" id="vib34dLayers" style="display: block;"></div>
+            <div class="holographic-layers" id="quantumLayers" style="display: none;"></div>
+            <div class="holographic-layers" id="holographicLayers" style="display: none;"></div>
+            <div class="holographic-layers" id="polychoraLayers" style="display: none;"></div>
+        </div>
+        
+        <div style="position: relative; z-index: 10;">
+            <h1 class="clear-seas-title">CLEAR SEAS</h1>
+            <h2 class="clear-seas-subtitle">Advanced Maritime Intelligence Platform</h2>
+            
+            <!-- VIB34D System Controls -->
+            <div class="control-overlay">
+                <div class="system-selector">
+                    <button class="system-btn active" data-system="faceted" onclick="switchSystem('faceted')">FACETED</button>
+                    <button class="system-btn" data-system="quantum" onclick="switchSystem('quantum')">QUANTUM</button>
+                    <button class="system-btn" data-system="holographic" onclick="switchSystem('holographic')">HOLOGRAPHIC</button>
+                    <button class="system-btn" data-system="polychora" onclick="switchSystem('polychora')">POLYCHORA</button>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Technology Showcase Section -->
+    <section class="clear-seas-section">
+        <h2 style="text-align: center; color: #00ffff; font-size: 3rem; margin-bottom: 3rem;">Our Technology Stack</h2>
+        
+        <div class="technology-showcase">
+            <!-- Faceted System Card -->
+            <div class="tech-card">
+                <h3>Faceted Analysis Engine</h3>
+                <div class="tech-visualizer-container">
+                    <div class="holographic-layers" id="facetedTechDemo"></div>
+                </div>
+                <p>Clean geometric analysis for maritime pattern recognition with crystalline precision.</p>
+            </div>
+            
+            <!-- Quantum System Card -->
+            <div class="tech-card">
+                <h3>Quantum Processing Matrix</h3>
+                <div class="tech-visualizer-container">
+                    <div class="holographic-layers" id="quantumTechDemo"></div>
+                </div>
+                <p>Advanced quantum algorithms for complex maritime data processing and prediction.</p>
+            </div>
+            
+            <!-- Holographic System Card -->
+            <div class="tech-card">
+                <h3>Holographic Data Visualization</h3>
+                <div class="tech-visualizer-container">
+                    <div class="holographic-layers" id="holographicTechDemo"></div>
+                </div>
+                <p>Immersive 3D data visualization for maritime intelligence and situational awareness.</p>
+            </div>
+            
+            <!-- Polychora System Card -->
+            <div class="tech-card">
+                <h3>4D Polychora Analytics</h3>
+                <div class="tech-visualizer-container">
+                    <div class="holographic-layers" id="polychoraTechDemo"></div>
+                </div>
+                <p>Revolutionary 4D dimensional analysis for advanced maritime intelligence processing.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- VIB34D Core Module Loading -->
+    <script type="module" src="js/core/url-params.js"></script>
+    <script type="module" src="js/audio/audio-engine.js"></script>
+    <script type="module" src="js/controls/ui-handlers.js"></script>
+    <script type="module" src="js/gallery/gallery-manager.js"></script>
+    <script type="module" src="js/interactions/device-tilt.js"></script>
+
+    <!-- Clear Seas VIB34D Integration -->
+    <script type="module">
+        (async function() {
+            try {
+                console.log('🌊 Starting Clear Seas VIB34D Integration...');
+                
+                // Import the main VIB34D app
+                const VIB34DApp = (await import('./js/core/app.js')).default;
+                console.log('✅ VIB34DApp imported');
+                
+                // Import VIB34D engine systems
+                let VIB34DIntegratedEngine, QuantumEngine, RealHolographicSystem, NewPolychoraEngine;
+                let CanvasManager, ReactivityManager, UnifiedReactivityManager;
+                
+                try {
+                    const coreEngine = await import('./src/core/Engine.js');
+                    VIB34DIntegratedEngine = coreEngine.VIB34DIntegratedEngine;
+                    console.log('✅ VIB34DIntegratedEngine imported');
+                } catch (e) {
+                    console.warn('⚠️ VIB34DIntegratedEngine not available:', e.message);
+                }
+                
+                try {
+                    const quantumEngine = await import('./src/quantum/QuantumEngine.js');
+                    QuantumEngine = quantumEngine.QuantumEngine;
+                    console.log('✅ QuantumEngine imported');
+                } catch (e) {
+                    console.warn('⚠️ QuantumEngine not available:', e.message);
+                }
+                
+                try {
+                    const holoSystem = await import('./src/holograms/RealHolographicSystem.js');
+                    RealHolographicSystem = holoSystem.RealHolographicSystem;
+                    console.log('✅ RealHolographicSystem imported');
+                } catch (e) {
+                    console.warn('⚠️ RealHolographicSystem not available:', e.message);
+                }
+                
+                try {
+                    const newPolySystem = await import('./src/core/PolychoraSystemNew.js');
+                    NewPolychoraEngine = newPolySystem.NewPolychoraEngine;
+                    console.log('✅ NEW 4D Polychora Engine imported');
+                } catch (e) {
+                    try {
+                        const polySystem = await import('./src/core/PolychoraSystem.js');
+                        NewPolychoraEngine = polySystem.PolychoraSystem;
+                        console.log('✅ Fallback to old PolychoraSystem');
+                    } catch (e2) {
+                        console.warn('⚠️ No Polychora system available:', e2.message);
+                    }
+                }
+                
+                // Import Canvas Manager
+                try {
+                    const canvasManager = await import('./src/core/CanvasManager.js');
+                    CanvasManager = canvasManager.CanvasManager;
+                    console.log('✅ CanvasManager imported');
+                } catch (e) {
+                    console.warn('⚠️ CanvasManager not available:', e.message);
+                }
+                
+                // Import Reactivity Managers
+                try {
+                    const unifiedReactivityManager = await import('./src/core/UnifiedReactivityManager.js');
+                    UnifiedReactivityManager = unifiedReactivityManager.UnifiedReactivityManager;
+                    console.log('✅ UnifiedReactivityManager imported');
+                } catch (e) {
+                    console.warn('⚠️ UnifiedReactivityManager not available:', e.message);
+                }
+                
+                try {
+                    const reactivityManager = await import('./src/core/ReactivityManager.js');
+                    ReactivityManager = reactivityManager.ReactivityManager;
+                    console.log('✅ ReactivityManager imported');
+                } catch (e) {
+                    console.warn('⚠️ ReactivityManager not available:', e.message);
+                }
+
+                // Store engine classes globally
+                window.engineClasses = {
+                    VIB34DIntegratedEngine,
+                    QuantumEngine,
+                    RealHolographicSystem,
+                    NewPolychoraEngine
+                };
+                
+                console.log('📦 Engine classes stored:', Object.keys(window.engineClasses).filter(k => window.engineClasses[k]));
+
+                // Initialize Unified Reactivity Manager
+                if (UnifiedReactivityManager) {
+                    const reactivityManager = new UnifiedReactivityManager();
+                    console.log('✅ UnifiedReactivityManager initialized');
+                }
+                
+                // Initialize Canvas Manager with Clear Seas containers
+                if (CanvasManager) {
+                    window.canvasManager = new CanvasManager();
+                    console.log('✅ CanvasManager initialized');
+                    
+                    // Setup Clear Seas specific containers
+                    const containers = [
+                        'vib34dLayers', 'quantumLayers', 'holographicLayers', 'polychoraLayers',
+                        'facetedTechDemo', 'quantumTechDemo', 'holographicTechDemo', 'polychoraTechDemo'
+                    ];
+                    
+                    containers.forEach(containerId => {
+                        const container = document.getElementById(containerId);
+                        if (container) {
+                            console.log(`✅ Found container: ${containerId}`);
+                        }
+                    });
+                }
+                
+                // Initialize VIB34D App
+                const app = new VIB34DApp();
+                window.vib34dApp = app;
+                
+                // Initialize default system (faceted)
+                const initialSystem = 'faceted';
+                if (window.switchSystem) {
+                    await window.switchSystem(initialSystem);
+                    console.log(`✅ Initial system loaded: ${initialSystem}`);
+                }
+                
+                // Initialize tech demo visualizers
+                setTimeout(async () => {
+                    if (window.canvasManager) {
+                        // Create individual visualizers for tech demos
+                        try {
+                            await window.canvasManager.createVisualizerInContainer('facetedTechDemo', 'faceted', window.engineClasses);
+                            await window.canvasManager.createVisualizerInContainer('quantumTechDemo', 'quantum', window.engineClasses);
+                            await window.canvasManager.createVisualizerInContainer('holographicTechDemo', 'holographic', window.engineClasses);
+                            await window.canvasManager.createVisualizerInContainer('polychoraTechDemo', 'polychora', window.engineClasses);
+                            console.log('✅ Tech demo visualizers initialized');
+                        } catch (error) {
+                            console.warn('⚠️ Some tech demo visualizers failed to initialize:', error);
+                        }
+                    }
+                }, 2000);
+                
+                // Update system button UI
+                window.updateSystemButtons = (activeSystem) => {
+                    document.querySelectorAll('.system-btn').forEach(btn => {
+                        btn.classList.remove('active');
+                        if (btn.dataset.system === activeSystem) {
+                            btn.classList.add('active');
+                        }
+                    });
+                };
+
+                // Override switchSystem to update UI
+                const originalSwitchSystem = window.switchSystem;
+                window.switchSystem = async (system) => {
+                    if (originalSwitchSystem) {
+                        await originalSwitchSystem(system);
+                        window.updateSystemButtons(system);
+                        console.log(`🌊 Clear Seas switched to ${system} system`);
+                    }
+                };
+
+                document.body.classList.remove('loading');
+                console.log('🌊 Clear Seas VIB34D Integration Complete');
+                
+            } catch (error) {
+                console.error('❌ Clear Seas VIB34D Integration failed:', error);
+                document.body.classList.remove('loading');
+            }
+        })();
+    </script>
+</body>
+</html>

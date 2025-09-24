@@ -1,0 +1,41 @@
+/* VIB34D Base Styles - Core reset and layout */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #000;
+    color: #fff;
+    font-family: 'Orbitron', monospace;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Canvas container - main visualization area */
+.canvas-container {
+    position: fixed;
+    top: 50px;
+    left: 0;
+    right: 300px;
+    bottom: 0;
+}
+
+.visualization-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* Canvas layers for each system */
+.holographic-layers {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}

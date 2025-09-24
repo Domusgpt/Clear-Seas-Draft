@@ -1,0 +1,221 @@
+{
+  "$schema": "https://clearseas/reactivity.schema.json",
+  "version": "1.0",
+  "systems": {
+    "FACETED": {
+      "base": {
+        "geometry": "HYPERCUBE",
+        "rot4d": { "xw": 0, "yw": 0, "zw": 0 },
+        "visual": {
+          "gridDensity": 15,
+          "morphFactor": 1.0,
+          "chaos": 0.2,
+          "speed": 1.0
+        },
+        "color": { "hue": 200, "intensity": 0.92, "saturation": 0.51 }
+      },
+      "reactivity": {
+        "roles": {
+          "frame": "hero",
+          "defaultScene": "technology"
+        },
+        "events": {
+          "card:hover": {
+            "target": {
+              "visual": { 
+                "gridDensity": { "to": 8, "ease": "expoOut", "ms": 450 },
+                "speed": { "to": 1.35, "ease": "expoOut", "ms": 450 },
+                "chaos": { "to": 0.12, "ease": "expoOut", "ms": 450 }
+              },
+              "color": { "hue": { "to": 220, "ms": 450 } }
+            },
+            "frame": {
+              "visual": { 
+                "gridDensity": { "to": 22, "ease": "expoOut", "ms": 600 },
+                "speed": { "to": 0.35, "ms": 600 },
+                "chaos": { "to": 0.28, "ms": 600 }
+              },
+              "color": { "hue": { "toComplementOf": "target.color.hue", "ms": 600 } }
+            },
+            "siblings": {
+              "visual": { "intensity": { "mul": 0.9, "ms": 300 } }
+            }
+          },
+          "card:leave": {
+            "target": { "reset": true, "ms": 500, "ease": "expoOut" },
+            "frame": { "reset": true, "ms": 500, "ease": "expoOut" },
+            "siblings": { "reset": true, "ms": 300 }
+          },
+          "button:hover": {
+            "target": {
+              "visual": { 
+                "speed": { "to": 1.8, "ms": 220 }, 
+                "chaos": { "to": 0.18, "ms": 220 } 
+              },
+              "color": { "hue": { "to": 340, "ms": 220 } }
+            },
+            "frame": {
+              "visual": { 
+                "speed": { "toInverseOf": "target.visual.speed", "mul": 0.5, "ms": 260 } 
+              },
+              "color": { "hue": { "toComplementOf": "target.color.hue", "ms": 260 } }
+            }
+          },
+          "button:leave": {
+            "target": { 
+              "visual": { 
+                "speed": { "to": 1.25, "ms": 260 }, 
+                "chaos": { "to": 0.14, "ms": 260 } 
+              },
+              "color": { "hue": { "to": 220, "ms": 260 } } 
+            },
+            "frame": { 
+              "visual": { "speed": { "to": 0.35, "ms": 260 } },
+              "color": { "hue": { "to": 200, "ms": 260 } } 
+            }
+          },
+          "button:click": {
+            "target": {
+              "visual": { 
+                "speed": { "pingPong": [2.1, 0.5], "ms": 300 },
+                "chaos": { "pingPong": [0.35, 0.12], "ms": 300 }
+              },
+              "color": { "hue": { "swapWith": "frame.color.hue", "ms": 300 } }
+            },
+            "frame": {
+              "visual": { 
+                "speed": { "pingPongInverseOf": "target.visual.speed", "mul": 0.5, "ms": 300 } 
+              }
+            }
+          }
+        }
+      }
+    },
+    "QUANTUM": {
+      "base": {
+        "geometry": "TESSERACT",
+        "rot4d": { "xw": 0.1, "yw": 0.2, "zw": 0.3 },
+        "visual": {
+          "gridDensity": 20,
+          "morphFactor": 1.5,
+          "chaos": 0.3,
+          "speed": 0.8
+        },
+        "color": { "hue": 280, "intensity": 1.0, "saturation": 0.7 }
+      },
+      "reactivity": {
+        "roles": {
+          "frame": "hero",
+          "defaultScene": "technology"
+        },
+        "events": {
+          "card:hover": {
+            "target": {
+              "visual": { 
+                "gridDensity": { "to": 12, "ease": "backOut", "ms": 400 },
+                "speed": { "to": 1.2, "ease": "backOut", "ms": 400 },
+                "morphFactor": { "to": 2.0, "ease": "backOut", "ms": 400 }
+              },
+              "color": { "hue": { "to": 260, "ms": 400 } }
+            },
+            "frame": {
+              "visual": { 
+                "gridDensity": { "to": 35, "ease": "expoOut", "ms": 650 },
+                "speed": { "to": 0.2, "ms": 650 },
+                "chaos": { "to": 0.45, "ms": 650 }
+              },
+              "color": { "hue": { "toComplementOf": "target.color.hue", "ms": 650 } }
+            }
+          },
+          "card:leave": {
+            "target": { "reset": true, "ms": 450, "ease": "expoOut" },
+            "frame": { "reset": true, "ms": 650, "ease": "expoOut" }
+          }
+        }
+      }
+    },
+    "HOLOGRAPHIC": {
+      "base": {
+        "geometry": "CRYSTAL",
+        "rot4d": { "xw": 0.15, "yw": -0.1, "zw": 0.25 },
+        "visual": {
+          "gridDensity": 25,
+          "morphFactor": 0.8,
+          "chaos": 0.4,
+          "speed": 1.2
+        },
+        "color": { "hue": 330, "intensity": 1.1, "saturation": 0.9 }
+      },
+      "reactivity": {
+        "roles": {
+          "frame": "hero",
+          "defaultScene": "research"
+        },
+        "events": {
+          "card:hover": {
+            "target": {
+              "visual": { 
+                "gridDensity": { "to": 15, "ease": "expoOut", "ms": 350 },
+                "chaos": { "to": 0.6, "ease": "expoOut", "ms": 350 },
+                "morphFactor": { "to": 1.5, "ease": "expoOut", "ms": 350 }
+              },
+              "color": { 
+                "hue": { "to": 310, "ms": 350 },
+                "intensity": { "to": 1.3, "ms": 350 }
+              }
+            },
+            "frame": {
+              "visual": { 
+                "gridDensity": { "to": 40, "ease": "expoOut", "ms": 550 },
+                "speed": { "to": 0.3, "ms": 550 }
+              },
+              "color": { "hue": { "toComplementOf": "target.color.hue", "ms": 550 } }
+            }
+          },
+          "card:leave": {
+            "target": { "reset": true, "ms": 400, "ease": "expoOut" },
+            "frame": { "reset": true, "ms": 600, "ease": "expoOut" }
+          }
+        }
+      }
+    }
+  },
+  "routes": [
+    {
+      "selector": "#tech-card-polychora",
+      "scene": "technology",
+      "system": "FACETED",
+      "role": "target"
+    },
+    {
+      "selector": "#tech-card-quantum", 
+      "scene": "technology",
+      "system": "QUANTUM",
+      "role": "target"
+    },
+    {
+      "selector": "#tech-card-holographic",
+      "scene": "technology", 
+      "system": "HOLOGRAPHIC",
+      "role": "target"
+    },
+    {
+      "selector": ".portfolio-item[data-category*=\"interactive\"]",
+      "scene": "portfolio",
+      "system": "FACETED",
+      "role": "target"
+    },
+    {
+      "selector": ".portfolio-item[data-category*=\"ai-systems\"]",
+      "scene": "portfolio",
+      "system": "QUANTUM", 
+      "role": "target"
+    },
+    {
+      "selector": ".paper-card",
+      "scene": "research",
+      "system": "HOLOGRAPHIC",
+      "role": "target"
+    }
+  ]
+}

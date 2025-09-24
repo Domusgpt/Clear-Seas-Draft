@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Seas Solutions - Unified System</title>
+    <link rel="stylesheet" href="styles/consolidated-styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Performance Test Control -->
+    <div id="system-status" style="position: fixed; top: 10px; left: 10px; z-index: 10000; font-family: monospace; font-size: 12px; background: rgba(0,0,0,0.8); color: #3ad4ed; padding: 8px; border-radius: 4px;">
+        <div>Status: <span id="status-text">Loading...</span></div>
+        <div>Visualizers: <span id="visualizer-count">0</span></div>
+        <div>Queue: <span id="queue-size">0</span></div>
+        <button onclick="togglePresetLab()" style="margin-top: 4px; font-size: 10px;">Toggle Lab</button>
+    </div>
+
+    <!-- Hero Section with Background Visualizer -->
+    <section id="hero" class="hero-section" data-scene="technology">
+        <div class="hero-content">
+            <h1 class="hero-title">Clear Seas Solutions</h1>
+            <p class="hero-subtitle">Advanced Polytopal Projection Technology</p>
+            
+            <!-- Background VIB34D Visualizer -->
+            <div class="hero-visualizer">
+                <iframe id="hero-background" 
+                        src="https://domusgpt.github.io/vib34d-holographic-engine/?geometry=0&density=10&speed=0.01&chaos=0.1&hue=200&intensity=0.8" 
+                        frameborder="0" 
+                        allowfullscreen>
+                </iframe>
+            </div>
+        </div>
+    </section>
+
+    <!-- Technology Cards Section -->
+    <section id="technology" class="technology-section" data-scene="technology">
+        <div class="container">
+            <h2 class="section-title">Our Technology</h2>
+            
+            <div class="tech-cards-grid">
+                <!-- Faceted System Card -->
+                <div id="tech-card-polychora" class="unified-card tech-card" data-profile="tech-card">
+                    <div class="card-header">
+                        <h3>Polychora Projections</h3>
+                        <div class="card-visualizer">
+                            <iframe src="https://domusgpt.github.io/vib34d-holographic-engine/?geometry=1&density=15&speed=0.02&chaos=0.2&hue=200" 
+                                    frameborder="0">
+                            </iframe>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <p>Advanced 4D polytope projections with real-time parameter manipulation</p>
+                        <ul>
+                            <li>120+ dimensional geometries</li>
+                            <li>Real-time holographic rendering</li>
+                            <li>Interactive parameter spaces</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Quantum System Card -->
+                <div id="tech-card-quantum" class="unified-card tech-card" data-profile="tech-card">
+                    <div class="card-header">
+                        <h3>Quantum Lattice Systems</h3>
+                        <div class="card-visualizer">
+                            <iframe src="https://domusgpt.github.io/vib34d-holographic-engine/?geometry=3&density=20&speed=0.015&chaos=0.3&hue=280" 
+                                    frameborder="0">
+                            </iframe>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <p>Enhanced holographic effects with complex 3D lattice functions</p>
+                        <ul>
+                            <li>Volumetric holographic effects</li>
+                            <li>Complex lattice mathematics</li>
+                            <li>Dynamic intensity modulation</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Holographic System Card -->
+                <div id="tech-card-holographic" class="unified-card tech-card" data-profile="tech-card">
+                    <div class="card-header">
+                        <h3>Audio-Reactive Holograms</h3>
+                        <div class="card-visualizer">
+                            <iframe src="https://domusgpt.github.io/vib34d-holographic-engine/?geometry=7&density=25&speed=0.025&chaos=0.4&hue=330" 
+                                    frameborder="0">
+                            </iframe>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <p>Rich pink/magenta effects with microphone-driven reactivity</p>
+                        <ul>
+                            <li>Real-time audio analysis</li>
+                            <li>Frequency-reactive parameters</li>
+                            <li>Rich volumetric rendering</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Portfolio Section -->
+    <section id="portfolio" class="portfolio-section" data-scene="portfolio">
+        <div class="container">
+            <h2 class="section-title">Our Work</h2>
+            
+            <div class="portfolio-grid">
+                <div class="portfolio-item unified-card" data-profile="portfolio-card" data-category="interactive">
+                    <div class="portfolio-header">
+                        <h3>Interactive Visualization Platform</h3>
+                        <div class="card-visualizer">
+                            <iframe src="https://domusgpt.github.io/vib34d-holographic-engine/?geometry=2&density=12&speed=0.03&chaos=0.25&hue=180" 
+                                    frameborder="0">
+                            </iframe>
+                        </div>
+                    </div>
+                    <div class="portfolio-content">
+                        <p>Real-time 4D mathematical visualization with user interaction</p>
+                    </div>
+                </div>
+                
+                <div class="portfolio-item unified-card" data-profile="portfolio-card" data-category="ai-systems">
+                    <div class="portfolio-header">
+                        <h3>AI-Driven Polytopal Analysis</h3>
+                        <div class="card-visualizer">
+                            <iframe src="https://domusgpt.github.io/vib34d-holographic-engine/?geometry=5&density=18&speed=0.04&chaos=0.35&hue=120" 
+                                    frameborder="0">
+                            </iframe>
+                        </div>
+                    </div>
+                    <div class="portfolio-content">
+                        <p>Machine learning enhanced dimensional analysis systems</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Research Section -->
+    <section id="research" class="research-section" data-scene="research">
+        <div class="container">
+            <h2 class="section-title">Research Publications</h2>
+            
+            <div class="research-grid">
+                <div class="paper-card unified-card" data-profile="research-card">
+                    <div class="paper-header">
+                        <h3>4D Polytope Projection Algorithms</h3>
+                        <div class="card-visualizer">
+                            <iframe src="https://domusgpt.github.io/vib34d-holographic-engine/?geometry=6&density=22&speed=0.02&chaos=0.15&hue=300" 
+                                    frameborder="0">
+                            </iframe>
+                        </div>
+                    </div>
+                    <div class="paper-content">
+                        <p><strong>Abstract:</strong> Novel algorithms for real-time 4D polytope projection with holographic visualization...</p>
+                        <p><strong>Published:</strong> Journal of Computational Geometry, 2024</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="contact-section">
+        <div class="container">
+            <h2 class="section-title">Contact</h2>
+            <div class="contact-content">
+                <p>Ready to explore advanced polytopal projection technology?</p>
+                <a href="mailto:contact@clearseas.solutions" class="btn primary">Get in Touch</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- UNIFIED SYSTEM SCRIPTS - NO COMPETING SYSTEMS -->
+    <script src="scripts/polytopal-reactivity-json.js"></script>
+    <script src="scripts/preset-laboratory.js"></script>
+
+    <!-- Initialize System Status Monitor -->
+    <script>
+        let labVisible = false;
+        
+        function togglePresetLab() {
+            const lab = document.getElementById('preset-laboratory');
+            if (lab) {
+                labVisible = !labVisible;
+                lab.style.display = labVisible ? 'block' : 'none';
+            } else {
+                console.log('Preset lab not yet initialized');
+            }
+        }
+        
+        function updateSystemStatus() {
+            if (window.unifiedPolytopal) {
+                const status = window.unifiedPolytopal.getSystemStatus();
+                const performance = window.getVisualizerPerformance ? window.getVisualizerPerformance() : {};
+                
+                document.getElementById('status-text').textContent = status.initialized ? 'Online' : 'Initializing';
+                document.getElementById('visualizer-count').textContent = status.visualizerCount || 0;
+                document.getElementById('queue-size').textContent = status.queueSize || 0;
+                
+                // Color code the status
+                const statusEl = document.getElementById('system-status');
+                if (status.initialized && performance.healthyVisualizers > 0) {
+                    statusEl.style.borderLeft = '4px solid #00ff00';
+                } else if (status.initialized) {
+                    statusEl.style.borderLeft = '4px solid #ffff00';
+                } else {
+                    statusEl.style.borderLeft = '4px solid #ff0000';
+                }
+            }
+        }
+        
+        // Update status every 2 seconds
+        setInterval(updateSystemStatus, 2000);
+        
+        // Initial update after page load
+        setTimeout(updateSystemStatus, 1000);
+        
+        console.log('🧪 Clear Seas Unified System - Test page loaded');
+    </script>
+</body>
+</html>

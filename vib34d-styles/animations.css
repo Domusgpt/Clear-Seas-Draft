@@ -1,0 +1,130 @@
+/* VIB34D Animation Styles */
+
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: translateY(-10px); }
+    20% { opacity: 1; transform: translateY(0); }
+    80% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-10px); }
+}
+
+@keyframes slideIn {
+    0% { opacity: 0; transform: translateX(20px); }
+    100% { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes neonGlow {
+    0%, 100% { 
+        text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff; 
+        box-shadow: 0 0 5px rgba(0, 255, 255, 0.3);
+    }
+    50% { 
+        text-shadow: 0 0 20px #00ffff, 0 0 30px #00ffff, 0 0 40px #00ffff;
+        box-shadow: 0 0 15px rgba(0, 255, 255, 0.6);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-10px); }
+    60% { transform: translateY(-5px); }
+}
+
+/* Loading spinner animation */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Shimmer effect for reactive elements */
+@keyframes shimmer {
+    0% { background-position: -1000px 0; }
+    100% { background-position: 1000px 0; }
+}
+
+.shimmer {
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(0, 255, 255, 0.3), 
+        transparent);
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite;
+}
+
+/* Button press animation */
+@keyframes buttonPress {
+    0% { transform: scale(1); }
+    50% { transform: scale(0.95); }
+    100% { transform: scale(1); }
+}
+
+.button-press {
+    animation: buttonPress 0.2s ease;
+}
+
+/* Glow intensity animation for active elements */
+@keyframes activeGlow {
+    0%, 100% { 
+        box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        border-color: rgba(0, 255, 255, 0.5);
+    }
+    50% { 
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.8), 0 0 30px rgba(0, 255, 255, 0.4);
+        border-color: rgba(0, 255, 255, 0.8);
+    }
+}
+
+.active-glow {
+    animation: activeGlow 2s infinite ease-in-out;
+}
+
+/* Fade in animation for new content */
+@keyframes fadeIn {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease;
+}
+
+/* Slide up animation for mobile panels */
+@keyframes slideUp {
+    0% { transform: translateY(100%); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+}
+
+.slide-up {
+    animation: slideUp 0.3s ease;
+}
+
+/* Color cycle animation for interactive elements */
+@keyframes colorCycle {
+    0% { border-color: #00ffff; color: #00ffff; }
+    33% { border-color: #ff00ff; color: #ff00ff; }
+    66% { border-color: #ffff00; color: #ffff00; }
+    100% { border-color: #00ffff; color: #00ffff; }
+}
+
+.color-cycle {
+    animation: colorCycle 3s infinite ease-in-out;
+}
+
+/* Smooth transitions for all interactive elements */
+* {
+    transition: opacity 0.3s ease, 
+                transform 0.3s ease,
+                background-color 0.3s ease,
+                border-color 0.3s ease,
+                color 0.3s ease,
+                box-shadow 0.3s ease;
+}
+
+/* Disable transitions during page load for performance */
+.loading * {
+    transition: none !important;
+}

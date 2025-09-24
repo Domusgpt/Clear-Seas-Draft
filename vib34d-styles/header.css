@@ -1,0 +1,447 @@
+/* VIB34D Header Styles - Top bar with system selector */
+
+.top-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50px;
+    background: rgba(0, 0, 0, 0.9);
+    border-bottom: 2px solid #00ffff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+}
+
+/* 🌟 SPECTACULAR VIB3-4D LOGO - BEYOND EXPECTATIONS! */
+.vib3d-logo-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    position: relative;
+}
+
+.vib3d-logo {
+    font-family: 'Orbitron', monospace;
+    font-weight: 900;
+    font-size: 2.2rem;
+    display: flex;
+    align-items: baseline;
+    position: relative;
+    margin-bottom: 2px;
+}
+
+.logo-text {
+    color: #00ffff;
+    text-shadow: 
+        0 0 10px #00ffff,
+        0 0 20px #00ffff,
+        0 0 30px #00ffff;
+    animation: logoGlow 3s ease-in-out infinite alternate;
+}
+
+/* 🎭 THE MAGICAL "3" - DYNAMIC VISUALIZER WINDOW */
+.special-three {
+    font-size: 3.5rem !important;
+    position: relative;
+    display: inline-block;
+    margin: 0 2px;
+    background: linear-gradient(45deg, #ff00ff, #00ffff, #ffff00, #ff00ff);
+    background-size: 400% 400%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: 
+        holographicShine 2s linear infinite,
+        specialThreeFloat 4s ease-in-out infinite,
+        specialThreePulse 1.5s ease-in-out infinite alternate;
+    filter: drop-shadow(0 0 15px rgba(255, 0, 255, 0.8));
+    transform-origin: center;
+}
+
+/* 🌈 HOLOGRAPHIC SHINE ANIMATION */
+@keyframes holographicShine {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* ✨ FLOATING ANIMATION FOR THE "3" */
+@keyframes specialThreeFloat {
+    0%, 100% { transform: translateY(0px) scale(1); }
+    25% { transform: translateY(-3px) scale(1.05); }
+    75% { transform: translateY(2px) scale(0.98); }
+}
+
+/* 💫 PULSING GLOW */
+@keyframes specialThreePulse {
+    0% { filter: drop-shadow(0 0 15px rgba(255, 0, 255, 0.8)); }
+    100% { filter: drop-shadow(0 0 25px rgba(0, 255, 255, 1)); }
+}
+
+/* ⭐ MAIN LOGO GLOW */
+@keyframes logoGlow {
+    0% { 
+        text-shadow: 
+            0 0 10px #00ffff,
+            0 0 20px #00ffff,
+            0 0 30px #00ffff;
+    }
+    100% { 
+        text-shadow: 
+            0 0 15px #00ffff,
+            0 0 25px #00ffff,
+            0 0 35px #00ffff,
+            0 0 45px #00ffff;
+    }
+}
+
+/* 📝 ELEGANT SUBTITLE */
+.logo-subtitle {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.7rem;
+    font-weight: 400;
+    line-height: 1.1;
+    margin-top: -2px;
+}
+
+.subtitle-line-1 {
+    color: #ffffff;
+    text-shadow: 0 0 8px #ffffff;
+    opacity: 0.9;
+}
+
+.subtitle-line-2 {
+    color: #00ffff;
+    font-weight: 700;
+    text-shadow: 0 0 10px #00ffff;
+    margin-top: 1px;
+}
+
+/* 👨‍💻 CREDITS */
+.logo-credits {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.5rem;
+    margin-top: 3px;
+    opacity: 0.7;
+}
+
+.by-text {
+    color: #ffffff;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.developer-credit {
+    color: #888;
+    font-weight: 300;
+    font-size: 0.45rem;
+    margin-top: 1px;
+}
+
+/* 🎆 SPECTACULAR PARTICLE EFFECTS AROUND THE "3" - BEYOND EXPECTATIONS! */
+.special-three::before,
+.special-three::after {
+    content: '';
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: radial-gradient(circle, #ff00ff, #00ffff, transparent);
+    border-radius: 50%;
+    animation: sparkle 2s linear infinite, particleFloat 3s ease-in-out infinite;
+}
+
+.special-three::before {
+    top: -8px;
+    left: -10px;
+    animation-delay: 0s, 0.5s;
+    box-shadow: 0 0 10px #ff00ff;
+}
+
+.special-three::after {
+    bottom: -8px;
+    right: -10px;
+    animation-delay: 1s, 1.5s;
+    box-shadow: 0 0 10px #00ffff;
+}
+
+/* 🌟 ADDITIONAL PARTICLE ORBITS */
+.special-three {
+    overflow: visible;
+}
+
+.special-three::before {
+    box-shadow: 
+        0 0 10px #ff00ff,
+        -15px 0 8px #00ffff,
+        15px 0 8px #ffff00,
+        0 -15px 6px #ff00ff,
+        0 15px 6px #00ffff;
+}
+
+@keyframes particleFloat {
+    0%, 100% { transform: translateY(0px) translateX(0px) scale(1); }
+    25% { transform: translateY(-2px) translateX(1px) scale(1.2); }
+    50% { transform: translateY(0px) translateX(2px) scale(0.8); }
+    75% { transform: translateY(2px) translateX(-1px) scale(1.1); }
+}
+
+/* 💫 ADVANCED HOLOGRAPHIC EFFECTS */
+.special-three {
+    background: 
+        linear-gradient(45deg, transparent 30%, rgba(255,0,255,0.3) 50%, transparent 70%),
+        linear-gradient(135deg, transparent 30%, rgba(0,255,255,0.3) 50%, transparent 70%),
+        linear-gradient(45deg, #ff00ff, #00ffff, #ffff00, #ff00ff);
+    background-size: 200% 200%, 200% 200%, 400% 400%;
+    animation: 
+        holographicShine 2s linear infinite,
+        specialThreeFloat 4s ease-in-out infinite,
+        specialThreePulse 1.5s ease-in-out infinite alternate,
+        holographicSweep 3s ease-in-out infinite;
+}
+
+/* 🌈 HOLOGRAPHIC SWEEP EFFECT */
+@keyframes holographicSweep {
+    0% { 
+        background-position: 0% 0%, 100% 100%, 0% 50%; 
+        filter: drop-shadow(0 0 15px rgba(255, 0, 255, 0.8)) hue-rotate(0deg);
+    }
+    33% { 
+        background-position: 50% 50%, 50% 50%, 50% 50%; 
+        filter: drop-shadow(0 0 20px rgba(0, 255, 255, 0.9)) hue-rotate(120deg);
+    }
+    66% { 
+        background-position: 100% 100%, 0% 0%, 100% 50%; 
+        filter: drop-shadow(0 0 25px rgba(255, 255, 0, 1)) hue-rotate(240deg);
+    }
+    100% { 
+        background-position: 0% 0%, 100% 100%, 0% 50%; 
+        filter: drop-shadow(0 0 15px rgba(255, 0, 255, 0.8)) hue-rotate(360deg);
+    }
+}
+
+@keyframes sparkle {
+    0%, 100% { opacity: 0; transform: scale(0); }
+    50% { opacity: 1; transform: scale(1); }
+}
+
+/* 🌟 HOVER EFFECTS - INTERACTIVE MAGIC */
+.vib3d-logo-container:hover .special-three {
+    animation-duration: 1s, 2s, 0.8s;
+    transform: scale(1.1);
+}
+
+.vib3d-logo-container:hover .logo-text {
+    animation-duration: 1.5s;
+}
+
+/* 📱 RESPONSIVE SCALING */
+@media (max-width: 768px) {
+    .vib3d-logo {
+        font-size: 1.8rem;
+    }
+    
+    .special-three {
+        font-size: 2.8rem !important;
+    }
+    
+    .logo-subtitle {
+        font-size: 0.6rem;
+    }
+}
+
+.system-selector {
+    display: flex;
+    gap: 10px;
+}
+
+.system-btn {
+    background: rgba(0, 255, 255, 0.1);
+    border: 2px solid rgba(0, 255, 255, 0.3);
+    color: #00ffff;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-family: 'Orbitron', monospace;
+    font-size: 0.9rem;
+    transition: all 0.3s;
+}
+
+.system-btn:hover {
+    background: rgba(0, 255, 255, 0.2);
+    border-color: #00ffff;
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+.system-btn.active {
+    background: rgba(0, 255, 255, 0.3);
+    border-color: #00ffff;
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+}
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+/* Primary Action Buttons */
+.action-buttons-primary {
+    display: flex;
+    gap: 12px;
+}
+
+.primary-btn {
+    background: rgba(255, 200, 0, 0.1);
+    border: 2px solid rgba(255, 200, 0, 0.4);
+    color: #ffc800;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-family: 'Orbitron', monospace;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    transition: all 0.3s;
+}
+
+.primary-btn:hover {
+    background: rgba(255, 200, 0, 0.2);
+    box-shadow: 0 0 15px rgba(255, 200, 0, 0.5);
+}
+
+/* Navigation Buttons */
+.navigation-buttons {
+    display: flex;
+    gap: 12px;
+}
+
+.nav-btn {
+    background: rgba(0, 255, 255, 0.05);
+    border: 2px solid rgba(0, 255, 255, 0.3);
+    color: #00ffff;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-family: 'Orbitron', monospace;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    transition: all 0.3s;
+}
+
+.nav-btn:hover {
+    background: rgba(0, 255, 255, 0.15);
+    border-color: #00ffff;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+}
+
+.nav-text-top {
+    font-size: 0.75rem;
+    font-weight: 400;
+}
+
+.nav-text-bottom {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #ffffff;
+    text-shadow: 0 0 10px #00ffff;
+    margin-top: 2px;
+}
+
+/* Control Toggles */
+.control-toggles {
+    display: flex;
+    gap: 12px;
+}
+
+.toggle-btn {
+    background: rgba(255, 0, 255, 0.05);
+    border: 2px solid rgba(255, 0, 255, 0.3);
+    color: #ff00ff;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-family: 'Orbitron', monospace;
+    font-size: 0.8rem;
+    font-weight: 700;
+    transition: all 0.3s;
+    letter-spacing: 1px;
+}
+
+.toggle-btn:hover {
+    background: rgba(255, 0, 255, 0.15);
+    border-color: #ff00ff;
+    box-shadow: 0 0 10px rgba(255, 0, 255, 0.4);
+}
+
+.toggle-btn.active {
+    background: rgba(255, 0, 255, 0.2);
+    border-color: #ff00ff;
+    box-shadow: 0 0 15px rgba(255, 0, 255, 0.6);
+}
+
+/* Legacy action-btn for compatibility */
+.action-btn {
+    background: rgba(255, 0, 255, 0.1);
+    border: 2px solid rgba(255, 0, 255, 0.3);
+    color: #ff00ff;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.3s;
+}
+
+.action-btn:hover {
+    background: rgba(255, 0, 255, 0.3);
+    box-shadow: 0 0 10px rgba(255, 0, 255, 0.5);
+}
+
+/* ⚡ POPOUT MENU SYSTEM - 3x4 grids for toggle buttons */
+.popout-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 8px;
+    min-width: 280px;
+    background: rgba(0, 0, 0, 0.98);
+    border: 2px solid rgba(0, 255, 255, 0.3);
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(20px);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+    z-index: 2000;
+    pointer-events: none;
+}
+
+.popout-menu.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: all;
+}
+
+.audio-popout {
+    border-color: rgba(255, 0, 255, 0.4);
+}
+
+.react-popout {
+    border-color: rgba(0, 255, 255, 0.4);
+}
+
+/* Position control-toggles relatively for popout positioning */
+.control-toggles {
+    position: relative;
+}
+
+/* Prevent popout from closing when interacting with it */
+.popout-menu:hover {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: all;
+}

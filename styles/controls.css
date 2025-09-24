@@ -1,0 +1,302 @@
+/* VIB34D Control Panel Styles */
+
+.control-panel {
+    position: fixed;
+    top: 50px;
+    right: 0;
+    bottom: 0;
+    width: 300px;
+    background: rgba(0, 0, 0, 0.95);
+    border-left: 2px solid #00ffff;
+    padding: 20px;
+    overflow-y: auto;
+    backdrop-filter: blur(10px);
+    z-index: 100;
+    transition: transform 0.3s ease;
+}
+
+.panel-header {
+    font-size: 1.1rem;
+    color: #ff00ff;
+    margin-bottom: 20px;
+    text-align: center;
+    text-shadow: 0 0 10px #ff00ff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.mobile-collapse-btn {
+    background: rgba(255, 0, 255, 0.2);
+    border: 1px solid #ff00ff;
+    color: #ff00ff;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 1.2rem;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+}
+
+.mobile-collapse-btn:hover {
+    background: rgba(255, 0, 255, 0.4);
+}
+
+.control-section {
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+}
+
+.control-section:last-child {
+    border-bottom: none;
+}
+
+.section-title {
+    font-size: 0.9rem;
+    color: #00ffff;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+}
+
+/* Geometry Grid */
+.geometry-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 5px;
+}
+
+.geom-btn {
+    background: rgba(0, 255, 255, 0.1);
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    color: #00ffff;
+    padding: 8px;
+    cursor: pointer;
+    font-size: 0.7rem;
+    transition: all 0.3s;
+    
+    /* FIXED: Handle long text like HYPERTETRAHEDRON */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    line-height: 1.1;
+    min-height: 40px;
+    
+    /* Allow text wrapping for long geometry names */
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+}
+
+/* SPECIAL: HyperTetrahedron button - split into two lines */
+.geom-btn[data-name*="HYPERTETRAHEDRON"],
+.geom-btn[title*="HYPERTETRAHEDRON"] {
+    font-size: 0.6rem;
+    line-height: 1.0;
+    padding: 6px 4px;
+}
+
+.geom-btn[data-name*="HYPERTETRAHEDRON"]::before,
+.geom-btn[title*="HYPERTETRAHEDRON"]::before {
+    content: "HYPER\ATETRAHEDRON";
+    white-space: pre-line;
+    text-align: center;
+}
+
+/* Alternative: CSS-only line break for HYPERTETRAHEDRON */
+.geom-btn-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+}
+
+.geom-btn-line {
+    font-size: 0.65rem;
+}
+
+.geom-btn:hover {
+    background: rgba(0, 255, 255, 0.2);
+}
+
+.geom-btn.active {
+    background: rgba(0, 255, 255, 0.4);
+    border-color: #00ffff;
+    box-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+}
+
+/* Parameter Controls */
+.control-group {
+    margin-bottom: 15px;
+}
+
+.control-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.control-value {
+    color: #00ffff;
+    font-weight: bold;
+}
+
+.control-slider {
+    width: 100%;
+    height: 6px;
+    background: rgba(0, 255, 255, 0.2);
+    outline: none;
+    opacity: 0.9;
+    transition: opacity 0.2s;
+    appearance: none;
+    border-radius: 3px;
+}
+
+.control-slider:hover {
+    opacity: 1;
+}
+
+.control-slider::-webkit-slider-thumb {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: #00ffff;
+    cursor: pointer;
+    border-radius: 50%;
+    box-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+}
+
+.control-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: #00ffff;
+    cursor: pointer;
+    border-radius: 50%;
+    border: none;
+    box-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+}
+
+/* Action Buttons */
+.panel-btn {
+    background: rgba(255, 0, 255, 0.1);
+    border: 2px solid rgba(255, 0, 255, 0.3);
+    color: #ff00ff;
+    padding: 10px 20px;
+    margin: 5px 0;
+    cursor: pointer;
+    font-size: 0.9rem;
+    width: 100%;
+    transition: all 0.3s;
+}
+
+.panel-btn:hover {
+    background: rgba(255, 0, 255, 0.3);
+    box-shadow: 0 0 10px rgba(255, 0, 255, 0.5);
+}
+
+.panel-btn.wide {
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+/* System Selector Panel (moved from top bar) */
+.system-selector-panel {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.system-selector-panel .system-btn {
+    background: rgba(0, 255, 255, 0.1);
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    color: #00ffff;
+    padding: 10px 8px;
+    cursor: pointer;
+    font-family: 'Orbitron', monospace;
+    font-size: 0.8rem;
+    transition: all 0.3s;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.system-selector-panel .system-btn:hover {
+    background: rgba(0, 255, 255, 0.2);
+    border-color: #00ffff;
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.system-selector-panel .system-btn.active {
+    background: rgba(0, 255, 255, 0.3);
+    border-color: #00ffff;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+}
+
+/* Professional Action Buttons */
+.panel-btn.action-randomize {
+    background: rgba(100, 255, 100, 0.1);
+    border-color: rgba(100, 255, 100, 0.3);
+    color: #64ff64;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.panel-btn.action-reset {
+    background: rgba(255, 100, 100, 0.1);
+    border-color: rgba(255, 100, 100, 0.3);
+    color: #ff6464;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.panel-btn.action-save {
+    background: rgba(0, 255, 255, 0.1);
+    border-color: rgba(0, 255, 255, 0.3);
+    color: #00ffff;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.panel-btn.action-card {
+    background: rgba(255, 200, 0, 0.1);
+    border-color: rgba(255, 200, 0, 0.3);
+    color: #ffc800;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.panel-btn.action-randomize:hover {
+    background: rgba(100, 255, 100, 0.2);
+    box-shadow: 0 0 10px rgba(100, 255, 100, 0.5);
+}
+
+.panel-btn.action-reset:hover {
+    background: rgba(255, 100, 100, 0.2);
+    box-shadow: 0 0 10px rgba(255, 100, 100, 0.5);
+}
+
+.panel-btn.action-save:hover {
+    background: rgba(0, 255, 255, 0.2);
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+.panel-btn.action-card:hover {
+    background: rgba(255, 200, 0, 0.2);
+    box-shadow: 0 0 10px rgba(255, 200, 0, 0.5);
+}
+
+/* Randomize Lite Button */
+.panel-btn.action-randomize-lite {
+    background: rgba(150, 255, 150, 0.1);
+    border-color: rgba(150, 255, 150, 0.3);
+    color: #96ff96;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.panel-btn.action-randomize-lite:hover {
+    background: rgba(150, 255, 150, 0.2);
+    box-shadow: 0 0 10px rgba(150, 255, 150, 0.5);
+}

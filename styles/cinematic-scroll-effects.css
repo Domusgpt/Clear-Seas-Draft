@@ -1,0 +1,703 @@
+/*
+ * CINEMATIC SCROLL EFFECTS
+ * The Visual Language for Website Storytelling
+ * 
+ * This CSS creates movie-like visual effects that respond to the
+ * Cinematic Scroll Director's scene transitions and story progression
+ */
+
+:root {
+  /* CINEMATIC CAMERA PROPERTIES */
+  --camera-z: 1000px;
+  --camera-x: 0px;
+  --camera-y: 0px;
+  --world-rotation-x: 0deg;
+  --world-rotation-y: 0deg;
+  --world-rotation-z: 0deg;
+  --world-scale: 1;
+  
+  /* SCENE PROGRESSION */
+  --current-scene: 0;
+  --scene-progress: 0;
+  --scroll-progress: 0;
+  
+  /* DYNAMIC SCENE COLORS */
+  --scene-primary: hsl(200, 80%, 60%);
+  --scene-secondary: hsl(180, 70%, 50%);
+  --scene-accent: hsl(220, 90%, 70%);
+  --scene-density: 0.5;
+  
+  /* CINEMATIC TIMING */
+  --scene-transition: all 2s cubic-bezier(0.23, 1, 0.32, 1);
+  --quick-transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  --slow-transition: all 3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  
+  /* SPATIAL TRANSFORMATION */
+  --world-transform: perspective(var(--camera-z)) 
+                     rotateX(var(--world-rotation-x)) 
+                     rotateY(var(--world-rotation-y)) 
+                     rotateZ(var(--world-rotation-z))
+                     scale(var(--world-scale));
+}
+
+/* ===== CINEMATIC BODY AND VIEWPORT ===== */
+html, body {
+  scroll-behavior: unset; /* Disable default smooth scroll for custom control */
+  overflow-x: hidden;
+  perspective: var(--camera-z);
+  transform-style: preserve-3d;
+}
+
+body {
+  transform: var(--world-transform);
+  transition: var(--scene-transition);
+  background: radial-gradient(
+    ellipse at center,
+    var(--scene-primary) 0%,
+    var(--scene-secondary) 30%,
+    var(--bg-primary) 70%,
+    var(--bg-secondary) 100%
+  );
+  background-attachment: fixed;
+  animation: cinematic-ambience 20s ease-in-out infinite;
+}
+
+@keyframes cinematic-ambience {
+  0%, 100% { 
+    filter: brightness(1) contrast(1) saturate(1);
+  }
+  25% { 
+    filter: brightness(1.05) contrast(1.1) saturate(1.1);
+  }
+  50% { 
+    filter: brightness(0.95) contrast(1.05) saturate(1.2);
+  }
+  75% { 
+    filter: brightness(1.02) contrast(1.08) saturate(0.9);
+  }
+}
+
+/* ===== SCENE-SPECIFIC ATMOSPHERICS ===== */
+.scene-origin_story {
+  --world-rotation-x: 2deg;
+  --world-scale: 1;
+  filter: hue-rotate(calc(var(--scene-progress) * 30deg)) 
+          brightness(calc(0.9 + var(--scene-progress) * 0.2));
+}
+
+.scene-origin_story::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(
+    circle at 30% 40%,
+    rgba(0, 150, 200, 0.1) 0%,
+    transparent 50%
+  );
+  pointer-events: none;
+  z-index: -1;
+  animation: gentle-pulse 8s ease-in-out infinite;
+}
+
+.scene-technological_awakening {
+  --world-rotation-y: 5deg;
+  --world-scale: 1.02;
+  filter: hue-rotate(calc(280deg + var(--scene-progress) * 40deg))
+          contrast(calc(1 + var(--scene-progress) * 0.2))
+          saturate(calc(1.1 + var(--scene-progress) * 0.3));
+}
+
+.scene-technological_awakening::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 70% 30%, rgba(200, 0, 200, 0.15) 0%, transparent 40%),
+    radial-gradient(circle at 20% 80%, rgba(150, 0, 255, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: -1;
+  animation: tech-energy-pulse 6s ease-in-out infinite;
+}
+
+.scene-capability_demonstration {
+  --world-rotation-x: -3deg;
+  --world-rotation-y: 8deg;
+  --world-scale: 1.05;
+  filter: hue-rotate(calc(45deg + var(--scene-progress) * 20deg))
+          brightness(calc(1.1 + var(--scene-progress) * 0.2))
+          contrast(calc(1.2 + var(--scene-progress) * 0.1));
+}
+
+.scene-capability_demonstration::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 50% 20%, rgba(255, 150, 0, 0.2) 0%, transparent 30%),
+    linear-gradient(135deg, rgba(255, 200, 0, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: -1;
+  animation: power-surge 4s ease-in-out infinite;
+}
+
+.scene-knowledge_synthesis {
+  --world-rotation-x: 5deg;
+  --world-rotation-z: 2deg;
+  --world-scale: 0.98;
+  filter: hue-rotate(calc(120deg + var(--scene-progress) * 30deg))
+          brightness(calc(0.95 + var(--scene-progress) * 0.15))
+          saturate(calc(1.2 + var(--scene-progress) * -0.2));
+}
+
+.scene-knowledge_synthesis::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 40% 60%, rgba(0, 200, 100, 0.15) 0%, transparent 45%),
+    conic-gradient(from 45deg at 60% 30%, 
+                   rgba(100, 255, 150, 0.1) 0deg, 
+                   transparent 90deg, 
+                   rgba(0, 200, 150, 0.08) 180deg, 
+                   transparent 270deg);
+  pointer-events: none;
+  z-index: -1;
+  animation: wisdom-crystallization 10s linear infinite;
+}
+
+.scene-infinite_potential {
+  --world-rotation-y: 15deg;
+  --world-rotation-x: 8deg;
+  --world-scale: 1.1;
+  filter: hue-rotate(calc(240deg + var(--scene-progress) * 60deg))
+          brightness(calc(1.2 + var(--scene-progress) * 0.3))
+          contrast(calc(1.3 + var(--scene-progress) * 0.2))
+          saturate(calc(1.5 + var(--scene-progress) * 0.5));
+}
+
+.scene-infinite_potential::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at center, rgba(150, 100, 255, 0.3) 0%, transparent 40%),
+    conic-gradient(from 0deg at center, 
+                   rgba(200, 150, 255, 0.2) 0deg,
+                   rgba(150, 200, 255, 0.15) 60deg,
+                   rgba(255, 150, 200, 0.2) 120deg,
+                   rgba(200, 255, 150, 0.15) 180deg,
+                   rgba(150, 100, 255, 0.2) 240deg,
+                   rgba(255, 200, 150, 0.15) 300deg);
+  pointer-events: none;
+  z-index: -1;
+  animation: infinite-spiral 15s linear infinite,
+             portal-energy 8s ease-in-out infinite;
+}
+
+/* ===== CINEMATIC CARD CHOREOGRAPHY ===== */
+.tech-card, .portfolio-item, .paper-card {
+  transform-style: preserve-3d;
+  transition: var(--scene-transition);
+  will-change: transform, opacity, filter;
+  position: relative;
+  backface-visibility: hidden;
+}
+
+/* ORIGIN STORY - Cards emerge from depth */
+.scene-origin_story .tech-card,
+.scene-origin_story .portfolio-item,
+.scene-origin_story .paper-card {
+  transform: translateZ(calc(var(--scene-progress) * 50px - 100px))
+             rotateX(calc((1 - var(--scene-progress)) * -20deg))
+             scale(calc(0.8 + var(--scene-progress) * 0.2));
+  opacity: calc(0.3 + var(--scene-progress) * 0.7);
+  filter: blur(calc((1 - var(--scene-progress)) * 8px));
+}
+
+/* TECHNOLOGICAL AWAKENING - Cards form tech stack */
+.scene-technological_awakening .tech-card {
+  animation: tech-stack-formation 3s ease-out infinite;
+  box-shadow: 
+    0 10px 30px rgba(200, 0, 200, calc(var(--scene-progress) * 0.4)),
+    inset 0 0 20px rgba(255, 100, 255, calc(var(--scene-progress) * 0.2));
+}
+
+.scene-technological_awakening .tech-card:nth-child(odd) {
+  animation-delay: -1s;
+}
+
+.scene-technological_awakening .tech-card:nth-child(even) {
+  animation-delay: -2s;
+}
+
+/* CAPABILITY DEMONSTRATION - Portfolio showcase dance */
+.scene-capability_demonstration .portfolio-item {
+  animation: portfolio-showcase-dance 4s ease-in-out infinite;
+  filter: brightness(calc(1 + var(--scene-progress) * 0.3))
+          contrast(calc(1 + var(--scene-progress) * 0.2));
+}
+
+.scene-capability_demonstration .portfolio-item:nth-child(1) { animation-delay: 0s; }
+.scene-capability_demonstration .portfolio-item:nth-child(2) { animation-delay: -1s; }
+.scene-capability_demonstration .portfolio-item:nth-child(3) { animation-delay: -2s; }
+
+/* KNOWLEDGE SYNTHESIS - Research constellation */
+.scene-knowledge_synthesis .paper-card {
+  animation: research-constellation 8s linear infinite;
+  transform-origin: center center;
+  filter: hue-rotate(calc(var(--scene-progress) * 180deg));
+}
+
+.scene-knowledge_synthesis .paper-card:nth-child(odd) {
+  animation-direction: reverse;
+}
+
+/* INFINITE POTENTIAL - Portal spiral */
+.scene-infinite_potential .tech-card,
+.scene-infinite_potential .portfolio-item,
+.scene-infinite_potential .paper-card {
+  animation: portal-spiral 6s ease-in-out infinite;
+  filter: brightness(calc(1 + var(--scene-progress) * 0.5))
+          saturate(calc(1 + var(--scene-progress) * 0.8))
+          hue-rotate(calc(var(--scene-progress) * 360deg));
+}
+
+/* ===== CINEMATIC KEYFRAME ANIMATIONS ===== */
+@keyframes gentle-pulse {
+  0%, 100% { opacity: 0.1; transform: scale(1); }
+  50% { opacity: 0.2; transform: scale(1.05); }
+}
+
+@keyframes tech-energy-pulse {
+  0%, 100% { 
+    opacity: 0.15; 
+    transform: scale(1) rotate(0deg); 
+  }
+  25% { 
+    opacity: 0.25; 
+    transform: scale(1.02) rotate(1deg); 
+  }
+  50% { 
+    opacity: 0.2; 
+    transform: scale(1.05) rotate(-1deg); 
+  }
+  75% { 
+    opacity: 0.3; 
+    transform: scale(1.03) rotate(0.5deg); 
+  }
+}
+
+@keyframes power-surge {
+  0%, 100% { 
+    opacity: 0.2; 
+    transform: scale(1) skewX(0deg); 
+  }
+  33% { 
+    opacity: 0.4; 
+    transform: scale(1.03) skewX(1deg); 
+  }
+  66% { 
+    opacity: 0.35; 
+    transform: scale(1.06) skewX(-1deg); 
+  }
+}
+
+@keyframes wisdom-crystallization {
+  0% { 
+    transform: rotate(0deg) scale(1); 
+    opacity: 0.15; 
+  }
+  25% { 
+    transform: rotate(90deg) scale(1.02); 
+    opacity: 0.2; 
+  }
+  50% { 
+    transform: rotate(180deg) scale(1.05); 
+    opacity: 0.25; 
+  }
+  75% { 
+    transform: rotate(270deg) scale(1.02); 
+    opacity: 0.2; 
+  }
+  100% { 
+    transform: rotate(360deg) scale(1); 
+    opacity: 0.15; 
+  }
+}
+
+@keyframes infinite-spiral {
+  0% { 
+    transform: rotate(0deg) scale(1); 
+  }
+  100% { 
+    transform: rotate(360deg) scale(1); 
+  }
+}
+
+@keyframes portal-energy {
+  0%, 100% { 
+    opacity: 0.3; 
+    filter: blur(0px) brightness(1); 
+  }
+  50% { 
+    opacity: 0.5; 
+    filter: blur(2px) brightness(1.2); 
+  }
+}
+
+@keyframes tech-stack-formation {
+  0%, 100% { 
+    transform: translateX(0) translateY(0) rotateY(0deg) scale(1); 
+  }
+  25% { 
+    transform: translateX(20px) translateY(-10px) rotateY(5deg) scale(1.02); 
+  }
+  50% { 
+    transform: translateX(0) translateY(-20px) rotateY(0deg) scale(1.05); 
+  }
+  75% { 
+    transform: translateX(-20px) translateY(-10px) rotateY(-5deg) scale(1.02); 
+  }
+}
+
+@keyframes portfolio-showcase-dance {
+  0%, 100% { 
+    transform: translateY(0) rotateZ(0deg) scale(1); 
+    box-shadow: 0 10px 30px rgba(255, 150, 0, 0.3); 
+  }
+  25% { 
+    transform: translateY(-15px) rotateZ(2deg) scale(1.03); 
+    box-shadow: 0 20px 40px rgba(255, 150, 0, 0.5); 
+  }
+  50% { 
+    transform: translateY(-30px) rotateZ(0deg) scale(1.05); 
+    box-shadow: 0 30px 50px rgba(255, 150, 0, 0.4); 
+  }
+  75% { 
+    transform: translateY(-15px) rotateZ(-2deg) scale(1.03); 
+    box-shadow: 0 20px 40px rgba(255, 150, 0, 0.5); 
+  }
+}
+
+@keyframes research-constellation {
+  0% { 
+    transform: rotate(0deg) translateX(50px) rotate(0deg) scale(1); 
+  }
+  25% { 
+    transform: rotate(90deg) translateX(75px) rotate(-90deg) scale(0.9); 
+  }
+  50% { 
+    transform: rotate(180deg) translateX(50px) rotate(-180deg) scale(0.8); 
+  }
+  75% { 
+    transform: rotate(270deg) translateX(75px) rotate(-270deg) scale(0.9); 
+  }
+  100% { 
+    transform: rotate(360deg) translateX(50px) rotate(-360deg) scale(1); 
+  }
+}
+
+@keyframes portal-spiral {
+  0%, 100% { 
+    transform: rotate(0deg) translateZ(0px) scale(1); 
+    opacity: 1; 
+  }
+  25% { 
+    transform: rotate(90deg) translateZ(50px) scale(1.1); 
+    opacity: 0.9; 
+  }
+  50% { 
+    transform: rotate(180deg) translateZ(100px) scale(1.2); 
+    opacity: 0.8; 
+  }
+  75% { 
+    transform: rotate(270deg) translateZ(50px) scale(1.1); 
+    opacity: 0.9; 
+  }
+}
+
+/* ===== CINEMATIC VISUALIZER ENHANCEMENTS ===== */
+.hero-background,
+.card-visualizer,
+.item-visual {
+  transition: var(--scene-transition);
+  transform-style: preserve-3d;
+  filter: brightness(calc(0.8 + var(--scene-density) * 0.4))
+          contrast(calc(1 + var(--scene-density) * 0.3))
+          saturate(calc(1 + var(--scene-density) * 0.5))
+          hue-rotate(calc(var(--scene-progress) * 30deg));
+}
+
+/* Enhanced visualizer responsiveness to scenes */
+.scene-origin_story .hero-background,
+.scene-origin_story .card-visualizer {
+  animation: gentle-emergence 12s ease-in-out infinite;
+}
+
+.scene-technological_awakening .card-visualizer {
+  animation: tech-matrix-flow 8s linear infinite;
+}
+
+.scene-capability_demonstration .item-visual {
+  animation: power-demonstration 6s ease-in-out infinite;
+}
+
+.scene-knowledge_synthesis .card-visualizer {
+  animation: knowledge-crystallization 10s ease-in-out infinite;
+}
+
+.scene-infinite_potential .hero-background,
+.scene-infinite_potential .card-visualizer,
+.scene-infinite_potential .item-visual {
+  animation: transcendent-flow 15s linear infinite;
+}
+
+@keyframes gentle-emergence {
+  0%, 100% { 
+    transform: scale(1) rotate(0deg); 
+    opacity: 0.8; 
+  }
+  50% { 
+    transform: scale(1.02) rotate(0.5deg); 
+    opacity: 0.9; 
+  }
+}
+
+@keyframes tech-matrix-flow {
+  0% { 
+    transform: translateX(0) skewX(0deg); 
+    filter: hue-rotate(0deg); 
+  }
+  25% { 
+    transform: translateX(2px) skewX(0.5deg); 
+    filter: hue-rotate(90deg); 
+  }
+  50% { 
+    transform: translateX(0) skewX(0deg); 
+    filter: hue-rotate(180deg); 
+  }
+  75% { 
+    transform: translateX(-2px) skewX(-0.5deg); 
+    filter: hue-rotate(270deg); 
+  }
+  100% { 
+    transform: translateX(0) skewX(0deg); 
+    filter: hue-rotate(360deg); 
+  }
+}
+
+@keyframes power-demonstration {
+  0%, 100% { 
+    transform: scale(1) rotateZ(0deg); 
+    filter: brightness(1) contrast(1); 
+  }
+  25% { 
+    transform: scale(1.03) rotateZ(1deg); 
+    filter: brightness(1.1) contrast(1.1); 
+  }
+  50% { 
+    transform: scale(1.05) rotateZ(0deg); 
+    filter: brightness(1.2) contrast(1.2); 
+  }
+  75% { 
+    transform: scale(1.03) rotateZ(-1deg); 
+    filter: brightness(1.1) contrast(1.1); 
+  }
+}
+
+@keyframes knowledge-crystallization {
+  0%, 100% { 
+    transform: rotateY(0deg) scale(1); 
+    opacity: 0.9; 
+  }
+  25% { 
+    transform: rotateY(90deg) scale(0.95); 
+    opacity: 0.8; 
+  }
+  50% { 
+    transform: rotateY(180deg) scale(0.9); 
+    opacity: 0.7; 
+  }
+  75% { 
+    transform: rotateY(270deg) scale(0.95); 
+    opacity: 0.8; 
+  }
+}
+
+@keyframes transcendent-flow {
+  0% { 
+    transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg) scale(1); 
+    filter: hue-rotate(0deg) saturate(1); 
+  }
+  33% { 
+    transform: rotateX(120deg) rotateY(120deg) rotateZ(120deg) scale(1.05); 
+    filter: hue-rotate(120deg) saturate(1.3); 
+  }
+  66% { 
+    transform: rotateX(240deg) rotateY(240deg) rotateZ(240deg) scale(0.95); 
+    filter: hue-rotate(240deg) saturate(1.6); 
+  }
+  100% { 
+    transform: rotateX(360deg) rotateY(360deg) rotateZ(360deg) scale(1); 
+    filter: hue-rotate(360deg) saturate(1); 
+  }
+}
+
+/* ===== CINEMATIC BUTTONS AND INTERACTIONS ===== */
+.btn {
+  transition: var(--quick-transition);
+  transform-style: preserve-3d;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    transparent 100%
+  );
+  transition: left 0.8s ease;
+}
+
+.btn:hover::before {
+  left: 100%;
+}
+
+.btn:hover {
+  transform: translateY(-5px) scale(1.05) rotateX(5deg);
+  box-shadow: 
+    0 15px 35px rgba(0, 0, 0, 0.3),
+    0 0 25px var(--scene-primary),
+    inset 0 0 15px rgba(255, 255, 255, 0.1);
+}
+
+/* Scene-specific button behaviors */
+.scene-technological_awakening .btn:hover {
+  animation: tech-button-pulse 0.6s ease-in-out;
+}
+
+.scene-capability_demonstration .btn:hover {
+  animation: power-button-surge 0.8s ease-out;
+}
+
+.scene-infinite_potential .btn:hover {
+  animation: portal-button-transcend 1s ease-in-out;
+}
+
+@keyframes tech-button-pulse {
+  0%, 100% { 
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3), 0 0 25px var(--scene-primary); 
+  }
+  50% { 
+    box-shadow: 0 20px 45px rgba(200, 0, 200, 0.5), 0 0 40px rgba(200, 0, 200, 0.8); 
+  }
+}
+
+@keyframes power-button-surge {
+  0% { 
+    transform: translateY(-5px) scale(1.05) rotateX(5deg); 
+  }
+  50% { 
+    transform: translateY(-10px) scale(1.1) rotateX(10deg) rotateY(5deg); 
+  }
+  100% { 
+    transform: translateY(-5px) scale(1.05) rotateX(5deg); 
+  }
+}
+
+@keyframes portal-button-transcend {
+  0%, 100% { 
+    transform: translateY(-5px) scale(1.05) rotateX(5deg); 
+    filter: blur(0px); 
+  }
+  50% { 
+    transform: translateY(-15px) scale(1.2) rotateX(15deg) rotateZ(5deg); 
+    filter: blur(1px); 
+  }
+}
+
+/* ===== RESPONSIVE CINEMATIC SCALING ===== */
+@media (max-width: 768px) {
+  :root {
+    --camera-z: 800px;
+    --scene-transition: all 1.5s cubic-bezier(0.23, 1, 0.32, 1);
+    --quick-transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  body {
+    transform: var(--world-transform) scale(0.95);
+  }
+  
+  .tech-card, .portfolio-item, .paper-card {
+    transform-origin: center center;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --camera-z: 600px;
+    --scene-transition: all 1.2s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  
+  body {
+    transform: var(--world-transform) scale(0.9);
+  }
+  
+  /* Reduce animation intensity on mobile */
+  [class*="scene-"] .tech-card,
+  [class*="scene-"] .portfolio-item,
+  [class*="scene-"] .paper-card {
+    animation-duration: calc(var(--animation-duration, 3s) * 1.5);
+  }
+}
+
+/* ===== ACCESSIBILITY AND PERFORMANCE ===== */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  :root {
+    --scene-transition: none;
+    --quick-transition: none;
+    --slow-transition: none;
+  }
+  
+  body {
+    transform: none !important;
+  }
+}
+
+/* Force GPU acceleration for smooth animations */
+.tech-card, .portfolio-item, .paper-card,
+.hero-background, .card-visualizer, .item-visual,
+.btn {
+  will-change: transform, opacity, filter;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+}

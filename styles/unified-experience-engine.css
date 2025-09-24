@@ -1,0 +1,292 @@
+/*
+ * UNIFIED EXPERIENCE ENGINE CSS
+ * Works with unified-experience-engine.js CSS custom properties
+ * Replaces 10+ conflicting JavaScript systems with smooth CSS
+ */
+
+/* ===== REACTIVE CSS VARIABLES ===== */
+:root {
+  /* Set by UnifiedExperienceEngine.js */
+  --scroll-progress: 0;
+  --scroll-velocity: 0;
+  --mouse-x: 0.5;
+  --mouse-y: 0.5;
+  --user-energy: 0;
+  --current-zone: 0;
+  --zone-progress: 0;
+  --fps: 60;
+  --quality-level: high;
+  
+  /* Derived values */
+  --scroll-percent: calc(var(--scroll-progress) * 100%);
+  --mouse-influence: calc((var(--mouse-x) - 0.5) * 2);
+  --energy-intensity: calc(var(--user-energy) / 100);
+}
+
+/* ===== SMOOTH SCROLL BEHAVIOR ===== */
+html {
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 255, 255, 0.3) rgba(0, 0, 0, 0.1);
+}
+
+/* Custom scrollbar for webkit */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 255, 255, 0.6),
+    rgba(0, 200, 255, 0.4)
+  );
+  border-radius: 4px;
+}
+
+/* ===== SCROLL-DRIVEN ANIMATIONS ===== */
+.scroll-reactive {
+  transform: translateY(calc(var(--scroll-progress) * -50px));
+  opacity: calc(0.8 + var(--scroll-progress) * 0.2);
+  transition: transform 0.1s ease-out, opacity 0.1s ease-out;
+}
+
+.scroll-parallax {
+  transform: translateY(calc(var(--scroll-progress) * -100px * var(--parallax-speed, 0.5)));
+}
+
+/* ===== ZONE-BASED STYLING ===== */
+.zone-section {
+  transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transform-style: preserve-3d;
+}
+
+.zone-section.zone-active {
+  transform: translateZ(10px);
+  filter: brightness(1.1) contrast(1.05);
+}
+
+.zone-section:not(.zone-active) {
+  transform: translateZ(-5px) scale(0.98);
+  filter: brightness(0.95) contrast(0.9);
+  opacity: 0.8;
+}
+
+/* ===== CARD TRANSFORMATIONS ===== */
+.tech-card, .portfolio-item, .paper-card {
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.card-scroll-reactive {
+  transform: 
+    translateY(calc(var(--scroll-progress) * -20px))
+    rotateX(calc(var(--mouse-y) * 5deg))
+    rotateY(calc(var(--mouse-x) * 5deg))
+    scale(calc(1 + var(--energy-intensity) * 0.05));
+}
+
+.card-hover-active {
+  transform: 
+    translateZ(20px) 
+    rotateY(calc(var(--mouse-influence) * 8deg))
+    scale(1.05);
+  filter: brightness(1.1) saturate(1.2);
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.3),
+    0 0 30px rgba(0, 255, 255, 0.3);
+}
+
+/* ===== MOUSE REACTIVE EFFECTS ===== */
+.mouse-reactive {
+  --mouse-distance: calc(
+    sqrt(
+      pow(var(--mouse-x) - 0.5, 2) + 
+      pow(var(--mouse-y) - 0.5, 2)
+    )
+  );
+  
+  transform: translateX(calc(var(--mouse-influence) * 10px));
+  filter: hue-rotate(calc(var(--mouse-x) * 60deg));
+}
+
+/* ===== USER ENERGY EFFECTS ===== */
+.energy-reactive {
+  animation-duration: calc(2s - var(--energy-intensity) * 1.5s);
+  filter: brightness(calc(1 + var(--energy-intensity) * 0.2));
+}
+
+@keyframes energy-pulse {
+  0%, 100% { 
+    transform: scale(1); 
+    filter: brightness(1);
+  }
+  50% { 
+    transform: scale(calc(1 + var(--energy-intensity) * 0.05)); 
+    filter: brightness(calc(1 + var(--energy-intensity) * 0.3));
+  }
+}
+
+.energy-pulse {
+  animation: energy-pulse 2s ease-in-out infinite;
+}
+
+/* ===== PERFORMANCE ADAPTIVE STYLES ===== */
+@media (prefers-reduced-motion: reduce) {
+  .scroll-reactive,
+  .card-scroll-reactive,
+  .mouse-reactive,
+  .energy-reactive {
+    transition: none;
+    animation: none;
+    transform: none;
+  }
+}
+
+/* Low quality mode */
+.quality-low .card-hover-active {
+  transform: translateZ(10px) scale(1.02);
+  filter: brightness(1.05);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.quality-low .scroll-reactive {
+  transform: translateY(calc(var(--scroll-progress) * -20px));
+}
+
+/* ===== SCROLL INDICATOR ===== */
+.scroll-progress-indicator {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: rgba(0, 0, 0, 0.1);
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.scroll-progress-indicator::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--scroll-percent);
+  height: 100%;
+  background: linear-gradient(
+    to right,
+    rgba(0, 255, 255, 0.8),
+    rgba(0, 200, 255, 0.6)
+  );
+  transition: width 0.1s ease-out;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+/* ===== ZONE TRANSITIONS ===== */
+.zone-transition-in {
+  animation: zone-enter 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.zone-transition-out {
+  animation: zone-exit 0.6s cubic-bezier(0.55, 0.085, 0.68, 0.53);
+}
+
+@keyframes zone-enter {
+  from {
+    transform: translateZ(-50px) translateY(30px) scale(0.9);
+    opacity: 0.7;
+    filter: blur(10px);
+  }
+  to {
+    transform: translateZ(10px) translateY(0) scale(1);
+    opacity: 1;
+    filter: blur(0px);
+  }
+}
+
+@keyframes zone-exit {
+  from {
+    transform: translateZ(10px) translateY(0) scale(1);
+    opacity: 1;
+    filter: blur(0px);
+  }
+  to {
+    transform: translateZ(-30px) translateY(-20px) scale(0.95);
+    opacity: 0.8;
+    filter: blur(5px);
+  }
+}
+
+/* ===== BACKGROUND REACTIVITY ===== */
+body {
+  background: linear-gradient(
+    135deg,
+    hsl(calc(200 + var(--scroll-progress) * 60), 20%, 8%),
+    hsl(calc(220 + var(--mouse-x) * 40), 25%, 12%)
+  );
+  transition: background 0.3s ease;
+}
+
+/* ===== SMOOTH TEXT CONGRUENCY ===== */
+h1, h2, h3 {
+  transition: all 0.3s ease;
+  transform: translateY(calc(var(--scroll-progress) * -10px));
+}
+
+p {
+  transition: opacity 0.3s ease;
+  opacity: calc(0.8 + var(--energy-intensity) * 0.2);
+}
+
+/* ===== ACCESSIBILITY ===== */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text-primary: rgba(255, 255, 255, 0.9);
+    --text-secondary: rgba(255, 255, 255, 0.7);
+    --surface: rgba(255, 255, 255, 0.05);
+  }
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+  .card-scroll-reactive {
+    transform: translateY(calc(var(--scroll-progress) * -10px)) scale(1);
+  }
+  
+  .card-hover-active {
+    transform: translateZ(10px) scale(1.02);
+  }
+  
+  .scroll-reactive {
+    transform: translateY(calc(var(--scroll-progress) * -25px));
+  }
+}
+
+/* ===== DEBUG INFO (development only) ===== */
+.debug-info {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #00ff00;
+  padding: 10px;
+  border-radius: 5px;
+  font-family: monospace;
+  font-size: 12px;
+  z-index: 10000;
+  pointer-events: none;
+}
+
+.debug-info::after {
+  content: 
+    "Scroll: " var(--scroll-progress) "\A"
+    "Zone: " var(--current-zone) "\A" 
+    "Energy: " var(--user-energy) "\A"
+    "FPS: " var(--fps);
+  white-space: pre;
+}

@@ -1,0 +1,399 @@
+/*
+ * Totalistic Reactive CSS System
+ * Where every element responds harmoniously to the whole system state
+ * Elements don't just react to direct interaction - they react to the totality
+ */
+
+:root {
+  /* Dynamic variables updated by JavaScript choreography */
+  --dynamic-bg: hsl(200, 20%, 8%);
+  --user-energy: 0; /* 0-100 */
+  --scroll-progress: 0; /* 0-1 */
+  --mouse-x: 0; /* -1 to 1 */
+  --mouse-y: 0; /* -1 to 1 */
+  --current-scene-intensity: 0; /* 0-1 */
+  --global-mood: 'exploration'; /* exploration, focus, creation, reflection */
+  
+  /* Reactive animation durations based on energy */
+  --reactive-duration-fast: calc(0.15s + (var(--user-energy) * 0.001s));
+  --reactive-duration-normal: calc(0.3s + (var(--user-energy) * 0.002s));
+  --reactive-duration-slow: calc(0.6s + (var(--user-energy) * 0.004s));
+  
+  /* Reactive intensities */
+  --glow-intensity: calc(0.3 + (var(--current-scene-intensity) * 0.7));
+  --transform-intensity: calc(1 + (var(--user-energy) * 0.01));
+  --blur-intensity: calc(20px - (var(--current-scene-intensity) * 15px));
+}
+
+/* ===== TOTALISTIC BODY REACTIONS ===== */
+body {
+  background: radial-gradient(
+    ellipse at calc(50% + var(--mouse-x) * 20%) calc(50% + var(--mouse-y) * 20%),
+    var(--dynamic-bg) 0%,
+    var(--bg-primary) 60%,
+    var(--bg-secondary) 100%
+  );
+  transition: background var(--reactive-duration-slow) ease;
+}
+
+/* Energy-based global backdrop filter */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  backdrop-filter: blur(calc(var(--blur-intensity) * 0.1));
+  opacity: calc(var(--user-energy) * 0.01);
+  pointer-events: none;
+  z-index: -1;
+  transition: all var(--reactive-duration-normal) ease;
+}
+
+/* ===== SECTION TRANSITIONS ===== */
+section {
+  --section-energy: 0;
+  position: relative;
+  /* CONTROLLED: Smooth movement with proper bounds via Ultimate Scroll Orchestrator */
+  transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+section::before {
+  content: '';
+  position: absolute;
+  top: -50px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(200px + var(--section-energy) * 100px);
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--theme-primary) 50%,
+    transparent 100%
+  );
+  opacity: var(--section-energy);
+  transition: all var(--reactive-duration-normal) ease;
+}
+
+/* Active section gets enhanced presence */
+section[data-scene-active="true"] {
+  --section-energy: var(--current-scene-intensity);
+}
+
+/* ===== REACTIVE CARDS ===== */
+.card, .tech-card, .portfolio-item, .paper-card {
+  --card-energy: 0;
+  --card-focus-distance: 1; /* Distance from focused element */
+  
+  transform: 
+    translateY(calc(var(--card-energy) * -8px))
+    scale(calc(1 + var(--card-energy) * 0.02))
+    rotateX(calc(var(--mouse-y) * var(--card-energy) * 2deg))
+    rotateY(calc(var(--mouse-x) * var(--card-energy) * 2deg));
+    
+  filter: 
+    brightness(calc(1 + var(--card-energy) * 0.2))
+    contrast(calc(1 + var(--card-energy) * 0.1))
+    saturate(calc(1 + var(--card-energy) * 0.3));
+    
+  box-shadow: 
+    0 calc(5px + var(--card-energy) * 20px) calc(15px + var(--card-energy) * 35px) 
+    rgba(0, 0, 0, calc(0.2 + var(--card-energy) * 0.3)),
+    0 0 calc(var(--card-energy) * 30px) 
+    rgba(var(--theme-primary-rgb), calc(var(--card-energy) * 0.4));
+    
+  transition: all var(--reactive-duration-normal) cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Direct hover intensifies card but also affects neighbors */
+.card:hover, .tech-card:hover, .portfolio-item:hover, .paper-card:hover {
+  --card-energy: 1;
+}
+
+/* Neighboring cards get subtle sympathetic reactions */
+.card:hover ~ .card,
+.tech-card:hover ~ .tech-card {
+  --card-energy: 0.3;
+  --card-focus-distance: 0.7;
+}
+
+/* Cards react to global energy */
+.card, .tech-card, .portfolio-item, .paper-card {
+  filter: brightness(calc(1 + var(--user-energy) * 0.002));
+}
+
+/* ===== REACTIVE BUTTONS ===== */
+.btn {
+  --btn-energy: 0;
+  --btn-glow: calc(var(--glow-intensity) * var(--btn-energy));
+  
+  transform: 
+    translateY(calc(var(--btn-energy) * -3px))
+    scale(calc(1 + var(--btn-energy) * 0.05));
+    
+  box-shadow: 
+    0 calc(2px + var(--btn-energy) * 8px) calc(4px + var(--btn-energy) * 16px) 
+    rgba(0, 0, 0, calc(0.2 + var(--btn-energy) * 0.3)),
+    inset 0 1px 0 rgba(255, 255, 255, calc(0.1 + var(--btn-energy) * 0.2)),
+    0 0 calc(var(--btn-glow) * 20px) var(--theme-primary);
+    
+  transition: all var(--reactive-duration-fast) ease;
+}
+
+.btn:hover, .btn:focus {
+  --btn-energy: 1;
+}
+
+/* Buttons react to nearby button interactions */
+.btn:hover ~ .btn,
+.btn:focus ~ .btn {
+  --btn-energy: 0.2;
+}
+
+/* ===== REACTIVE TEXT ELEMENTS ===== */
+h1, h2, h3 {
+  --text-energy: calc(var(--current-scene-intensity) * 0.5);
+  
+  text-shadow: 
+    0 0 calc(var(--text-energy) * 10px) var(--theme-primary),
+    0 0 calc(var(--text-energy) * 20px) var(--theme-secondary);
+    
+  transform: translateZ(calc(var(--text-energy) * 10px));
+  transition: all var(--reactive-duration-normal) ease;
+}
+
+/* Headlines respond to mouse proximity */
+h1:hover, h2:hover, h3:hover {
+  --text-energy: 1;
+  
+  background: linear-gradient(
+    45deg,
+    var(--theme-primary) 0%,
+    var(--theme-secondary) 50%,
+    var(--theme-tertiary) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ===== REACTIVE NAVIGATION ===== */
+.nav-container {
+  --nav-energy: calc(var(--scroll-progress) * 0.5 + var(--user-energy) * 0.005);
+  
+  backdrop-filter: blur(calc(10px + var(--nav-energy) * 10px));
+  background: rgba(
+    var(--bg-primary-rgb), 
+    calc(0.8 + var(--nav-energy) * 0.2)
+  );
+  
+  /* CONTROLLED: Smooth navigation movement via Ultimate Scroll Orchestrator */
+  transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.nav-link {
+  --link-energy: 0;
+  
+  color: rgba(
+    var(--text-secondary-rgb), 
+    calc(0.8 + var(--link-energy) * 0.2)
+  );
+  
+  text-shadow: 0 0 calc(var(--link-energy) * 10px) var(--theme-primary);
+  transform: translateY(calc(var(--link-energy) * -2px));
+  transition: all var(--reactive-duration-fast) ease;
+}
+
+.nav-link:hover, .nav-link.active {
+  --link-energy: 1;
+}
+
+/* Adjacent nav links get sympathetic glow */
+.nav-link:hover + .nav-link,
+.nav-link:hover ~ .nav-link {
+  --link-energy: 0.3;
+}
+
+/* ===== REACTIVE VISUALIZER CONTAINERS ===== */
+.hero-background, .card-visualizer, .item-visual {
+  --visualizer-energy: var(--current-scene-intensity);
+  
+  filter: 
+    brightness(calc(0.8 + var(--visualizer-energy) * 0.3))
+    contrast(calc(1 + var(--visualizer-energy) * 0.2))
+    saturate(calc(1 + var(--visualizer-energy) * 0.4));
+    
+  transform: 
+    scale(calc(1 + var(--visualizer-energy) * 0.05))
+    rotateX(calc(var(--mouse-y) * var(--visualizer-energy) * 1deg))
+    rotateY(calc(var(--mouse-x) * var(--visualizer-energy) * 1deg));
+    
+  transition: all var(--reactive-duration-slow) ease;
+}
+
+/* ===== REACTIVE OVERLAYS ===== */
+.hero-overlay, .project-overlay {
+  --overlay-energy: calc(1 - var(--current-scene-intensity));
+  
+  opacity: calc(var(--overlay-energy) * 0.8);
+  backdrop-filter: blur(calc(var(--overlay-energy) * 10px));
+  transition: all var(--reactive-duration-normal) ease;
+}
+
+/* ===== REACTIVE PARTICLES AND AMBIENTS ===== */
+@keyframes ambient-float {
+  0%, 100% { 
+    transform: 
+      translateY(0) 
+      rotate(0deg) 
+      scale(calc(1 + var(--user-energy) * 0.01));
+  }
+  50% { 
+    transform: 
+      translateY(-20px) 
+      rotate(180deg) 
+      scale(calc(1.1 + var(--user-energy) * 0.01));
+  }
+}
+
+@keyframes energy-pulse {
+  0%, 100% { 
+    opacity: calc(0.3 + var(--current-scene-intensity) * 0.7);
+    transform: scale(1);
+  }
+  50% { 
+    opacity: calc(0.8 + var(--current-scene-intensity) * 0.2);
+    transform: scale(calc(1.1 + var(--current-scene-intensity) * 0.1));
+  }
+}
+
+/* Ambient elements that react to global state */
+.ambient-particle {
+  animation: 
+    ambient-float calc(3s - var(--user-energy) * 0.01s) infinite ease-in-out,
+    energy-pulse calc(2s + var(--current-scene-intensity) * 1s) infinite ease-in-out;
+}
+
+/* ===== REACTIVE BORDERS AND ACCENTS ===== */
+.reactive-border::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 2px solid transparent;
+  border-radius: inherit;
+  background: linear-gradient(
+    calc(45deg + var(--mouse-x) * 15deg),
+    var(--theme-primary) calc(var(--scroll-progress) * 100%),
+    var(--theme-secondary) calc(50% + var(--current-scene-intensity) * 25%),
+    var(--theme-tertiary) calc(100% - var(--user-energy) * 0.5%)
+  ) border-box;
+  -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: calc(var(--current-scene-intensity) * 0.8);
+  transition: all var(--reactive-duration-normal) ease;
+}
+
+/* ===== REACTIVE FOCUS STATES ===== */
+*:focus {
+  --focus-energy: 1;
+  outline: none;
+  
+  box-shadow: 
+    0 0 0 2px var(--theme-primary),
+    0 0 calc(var(--focus-energy) * 20px) rgba(var(--theme-primary-rgb), 0.5),
+    0 0 calc(var(--focus-energy) * 40px) rgba(var(--theme-secondary-rgb), 0.2);
+}
+
+/* Elements near focused elements get sympathetic highlighting */
+*:focus ~ *, 
+*:focus + * {
+  box-shadow: 
+    0 0 calc(var(--focus-energy, 0.3) * 10px) 
+    rgba(var(--theme-primary-rgb), calc(var(--focus-energy, 0.3) * 0.2));
+}
+
+/* ===== MOOD-BASED VARIATIONS ===== */
+[data-mood="exploration"] {
+  --exploration-factor: 1;
+  
+  * {
+    transition-duration: calc(var(--reactive-duration-fast) * 0.8);
+    transform: translateZ(calc(var(--exploration-factor) * 2px));
+  }
+}
+
+[data-mood="focus"] {
+  --focus-factor: 1;
+  
+  * {
+    filter: contrast(calc(1 + var(--focus-factor) * 0.1));
+  }
+}
+
+[data-mood="creation"] {
+  --creation-factor: 1;
+  
+  * {
+    animation-duration: calc(var(--creation-factor) * 0.8s);
+    filter: saturate(calc(1 + var(--creation-factor) * 0.2));
+  }
+}
+
+[data-mood="reflection"] {
+  --reflection-factor: 1;
+  
+  * {
+    transition-duration: calc(var(--reactive-duration-slow) * 1.2);
+    filter: brightness(calc(0.9 + var(--reflection-factor) * 0.1));
+  }
+}
+
+/* ===== PERFORMANCE OPTIMIZATIONS ===== */
+/* Use transform and opacity for smooth 60fps animations */
+.reactive-element {
+  will-change: transform, opacity, filter;
+  transform: translateZ(0); /* Force GPU layer */
+  backface-visibility: hidden;
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  :root {
+    --reactive-duration-fast: 0.01ms;
+    --reactive-duration-normal: 0.01ms;
+    --reactive-duration-slow: 0.01ms;
+  }
+}
+
+/* ===== RESPONSIVE REACTIVE SCALING ===== */
+@media (max-width: 768px) {
+  :root {
+    --reactive-duration-fast: calc(var(--reactive-duration-fast) * 0.8);
+    --reactive-duration-normal: calc(var(--reactive-duration-normal) * 0.8);
+    --reactive-duration-slow: calc(var(--reactive-duration-slow) * 0.8);
+    --transform-intensity: calc(var(--transform-intensity) * 0.7);
+    --glow-intensity: calc(var(--glow-intensity) * 0.8);
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --reactive-duration-fast: calc(var(--reactive-duration-fast) * 0.6);
+    --reactive-duration-normal: calc(var(--reactive-duration-normal) * 0.6);
+    --reactive-duration-slow: calc(var(--reactive-duration-slow) * 0.6);
+    --transform-intensity: calc(var(--transform-intensity) * 0.5);
+    --glow-intensity: calc(var(--glow-intensity) * 0.6);
+  }
+}

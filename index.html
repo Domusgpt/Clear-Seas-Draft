@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Seas Solutions - Draft Versions</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 900px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #fff, #e0e7ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.8;
+            margin-bottom: 30px;
+        }
+
+        .version-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .version-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .version-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .version-number {
+            font-size: 3rem;
+            font-weight: bold;
+            opacity: 0.3;
+            position: absolute;
+            top: 10px;
+            right: 20px;
+        }
+
+        .version-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+
+        .version-description {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .version-link {
+            display: inline-block;
+            padding: 10px 20px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .version-link:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            opacity: 0.6;
+            font-size: 0.9rem;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: #86efac;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 30px 20px;
+            }
+            .logo {
+                font-size: 2rem;
+            }
+            .version-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">Clear Seas Solutions</div>
+            <div class="subtitle">Multi-Version Draft Deployment System</div>
+            <p>Choose your version to explore different iterations of the Clear Seas experience</p>
+        </div>
+
+        <div class="version-grid">
+            <div class="version-card">
+                <div class="version-number">01</div>
+                <div class="status-badge">MAIN VERSION</div>
+                <div class="version-title">Production Ready</div>
+                <div class="version-description">
+                    The main production version with all features, optimizations, and latest updates. Fully tested and deployment-ready.
+                </div>
+                <a href="./1-index.html" class="version-link">View Version</a>
+            </div>
+
+            <div class="version-card">
+                <div class="version-number">02</div>
+                <div class="status-badge">OPTIMIZED</div>
+                <div class="version-title">Performance Enhanced</div>
+                <div class="version-description">
+                    Optimized version focusing on performance improvements, faster loading times, and enhanced user experience.
+                </div>
+                <a href="./2-index-optimized.html" class="version-link">View Version</a>
+            </div>
+
+            <div class="version-card">
+                <div class="version-number">03</div>
+                <div class="status-badge">FIXED</div>
+                <div class="version-title">Bug Fixes Applied</div>
+                <div class="version-description">
+                    Version with critical bug fixes, stability improvements, and compatibility enhancements across different browsers.
+                </div>
+                <a href="./3-index-fixed.html" class="version-link">View Version</a>
+            </div>
+
+            <div class="version-card">
+                <div class="version-number">04</div>
+                <div class="status-badge">UNIFIED</div>
+                <div class="version-title">Unified Architecture</div>
+                <div class="version-description">
+                    Streamlined version with unified architecture, cleaner codebase, and improved maintainability.
+                </div>
+                <a href="./4-index-unified.html" class="version-link">View Version</a>
+            </div>
+
+            <div class="version-card">
+                <div class="version-number">05</div>
+                <div class="status-badge">VIB34D</div>
+                <div class="version-title">VIB34D Integrated</div>
+                <div class="version-description">
+                    Advanced version with VIB34D holographic visualizations, 4D geometry processing, and interactive elements.
+                </div>
+                <a href="./5-index-vib34d-integrated.html" class="version-link">View Version</a>
+            </div>
+
+            <div class="version-card">
+                <div class="version-number">06</div>
+                <div class="status-badge">TOTALISTIC</div>
+                <div class="version-title">Complete Experience</div>
+                <div class="version-description">
+                    Comprehensive version combining all features, experiments, and advanced capabilities in one totalistic experience.
+                </div>
+                <a href="./6-index-totalistic.html" class="version-link">View Version</a>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p><strong>Clear Seas Solutions LLC</strong> • Multi-Version Deployment System</p>
+            <p>© 2025 Paul Phillips - All Rights Reserved</p>
+        </div>
+    </div>
+
+    <script>
+        // Add some interactive effects
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.version-card');
+
+            cards.forEach((card, index) => {
+                card.style.animationDelay = `${index * 0.1}s`;
+                card.style.animation = 'slideInUp 0.6s ease-out forwards';
+            });
+        });
+
+        // Add CSS animation keyframes
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(30px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .version-card {
+                opacity: 0;
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

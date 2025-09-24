@@ -1,0 +1,233 @@
+/* VIB34D Mobile Styles - Responsive breakpoints and touch optimization */
+
+@media (max-width: 768px) {
+    /* Main layout adjustments for mobile */
+    .control-panel {
+        width: 100vw;
+        height: 40vh;
+        top: auto;
+        bottom: 0;
+        right: 0;
+        left: 0;
+        border-left: none;
+        border-top: 2px solid #00ffff;
+    }
+    
+    .canvas-container {
+        right: 0;
+        bottom: 60px;
+        top: 0;
+    }
+    
+    /* Header adjustments */
+    .system-selector {
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+    
+    .system-btn {
+        font-size: 0.8rem;
+        padding: 6px 12px;
+    }
+    
+    /* Mobile collapse button */
+    .mobile-collapse-btn {
+        display: block !important;
+    }
+    
+    .panel-header {
+        text-align: left;
+    }
+    
+    /* Touch target optimization - 44px minimum */
+    .system-btn, .action-btn, .geom-btn, .panel-btn {
+        min-height: 44px;
+        font-size: 0.9rem;
+        touch-action: manipulation;
+    }
+    
+    /* Slider optimization for touch */
+    .control-slider {
+        height: 8px;
+        min-height: 44px;
+    }
+    
+    .control-slider::-webkit-slider-thumb {
+        width: 24px;
+        height: 24px;
+    }
+    
+    /* Touch feedback */
+    .touch-active {
+        opacity: 0.7;
+        transform: scale(0.95);
+    }
+    
+    /* Reactivity grids mobile optimization */
+    .reactivity-grid,
+    .audio-grid {
+        gap: 2px;
+        padding: 4px;
+    }
+    
+    .reactivity-cell,
+    .audio-cell {
+        min-height: 36px;
+        padding: 2px;
+    }
+    
+    .reactivity-cell input[type="checkbox"],
+    .audio-cell input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+    }
+    
+    /* Font adjustments for mobile */
+    .cell-text {
+        font-size: 0.6rem;
+    }
+    
+    .reactivity-header,
+    .audio-header {
+        font-size: 0.7rem;
+    }
+    
+    .reactivity-label,
+    .audio-label {
+        font-size: 0.65rem;
+    }
+    
+    /* Control section spacing */
+    .control-section {
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+    }
+    
+    /* Button spacing */
+    .panel-btn {
+        margin: 8px 0;
+        padding: 12px 16px;
+    }
+    
+    /* Geometry grid mobile optimization */
+    .geometry-grid {
+        gap: 8px;
+    }
+    
+    .geom-btn {
+        padding: 12px 8px;
+        font-size: 0.75rem;
+    }
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+    .top-bar {
+        padding: 0 10px;
+        flex-wrap: wrap;
+        min-height: 50px;
+    }
+    
+    .logo {
+        font-size: 1rem;
+    }
+    
+    .system-btn {
+        font-size: 0.7rem;
+        padding: 4px 8px;
+    }
+    
+    .action-btn {
+        font-size: 0.9rem;
+        padding: 6px 8px;
+    }
+    
+    .control-panel {
+        padding: 15px;
+        height: 45vh;
+    }
+    
+    .canvas-container {
+        bottom: 55px;
+    }
+    
+    /* Further reduce text sizes */
+    .section-title {
+        font-size: 0.8rem;
+    }
+    
+    .control-label {
+        font-size: 0.75rem;
+    }
+    
+    .panel-header {
+        font-size: 1rem;
+    }
+    
+    /* Compact reactivity grids */
+    .reactivity-grid,
+    .audio-grid {
+        grid-template-columns: 50px 1fr 1fr 1fr;
+        gap: 1px;
+        padding: 3px;
+    }
+    
+    .reactivity-cell,
+    .audio-cell {
+        min-height: 32px;
+    }
+    
+    .cell-text {
+        font-size: 0.55rem;
+    }
+}
+
+/* Landscape mobile optimization */
+@media (max-width: 768px) and (orientation: landscape) {
+    .control-panel {
+        height: 50vh;
+        width: 50vw;
+        right: 0;
+        left: auto;
+        top: 50px;
+        bottom: 0;
+        border-left: 2px solid #00ffff;
+        border-top: none;
+    }
+    
+    .canvas-container {
+        right: 50vw;
+        bottom: 0;
+        top: 50px;
+    }
+}
+
+/* Touch interaction improvements */
+@media (hover: none) and (pointer: coarse) {
+    /* Remove hover effects on touch devices */
+    .system-btn:hover,
+    .action-btn:hover,
+    .geom-btn:hover,
+    .panel-btn:hover,
+    .reactivity-cell:hover,
+    .audio-cell:hover {
+        background: initial;
+        border-color: initial;
+        box-shadow: initial;
+    }
+    
+    /* Add active states for touch feedback */
+    .system-btn:active,
+    .action-btn:active,
+    .geom-btn:active,
+    .panel-btn:active {
+        transform: scale(0.95);
+        opacity: 0.8;
+    }
+    
+    .reactivity-cell:active,
+    .audio-cell:active {
+        background: rgba(0, 255, 255, 0.2);
+        transform: scale(0.95);
+    }
+}
