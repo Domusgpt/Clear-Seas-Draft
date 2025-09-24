@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clear Seas Solutions - Draft Versions</title>
+    <title>Clear Seas Solutions - All Versions (21 Total)</title>
     <style>
         * {
             margin: 0;
@@ -15,22 +15,19 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
             padding: 20px;
+            color: white;
         }
 
         .container {
+            max-width: 1200px;
+            margin: 0 auto;
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(20px);
             border-radius: 20px;
             padding: 40px;
             box-shadow: 0 25px 45px rgba(0, 0, 0, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            max-width: 900px;
-            width: 100%;
         }
 
         .header {
@@ -49,16 +46,34 @@
         }
 
         .subtitle {
-            font-size: 1.1rem;
-            opacity: 0.8;
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+
+        .count {
+            font-size: 1rem;
+            opacity: 0.7;
             margin-bottom: 30px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            padding-left: 20px;
+            border-left: 4px solid #fff;
+            color: #fff;
         }
 
         .version-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 20px;
-            margin-bottom: 30px;
         }
 
         .version-card {
@@ -78,7 +93,7 @@
         }
 
         .version-number {
-            font-size: 3rem;
+            font-size: 2.5rem;
             font-weight: bold;
             opacity: 0.3;
             position: absolute;
@@ -87,7 +102,7 @@
         }
 
         .version-title {
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             font-weight: bold;
             margin-bottom: 10px;
             color: #fff;
@@ -103,25 +118,18 @@
         .version-link {
             display: inline-block;
             padding: 10px 20px;
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            color: white;
-            text-decoration: none;
+            background: rgba(255, 255, 255, 0.2);
             border-radius: 25px;
+            text-decoration: none;
+            color: white;
             font-weight: 500;
             transition: all 0.3s ease;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .version-link:hover {
+            background: rgba(255, 255, 255, 0.3);
             transform: scale(1.05);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        .footer {
-            text-align: center;
-            margin-top: 30px;
-            opacity: 0.6;
-            font-size: 0.9rem;
         }
 
         .status-badge {
@@ -131,9 +139,25 @@
             font-size: 0.7rem;
             font-weight: bold;
             margin-bottom: 10px;
+        }
+
+        .main-version .status-badge {
             background: rgba(34, 197, 94, 0.2);
             border: 1px solid rgba(34, 197, 94, 0.3);
             color: #86efac;
+        }
+
+        .pr-version .status-badge {
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: #93c5fd;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            opacity: 0.6;
+            font-size: 0.9rem;
         }
 
         @media (max-width: 768px) {
@@ -152,109 +176,229 @@
 <body>
     <div class="container">
         <div class="header">
-            <div class="logo">Clear Seas Solutions</div>
-            <div class="subtitle">Multi-Version Draft Deployment System</div>
-            <p>Choose your version to explore different iterations of the Clear Seas experience</p>
+            <div class="logo">🌊 Clear Seas Solutions</div>
+            <div class="subtitle">Complete Multi-Version Deployment System</div>
+            <div class="count">21 Total Versions • 6 Main + 15 PR Branches</div>
+            <p>Explore different iterations and compare approaches side-by-side</p>
         </div>
 
-        <div class="version-grid">
-            <div class="version-card">
-                <div class="version-number">01</div>
-                <div class="status-badge">MAIN VERSION</div>
-                <div class="version-title">Production Ready</div>
-                <div class="version-description">
-                    The main production version with all features, optimizations, and latest updates. Fully tested and deployment-ready.
+        <!-- MAIN HTML VERSIONS (1-6) -->
+        <div class="section">
+            <div class="section-title">Core HTML Versions (1-6)</div>
+            <div class="version-grid">
+                <div class="version-card main-version">
+                    <div class="version-number">01</div>
+                    <div class="status-badge">PRODUCTION</div>
+                    <div class="version-title">Production Ready</div>
+                    <div class="version-description">
+                        Main production version with complete polytopal projection technology, VIB34D integration, and all core features.
+                    </div>
+                    <a href="./1-index.html" class="version-link">Launch Version</a>
                 </div>
-                <a href="./1-index.html" class="version-link">View Version</a>
-            </div>
 
-            <div class="version-card">
-                <div class="version-number">02</div>
-                <div class="status-badge">OPTIMIZED</div>
-                <div class="version-title">Performance Enhanced</div>
-                <div class="version-description">
-                    Optimized version focusing on performance improvements, faster loading times, and enhanced user experience.
+                <div class="version-card main-version">
+                    <div class="version-number">02</div>
+                    <div class="status-badge">OPTIMIZED</div>
+                    <div class="version-title">Performance Enhanced</div>
+                    <div class="version-description">
+                        Optimized version with enhanced performance, improved loading times, and streamlined interactions.
+                    </div>
+                    <a href="./2-index-optimized.html" class="version-link">Launch Version</a>
                 </div>
-                <a href="./2-index-optimized.html" class="version-link">View Version</a>
-            </div>
 
-            <div class="version-card">
-                <div class="version-number">03</div>
-                <div class="status-badge">FIXED</div>
-                <div class="version-title">Bug Fixes Applied</div>
-                <div class="version-description">
-                    Version with critical bug fixes, stability improvements, and compatibility enhancements across different browsers.
+                <div class="version-card main-version">
+                    <div class="version-number">03</div>
+                    <div class="status-badge">FIXED</div>
+                    <div class="version-title">Bug Fixes Applied</div>
+                    <div class="version-description">
+                        Version with critical bug fixes, stability improvements, and enhanced cross-browser compatibility.
+                    </div>
+                    <a href="./3-index-fixed.html" class="version-link">Launch Version</a>
                 </div>
-                <a href="./3-index-fixed.html" class="version-link">View Version</a>
-            </div>
 
-            <div class="version-card">
-                <div class="version-number">04</div>
-                <div class="status-badge">UNIFIED</div>
-                <div class="version-title">Unified Architecture</div>
-                <div class="version-description">
-                    Streamlined version with unified architecture, cleaner codebase, and improved maintainability.
+                <div class="version-card main-version">
+                    <div class="version-number">04</div>
+                    <div class="status-badge">UNIFIED</div>
+                    <div class="version-title">Unified Architecture</div>
+                    <div class="version-description">
+                        Unified system architecture with consolidated components and improved maintainability.
+                    </div>
+                    <a href="./4-index-unified.html" class="version-link">Launch Version</a>
                 </div>
-                <a href="./4-index-unified.html" class="version-link">View Version</a>
-            </div>
 
-            <div class="version-card">
-                <div class="version-number">05</div>
-                <div class="status-badge">VIB34D</div>
-                <div class="version-title">VIB34D Integrated</div>
-                <div class="version-description">
-                    Advanced version with VIB34D holographic visualizations, 4D geometry processing, and interactive elements.
+                <div class="version-card main-version">
+                    <div class="version-number">05</div>
+                    <div class="status-badge">VIB34D</div>
+                    <div class="version-title">Advanced VIB34D Integration</div>
+                    <div class="version-description">
+                        Full VIB34D holographic engine integration with 4D visualization systems and advanced geometric processing.
+                    </div>
+                    <a href="./5-index-vib34d-integrated.html" class="version-link">Launch Version</a>
                 </div>
-                <a href="./5-index-vib34d-integrated.html" class="version-link">View Version</a>
-            </div>
 
-            <div class="version-card">
-                <div class="version-number">06</div>
-                <div class="status-badge">TOTALISTIC</div>
-                <div class="version-title">Complete Experience</div>
-                <div class="version-description">
-                    Comprehensive version combining all features, experiments, and advanced capabilities in one totalistic experience.
+                <div class="version-card main-version">
+                    <div class="version-number">06</div>
+                    <div class="status-badge">COMPLETE</div>
+                    <div class="version-title">Totalistic Experience</div>
+                    <div class="version-description">
+                        Complete experience with all features, interactions, and advanced visualizations integrated.
+                    </div>
+                    <a href="./6-index-totalistic.html" class="version-link">Launch Version</a>
                 </div>
-                <a href="./6-index-totalistic.html" class="version-link">View Version</a>
+            </div>
+        </div>
+
+        <!-- PR BRANCH VERSIONS (7-30) -->
+        <div class="section">
+            <div class="section-title">PR Branch Versions (7-30)</div>
+            <div class="version-grid">
+                <div class="version-card pr-version">
+                    <div class="version-number">07</div>
+                    <div class="status-badge">PR #1</div>
+                    <div class="version-title">Avant-garde AI Experience</div>
+                    <div class="version-description">
+                        Initial avant-garde AI consulting landing experience with experimental design approaches.
+                    </div>
+                    <a href="./7-pr-1.html" class="version-link">Launch Version</a>
+                </div>
+
+                <div class="version-card pr-version">
+                    <div class="version-number">18</div>
+                    <div class="status-badge">PR #12</div>
+                    <div class="version-title">Fit-Focused Pitch</div>
+                    <div class="version-description">
+                        Streamlined homepage for decisive fit-focused pitch with clear messaging and conversion optimization.
+                    </div>
+                    <a href="./18-pr-12.html" class="version-link">Launch Version</a>
+                </div>
+
+                <div class="version-card pr-version">
+                    <div class="version-number">19</div>
+                    <div class="status-badge">PR #13</div>
+                    <div class="version-title">Visual Codex Polish</div>
+                    <div class="version-description">
+                        Clear Seas experience refined with Visual Codex polish and enhanced visual hierarchy.
+                    </div>
+                    <a href="./19-pr-13.html" class="version-link">Launch Version</a>
+                </div>
+
+                <div class="version-card pr-version">
+                    <div class="version-number">20</div>
+                    <div class="status-badge">PR #14</div>
+                    <div class="version-title">Minimal Fit Messaging</div>
+                    <div class="version-description">
+                        Refined homepage with minimal fit-focused messaging for clear value proposition delivery.
+                    </div>
+                    <a href="./20-pr-14.html" class="version-link">Launch Version</a>
+                </div>
+
+                <div class="version-card pr-version">
+                    <div class="version-number">21</div>
+                    <div class="status-badge">PR #15</div>
+                    <div class="version-title">Scroll-Locked Showcase</div>
+                    <div class="version-description">
+                        Rebuilt experience blueprint with scroll-locked showcase and enhanced interaction patterns.
+                    </div>
+                    <a href="./21-pr-15.html" class="version-link">Launch Version</a>
+                </div>
+
+                <div class="version-card pr-version">
+                    <div class="version-number">22</div>
+                    <div class="status-badge">PR #16</div>
+                    <div class="version-title">Staging Deck Rebuild</div>
+                    <div class="version-description">
+                        Rebuilt landing experience with placeholder staging deck and organized content structure.
+                    </div>
+                    <a href="./22-pr-16.html" class="version-link">Launch Version</a>
+                </div>
+
+                <div class="version-card pr-version">
+                    <div class="version-number">23</div>
+                    <div class="status-badge">PR #17</div>
+                    <div class="version-title">Scroll Staging Blueprint</div>
+                    <div class="version-description">
+                        Refactored site content into placeholder blueprint with advanced scroll staging interactions.
+                    </div>
+                    <a href="./23-pr-17.html" class="version-link">Launch Version</a>
+                </div>
+
+                <div class="version-card pr-version">
+                    <div class="version-number">24</div>
+                    <div class="status-badge">PR #18</div>
+                    <div class="version-title">Holographic Depth Layout</div>
+                    <div class="version-description">
+                        Reimagined layout with holographic depth effects and enhanced visual storytelling.
+                    </div>
+                    <a href="./24-pr-18.html" class="version-link">Launch Version</a>
+                </div>
+
+                <div class="version-card pr-version">
+                    <div class="version-number">25</div>
+                    <div class="status-badge">PR #19</div>
+                    <div class="version-title">Holographic Card System</div>
+                    <div class="version-description">
+                        Reimagined card system with holographic depth effects and advanced interaction paradigms.
+                    </div>
+                    <a href="./25-pr-19.html" class="version-link">Launch Version</a>
+                </div>
+
+                <div class="version-card pr-version">
+                    <div class="version-number">26</div>
+                    <div class="status-badge">PR #20</div>
+                    <div class="version-title">Deep Narrative Interactions</div>
+                    <div class="version-description">
+                        Deepened placeholder narrative with enhanced interaction systems and storytelling layers.
+                    </div>
+                    <a href="./26-pr-20.html" class="version-link">Launch Version</a>
+                </div>
+
+                <div class="version-card pr-version">
+                    <div class="version-number">27</div>
+                    <div class="status-badge">PR #21</div>
+                    <div class="version-title">Signal Lab Scaffolding</div>
+                    <div class="version-description">
+                        Immersive blueprint with signal lab scaffolding and advanced experimental features.
+                    </div>
+                    <a href="./27-pr-21.html" class="version-link">Launch Version</a>
+                </div>
+
+                <div class="version-card pr-version">
+                    <div class="version-number">28</div>
+                    <div class="status-badge">PR #22</div>
+                    <div class="version-title">Multi-Layer Interactions</div>
+                    <div class="version-description">
+                        Expanded immersive blueprint with multi-layer interactions and complex system integration.
+                    </div>
+                    <a href="./28-pr-22.html" class="version-link">Launch Version</a>
+                </div>
+
+                <div class="version-card pr-version">
+                    <div class="version-number">29</div>
+                    <div class="status-badge">PR #23</div>
+                    <div class="version-title">Holographic Pinned Showcases</div>
+                    <div class="version-description">
+                        Added holographic background with refined pinned showcase placeholders and enhanced UX.
+                    </div>
+                    <a href="./29-pr-23.html" class="version-link">Launch Version</a>
+                </div>
+
+                <div class="version-card pr-version">
+                    <div class="version-number">30</div>
+                    <div class="status-badge">PR #24</div>
+                    <div class="version-title">Amplified Reactive Choreography</div>
+                    <div class="version-description">
+                        Latest iteration with amplified reactive background and sophisticated card choreography systems.
+                    </div>
+                    <a href="./30-pr-24.html" class="version-link">Launch Version</a>
+                </div>
             </div>
         </div>
 
         <div class="footer">
-            <p><strong>Clear Seas Solutions LLC</strong> • Multi-Version Deployment System</p>
-            <p>© 2025 Paul Phillips - All Rights Reserved</p>
+            <p><strong>Clear Seas Solutions Multi-Version Deployment</strong></p>
+            <p>Compare approaches • Test interactions • Evaluate different design directions</p>
+            <p style="margin-top: 15px; opacity: 0.5;">© 2025 Paul Phillips - Clear Seas Solutions LLC</p>
         </div>
     </div>
-
-    <script>
-        // Add some interactive effects
-        document.addEventListener('DOMContentLoaded', function() {
-            const cards = document.querySelectorAll('.version-card');
-
-            cards.forEach((card, index) => {
-                card.style.animationDelay = `${index * 0.1}s`;
-                card.style.animation = 'slideInUp 0.6s ease-out forwards';
-            });
-        });
-
-        // Add CSS animation keyframes
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes slideInUp {
-                from {
-                    opacity: 0;
-                    transform: translateY(30px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-
-            .version-card {
-                opacity: 0;
-            }
-        `;
-        document.head.appendChild(style);
-    </script>
 </body>
 </html>
