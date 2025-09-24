@@ -3,36 +3,2112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visual Codex Gallery</title>
-    <meta http-equiv="refresh" content="0; url=gallery-mobile-enhanced.html">
+    <title>Visual Codex Gallery - Fixed Layout System v2.3</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💎</text></svg>">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        :root {
+            --silicon-green: #0d2818;
+            --crystal-teal: #00ffaa;
+            --accent-red: #ff004d;
+            --neon-cyan: #00ffff;
+            --neon-magenta: #ff00ff;
+            --neon-yellow: #ffff00;
+            --electric-blue: #0080ff;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
-            background: #0a0a0f;
-            color: #00ffff;
-            font-family: 'Courier New', monospace;
+            background: #000;
+            color: var(--crystal-teal);
+            font-family: 'Orbitron', 'Courier New', monospace;
+            overflow-x: hidden;
+            cursor: crosshair;
+            height: 100vh;
+            overflow-y: hidden;
+            perspective: 2000px;
+        }
+        
+        /* 4D POLYTOPAL VISUALIZER BACKGROUNDS */
+        .polytopal-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 1.0s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            /* Force CSS backgrounds to show */
+            background-size: 200% 200%, 150% 150%, cover !important;
+        }
+        
+        .polytopal-background.active {
+            opacity: 0.9 !important;
+        }
+        
+        .polytopal-canvas {
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* UNIQUE POLYTOPAL THEME BACKGROUNDS */
+        #polytop-0 { /* Holographic Genesis - Magenta */
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(255, 0, 255, 0.15) 0%, transparent 60%),
+                radial-gradient(circle at 80% 20%, rgba(0, 255, 170, 0.1) 0%, transparent 50%),
+                linear-gradient(45deg, rgba(13, 40, 24, 0.8) 0%, rgba(40, 0, 40, 0.8) 100%);
+            animation: magentaPulse 6s ease-in-out infinite;
+        }
+        
+        #polytop-1 { /* Plasma Emergence - Cyan */
+            background: 
+                radial-gradient(circle at 60% 40%, rgba(0, 255, 255, 0.15) 0%, transparent 60%),
+                radial-gradient(circle at 30% 70%, rgba(255, 0, 77, 0.1) 0%, transparent 50%),
+                linear-gradient(135deg, rgba(0, 40, 40, 0.8) 0%, rgba(13, 40, 24, 0.8) 100%);
+            animation: cyanPulse 7s ease-in-out infinite;
+        }
+        
+        #polytop-2 { /* Neural Awakening - Yellow */
+            background: 
+                radial-gradient(circle at 40% 30%, rgba(255, 255, 0, 0.15) 0%, transparent 60%),
+                radial-gradient(circle at 70% 80%, rgba(0, 128, 255, 0.1) 0%, transparent 50%),
+                linear-gradient(225deg, rgba(40, 40, 0, 0.8) 0%, rgba(13, 40, 24, 0.8) 100%);
+            animation: yellowPulse 8s ease-in-out infinite;
+        }
+        
+        #polytop-3 { /* Crystal Resonance - Green */
+            background: 
+                radial-gradient(circle at 50% 60%, rgba(0, 255, 0, 0.15) 0%, transparent 60%),
+                radial-gradient(circle at 90% 10%, rgba(255, 0, 255, 0.1) 0%, transparent 50%),
+                linear-gradient(315deg, rgba(0, 40, 0, 0.8) 0%, rgba(13, 40, 24, 0.8) 100%);
+            animation: greenPulse 9s ease-in-out infinite;
+        }
+        
+        #polytop-4 { /* Quantum Chaos - Orange */
+            background: 
+                radial-gradient(circle at 30% 20%, rgba(255, 128, 0, 0.15) 0%, transparent 60%),
+                radial-gradient(circle at 80% 90%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
+                linear-gradient(45deg, rgba(40, 20, 0, 0.8) 0%, rgba(13, 40, 24, 0.8) 100%);
+            animation: orangePulse 5s ease-in-out infinite;
+        }
+        
+        #polytop-5 { /* Fractal Storm - Purple */
+            background: 
+                radial-gradient(circle at 70% 30%, rgba(128, 0, 255, 0.15) 0%, transparent 60%),
+                radial-gradient(circle at 20% 90%, rgba(255, 255, 0, 0.1) 0%, transparent 50%),
+                linear-gradient(135deg, rgba(20, 0, 40, 0.8) 0%, rgba(13, 40, 24, 0.8) 100%);
+            animation: purplePulse 10s ease-in-out infinite;
+        }
+        
+        #polytop-6 { /* Dimensional Collapse - Red */
+            background: 
+                radial-gradient(circle at 90% 70%, rgba(255, 0, 0, 0.15) 0%, transparent 60%),
+                radial-gradient(circle at 10% 30%, rgba(0, 255, 0, 0.1) 0%, transparent 50%),
+                linear-gradient(225deg, rgba(40, 0, 0, 0.8) 0%, rgba(13, 40, 24, 0.8) 100%);
+            animation: redPulse 4s ease-in-out infinite;
+        }
+        
+        /* CSS-Only 4D Effect Animations */
+        @keyframes magentaPulse {
+            0% { background-position: 0% 0%, 100% 100%; filter: hue-rotate(0deg) brightness(0.8); }
+            50% { background-position: 100% 50%, 0% 50%; filter: hue-rotate(30deg) brightness(1.1); }
+            100% { background-position: 0% 0%, 100% 100%; filter: hue-rotate(0deg) brightness(0.8); }
+        }
+        
+        @keyframes cyanPulse {
+            0% { background-position: 50% 0%, 50% 100%; filter: hue-rotate(0deg) brightness(0.9); }
+            50% { background-position: 0% 50%, 100% 50%; filter: hue-rotate(60deg) brightness(1.2); }
+            100% { background-position: 50% 0%, 50% 100%; filter: hue-rotate(0deg) brightness(0.9); }
+        }
+        
+        @keyframes yellowPulse {
+            0% { background-position: 25% 25%, 75% 75%; filter: hue-rotate(0deg) brightness(0.8); }
+            50% { background-position: 75% 25%, 25% 75%; filter: hue-rotate(45deg) brightness(1.0); }
+            100% { background-position: 25% 25%, 75% 75%; filter: hue-rotate(0deg) brightness(0.8); }
+        }
+        
+        @keyframes greenPulse {
+            0% { background-position: 60% 40%, 40% 60%; filter: hue-rotate(0deg) brightness(0.9); }
+            50% { background-position: 40% 60%, 60% 40%; filter: hue-rotate(120deg) brightness(1.1); }
+            100% { background-position: 60% 40%, 40% 60%; filter: hue-rotate(0deg) brightness(0.9); }
+        }
+        
+        @keyframes orangePulse {
+            0% { background-position: 80% 20%, 20% 80%; filter: hue-rotate(0deg) brightness(0.8) contrast(1.1); }
+            50% { background-position: 20% 20%, 80% 80%; filter: hue-rotate(15deg) brightness(1.3) contrast(1.2); }
+            100% { background-position: 80% 20%, 20% 80%; filter: hue-rotate(0deg) brightness(0.8) contrast(1.1); }
+        }
+        
+        @keyframes purplePulse {
+            0% { background-position: 10% 90%, 90% 10%; filter: hue-rotate(0deg) brightness(0.7) saturate(1.2); }
+            50% { background-position: 90% 90%, 10% 10%; filter: hue-rotate(270deg) brightness(1.0) saturate(1.5); }
+            100% { background-position: 10% 90%, 90% 10%; filter: hue-rotate(0deg) brightness(0.7) saturate(1.2); }
+        }
+        
+        @keyframes redPulse {
+            0% { background-position: 100% 0%, 0% 100%; filter: hue-rotate(0deg) brightness(0.9) contrast(1.3); }
+            50% { background-position: 0% 0%, 100% 100%; filter: hue-rotate(10deg) brightness(1.4) contrast(1.5); }
+            100% { background-position: 100% 0%, 0% 100%; filter: hue-rotate(0deg) brightness(0.9) contrast(1.3); }
+        }
+        
+        /* COLLAPSIBLE NAVIGATION */
+        .nav-container {
+            position: fixed;
+            top: 0;
+            left: -280px;
+            width: 300px;
+            height: 100vh;
+            background: linear-gradient(135deg, var(--silicon-green), rgba(13, 40, 24, 0.95));
+            backdrop-filter: blur(20px);
+            z-index: 2000;
+            transition: left 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            border-right: 2px solid var(--crystal-teal);
+            box-shadow: 
+                0 0 40px var(--crystal-teal),
+                inset -2px 0 0 rgba(0, 255, 170, 0.2),
+                -3px -3px 0 var(--accent-red),
+                3px 3px 0 var(--electric-blue);
+        }
+        
+        .nav-container.open {
+            left: 0;
+        }
+        
+        .nav-toggle {
+            position: fixed;
+            top: 30px;
+            left: 30px;
+            width: 50px;
+            height: 50px;
+            background: var(--silicon-green);
+            border: 2px solid var(--crystal-teal);
+            border-radius: 8px;
+            cursor: pointer;
+            z-index: 2100;
             display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.3s ease;
+            box-shadow: 
+                0 0 20px var(--crystal-teal),
+                -2px -2px 0 var(--accent-red),
+                2px 2px 0 var(--electric-blue);
+        }
+        
+        .nav-toggle:hover {
+            background: rgba(0, 255, 170, 0.1);
+            box-shadow: 
+                0 0 30px var(--crystal-teal),
+                -3px -3px 0 var(--accent-red),
+                3px 3px 0 var(--electric-blue);
+            transform: scale(1.05);
+        }
+        
+        .nav-toggle span {
+            width: 20px;
+            height: 2px;
+            background: var(--crystal-teal);
+            transition: all 0.3s ease;
+        }
+        
+        .nav-toggle.open span:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+        
+        .nav-toggle.open span:nth-child(2) {
+            opacity: 0;
+        }
+        
+        .nav-toggle.open span:nth-child(3) {
+            transform: rotate(-45deg) translate(7px, -6px);
+        }
+        
+        .nav-header {
+            padding: 30px 20px;
+            border-bottom: 1px solid rgba(0, 255, 170, 0.3);
+        }
+        
+        .nav-title {
+            color: var(--crystal-teal);
+            font-size: 1.4em;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 
+                0 0 15px var(--crystal-teal),
+                -1px -1px 0 var(--accent-red),
+                1px 1px 0 var(--electric-blue);
+        }
+        
+        .nav-subtitle {
+            color: var(--crystal-teal);
+            font-size: 0.8em;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+        
+        .nav-sections {
+            padding: 20px 0;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+        
+        .nav-section {
+            padding: 15px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+        
+        .nav-section:hover {
+            background: rgba(0, 255, 170, 0.1);
+            border-left-color: var(--crystal-teal);
+            transform: translateX(5px);
+        }
+        
+        .nav-section.active {
+            background: rgba(0, 255, 170, 0.2);
+            border-left-color: var(--crystal-teal);
+        }
+        
+        .nav-section-name {
+            color: var(--crystal-teal);
+            font-size: 1.0em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .nav-section-info {
+            color: var(--crystal-teal);
+            font-size: 0.7em;
+            opacity: 0.6;
+        }
+        
+        /* CRYSTAL WAFER SYSTEM - 3 CARDS ONLY */
+        .crystal-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 95vw;
+            max-width: 1200px;
+            height: 70vh;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: 1fr;
+            gap: 30px;
+            z-index: 100;
+            perspective: 2000px;
             align-items: center;
             justify-content: center;
+        }
+        
+        .crystal-wafer {
+            background: linear-gradient(135deg, 
+                rgba(13, 40, 24, 0.95) 0%,
+                rgba(0, 255, 170, 0.1) 25%,
+                rgba(255, 0, 77, 0.05) 50%,
+                rgba(13, 40, 24, 0.95) 100%);
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(25px);
+            transform-style: preserve-3d;
+            transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            border-radius: 16px;
+            border: 3px solid var(--crystal-teal);
+            /* ENHANCED 3D FLOATING APPEARANCE */
+            transform: translateZ(40px) rotateX(5deg) rotateY(3deg) scale(1.0);
+            min-height: 450px;
+            padding: 25px;
+            opacity: 1.0;
+            
+            box-shadow: 
+                /* Enhanced ghosting afterimage effect */
+                -8px -8px 0 var(--accent-red),
+                8px 8px 0 var(--electric-blue),
+                /* Deep crystal depth */
+                0 40px 80px rgba(0, 0, 0, 0.8),
+                0 20px 40px rgba(0, 255, 170, 0.1),
+                /* Multi-layer inner glow */
+                inset 0 3px 0 rgba(0, 255, 170, 0.2),
+                inset 0 -3px 0 rgba(255, 0, 77, 0.1);
+        }
+        
+        /* REACTIVE ENERGY BORDER SYSTEM */
+        .crystal-wafer::before {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: -4px;
+            right: -4px;
+            bottom: -4px;
+            border-radius: 16px;
+            z-index: -1;
+            pointer-events: none;
+            
+            /* Reactive energy border */
+            background: 
+                linear-gradient(45deg, transparent 30%, var(--crystal-teal) 50%, transparent 70%),
+                linear-gradient(135deg, transparent 30%, var(--accent-red) 50%, transparent 70%),
+                linear-gradient(225deg, transparent 30%, var(--electric-blue) 50%, transparent 70%),
+                linear-gradient(315deg, transparent 30%, var(--neon-magenta) 50%, transparent 70%);
+            
+            background-size: 400% 400%;
+            opacity: 0.3;
+            animation: energyFlow 4s ease-in-out infinite;
+        }
+        
+        .crystal-wafer:hover {
+            transform: scale(1.5) translateZ(120px) rotateX(12deg) rotateY(10deg);
+            box-shadow: 
+                /* Massive ghosting afterimage */
+                -20px -20px 0 var(--accent-red),
+                20px 20px 0 var(--electric-blue),
+                /* Intense crystal resonance */
+                0 0 200px var(--crystal-teal),
+                0 0 80px var(--neon-cyan),
+                /* Treasure chest depth */
+                0 80px 160px rgba(0, 0, 0, 0.95),
+                /* Holographic inner glow */
+                inset 0 8px 0 rgba(0, 255, 170, 0.8),
+                inset 0 -8px 0 rgba(255, 0, 77, 0.3);
+            z-index: 1000;
+            border-color: var(--neon-cyan);
+        }
+        
+        .crystal-wafer:hover::before {
+            opacity: 0.8;
+            animation: energyReactive 1s ease-in-out infinite;
+        }
+        
+        /* HOVER FOCUS SYSTEM - SUBTLE DIM OTHER CARDS */
+        .crystal-container:hover .crystal-wafer:not(:hover) {
+            opacity: 0.7;
+            transform: scale(0.95) translateZ(-10px);
+            filter: brightness(0.8);
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        
+        /* PREVIEW ACTIVATION ON HOVER */
+        .crystal-wafer:hover .wafer-preview {
+            border-color: var(--crystal-teal);
+            box-shadow: 
+                inset 0 0 30px rgba(0, 255, 170, 0.4),
+                0 0 25px rgba(0, 255, 170, 0.3),
+                -3px -3px 0 var(--accent-red),
+                3px 3px 0 var(--electric-blue);
+            transform: scale(1.02);
+        }
+        
+        /* BACKGROUND VISUALIZER SLOW DOWN ON HOVER */
+        .polytopal-background.slowed {
+            opacity: 0.4;
+            filter: blur(1px);
+            transition: all 0.8s ease;
+        }
+        
+        .crystal-wafer.clicked {
+            animation: cardClick 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        
+        .crystal-wafer.clicked::before {
+            animation: energyBlast 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        
+        @keyframes energyFlow {
+            0% { 
+                background-position: 0% 50%, 0% 50%, 0% 50%, 0% 50%;
+                opacity: 0.3;
+            }
+            50% { 
+                background-position: 100% 50%, 100% 50%, 100% 50%, 100% 50%;
+                opacity: 0.5;
+            }
+            100% { 
+                background-position: 0% 50%, 0% 50%, 0% 50%, 0% 50%;
+                opacity: 0.3;
+            }
+        }
+        
+        @keyframes energyReactive {
+            0% { 
+                background-position: 0% 50%, 0% 50%, 0% 50%, 0% 50%;
+                opacity: 0.8;
+                filter: blur(0px);
+            }
+            50% { 
+                background-position: 50% 0%, 50% 100%, 50% 0%, 50% 100%;
+                opacity: 1;
+                filter: blur(1px);
+            }
+            100% { 
+                background-position: 100% 50%, 100% 50%, 100% 50%, 100% 50%;
+                opacity: 0.8;
+                filter: blur(0px);
+            }
+        }
+        
+        @keyframes energyBlast {
+            0% { 
+                background-position: 50% 50%, 50% 50%, 50% 50%, 50% 50%;
+                opacity: 1;
+                filter: blur(0px) brightness(1);
+                transform: scale(1);
+            }
+            50% { 
+                background-position: 100% 0%, 0% 100%, 100% 100%, 0% 0%;
+                opacity: 1.5;
+                filter: blur(3px) brightness(1.5);
+                transform: scale(1.1);
+            }
+            100% { 
+                background-position: 0% 50%, 0% 50%, 0% 50%, 0% 50%;
+                opacity: 0.3;
+                filter: blur(0px) brightness(1);
+                transform: scale(1);
+            }
+        }
+        
+        @keyframes cardClick {
+            0% { transform: scale(1.08) translateZ(40px) rotateX(3deg) rotateY(3deg); }
+            25% { transform: scale(1.15) translateZ(60px) rotateX(5deg) rotateY(5deg); }
+            50% { transform: scale(1.12) translateZ(50px) rotateX(4deg) rotateY(4deg); }
+            100% { transform: scale(1.08) translateZ(40px) rotateX(3deg) rotateY(3deg); }
+        }
+        
+        /* TRANSITION STATES */
+        .crystal-wafer.breaking {
+            animation: crystalBreak 0.8s ease-in forwards;
+        }
+        
+        .crystal-wafer.reforming {
+            animation: crystalReform 1.0s ease-out forwards;
+        }
+        
+        @keyframes crystalBreak {
+            0% { 
+                transform: scale(1) translateZ(0px) rotateY(0deg);
+                opacity: 1;
+                filter: brightness(1);
+            }
+            30% {
+                transform: scale(1.05) translateZ(20px) rotateY(10deg);
+                filter: brightness(1.3) blur(1px);
+            }
+            70% {
+                transform: scale(0.9) translateZ(-10px) rotateY(-8deg) rotateX(3deg);
+                opacity: 0.8;
+                filter: brightness(0.7) blur(2px);
+            }
+            100% { 
+                transform: scale(0.7) translateZ(-30px) rotateY(20deg) rotateX(10deg);
+                opacity: 0.4;
+                filter: brightness(0.5) blur(3px);
+            }
+        }
+        
+        @keyframes crystalReform {
+            0% { 
+                transform: scale(0.7) translateZ(-30px) rotateY(-20deg) rotateX(-10deg);
+                opacity: 0.4;
+                filter: brightness(1.5) blur(3px);
+            }
+            40% {
+                transform: scale(0.95) translateZ(10px) rotateY(5deg) rotateX(2deg);
+                opacity: 0.9;
+                filter: brightness(1.2) blur(1px);
+            }
+            70% {
+                transform: scale(1.02) translateZ(15px) rotateY(-2deg);
+                opacity: 1;
+                filter: brightness(1.1);
+            }
+            100% { 
+                transform: scale(1) translateZ(0px);
+                opacity: 1;
+                filter: brightness(1);
+            }
+        }
+        
+        /* NEGATIVE SPACE TEXT WITH TEAL */
+        .wafer-title {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            right: 15px;
+            font-size: 1.2em;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            z-index: 10;
+            
+            /* Negative space effect with teal border */
+            color: transparent;
+            -webkit-text-stroke: 2px var(--crystal-teal);
+            text-stroke: 2px var(--crystal-teal);
+            
+            /* Ghosting afterimage for text */
+            text-shadow: 
+                -2px -2px 0 var(--accent-red),
+                2px 2px 0 var(--electric-blue),
+                0 0 10px var(--crystal-teal);
+        }
+        
+        /* LARGE UNIFORM PREVIEW WINDOWS */
+        .wafer-preview {
+            position: absolute;
+            top: 60px;
+            left: 15px;
+            right: 15px;
+            bottom: 15px;
+            border: 2px solid var(--crystal-teal);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.9);
+            overflow: hidden;
+            transition: all 0.6s ease;
+            box-shadow: 
+                inset 0 0 20px rgba(0, 255, 170, 0.2),
+                0 0 15px rgba(0, 255, 170, 0.1),
+                /* Ghosting afterimage for preview frame */
+                -2px -2px 0 var(--accent-red),
+                2px 2px 0 var(--electric-blue);
+        }
+        
+        .wafer-preview iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 6px;
+        }
+        
+        .wafer-preview.clicked {
+            animation: previewClick 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        
+        @keyframes previewClick {
+            0% { transform: scale(1); filter: brightness(1); }
+            50% { transform: scale(0.98); filter: brightness(1.3) saturate(1.5); }
+            100% { transform: scale(1); filter: brightness(1); }
+        }
+        
+        /* HOVER INFO OVERLAY */
+        .wafer-info {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(13, 40, 24, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            opacity: 0;
+            transform: scale(0.9);
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            z-index: 20;
+            border-radius: 12px;
+            border: 2px solid var(--crystal-teal);
+            
+            /* Ghosting afterimage for info overlay */
+            box-shadow: 
+                -3px -3px 0 var(--accent-red),
+                3px 3px 0 var(--electric-blue);
+        }
+        
+        .crystal-wafer:hover .wafer-info {
+            opacity: 1;
+            transform: scale(1);
+        }
+        
+        .info-title {
+            color: var(--crystal-teal);
+            font-size: 1.4em;
+            font-weight: 900;
+            margin-bottom: 15px;
+            text-shadow: 
+                0 0 10px var(--crystal-teal),
+                -1px -1px 0 var(--accent-red),
+                1px 1px 0 var(--electric-blue);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .info-description {
+            color: var(--crystal-teal);
+            font-size: 0.9em;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            text-shadow: 0 0 5px rgba(0, 255, 170, 0.5);
+        }
+        
+        .info-tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: auto;
+        }
+        
+        .info-tag {
+            background: linear-gradient(45deg, rgba(255, 0, 77, 0.3), rgba(0, 255, 170, 0.3));
+            color: var(--crystal-teal);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.7em;
+            font-weight: bold;
+            border: 1px solid var(--crystal-teal);
+            text-shadow: 0 0 5px var(--crystal-teal);
+            box-shadow: 
+                0 0 10px rgba(0, 255, 170, 0.3),
+                -1px -1px 0 var(--accent-red),
+                1px 1px 0 var(--electric-blue);
+        }
+        
+        /* SECTION INDICATOR */
+        .section-indicator {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            background: var(--silicon-green);
+            border: 2px solid var(--crystal-teal);
+            border-radius: 15px;
+            padding: 20px 25px;
+            backdrop-filter: blur(20px);
+            z-index: 1000;
+            box-shadow: 
+                0 0 30px var(--crystal-teal),
+                inset 0 1px 0 rgba(0, 255, 170, 0.2),
+                -2px -2px 0 var(--accent-red),
+                2px 2px 0 var(--electric-blue);
+        }
+        
+        .section-title {
+            color: var(--crystal-teal);
+            font-size: 1.3em;
+            font-weight: 900;
+            margin-bottom: 8px;
+            text-shadow: 
+                0 0 15px var(--crystal-teal),
+                -1px -1px 0 var(--accent-red),
+                1px 1px 0 var(--electric-blue);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .section-subtitle {
+            color: var(--crystal-teal);
+            font-size: 0.8em;
+            opacity: 0.7;
+        }
+        
+        /* MOMENTUM INDICATOR */
+        .momentum-indicator {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--silicon-green);
+            border: 2px solid var(--crystal-teal);
+            border-radius: 15px;
+            padding: 15px;
+            backdrop-filter: blur(20px);
+            z-index: 1000;
+            opacity: 0;
+            transition: all 0.3s ease;
+            box-shadow: 
+                0 0 30px var(--crystal-teal),
+                inset 0 1px 0 rgba(0, 255, 170, 0.2),
+                -2px -2px 0 var(--accent-red),
+                2px 2px 0 var(--electric-blue);
+        }
+        
+        .momentum-indicator.active {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+        
+        .momentum-title {
+            color: var(--crystal-teal);
+            font-size: 0.9em;
+            font-weight: bold;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px var(--crystal-teal);
+        }
+        
+        .momentum-bar {
+            width: 120px;
+            height: 8px;
+            background: rgba(0, 255, 170, 0.2);
+            border-radius: 4px;
+            overflow: hidden;
+            border: 1px solid var(--crystal-teal);
+        }
+        
+        .momentum-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--crystal-teal), var(--electric-blue));
+            border-radius: 4px;
+            transition: width 0.1s ease;
+            box-shadow: 0 0 10px var(--crystal-teal);
+        }
+        
+        /* SITE-WIDE REACTION SYSTEM */
+        .site-reaction {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
             height: 100vh;
-            margin: 0;
+            pointer-events: none;
+            z-index: 50;
+            opacity: 0;
+            background: radial-gradient(circle at var(--click-x, 50%) var(--click-y, 50%), 
+                         rgba(0, 255, 170, 0.1) 0%, 
+                         transparent 60%);
+            animation: siteReaction 0.8s ease-out;
         }
-        .loader {
-            text-align: center;
+        
+        @keyframes siteReaction {
+            0% { 
+                opacity: 0;
+                transform: scale(0.5);
+                filter: blur(10px);
+            }
+            50% { 
+                opacity: 1;
+                transform: scale(1.2);
+                filter: blur(2px);
+            }
+            100% { 
+                opacity: 0;
+                transform: scale(2);
+                filter: blur(0px);
+            }
         }
-        .loader h1 {
-            font-size: 2rem;
-            margin-bottom: 1rem;
-            text-shadow: 0 0 20px #00ffff;
-        }
-        .loader p {
-            color: #ff00ff;
+        
+        /* MOBILE SCROLL SNAP SYSTEM */
+        @media (max-width: 768px) {
+            body {
+                overflow-y: auto;
+                scroll-snap-type: y mandatory;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .crystal-container {
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+                width: 95vw;
+                height: auto;
+                min-height: 100vh;
+                padding: 20px 0;
+                scroll-snap-align: start;
+            }
+            
+            .crystal-wafer {
+                width: 100%;
+                height: 300px;
+                scroll-snap-align: start;
+                margin-bottom: 20px;
+            }
+            
+            .crystal-wafer:hover {
+                transform: scale(1.05) translateZ(20px);
+            }
+            
+            .wafer-preview {
+                top: 50px;
+            }
+            
+            .wafer-title {
+                font-size: 1.0em;
+            }
+            
+            /* Show 3 cards per section on mobile */
+            .mobile-section {
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+                min-height: 100vh;
+                scroll-snap-align: start;
+                padding: 60px 20px 20px 20px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="loader">
-        <h1>⚡ VISUAL CODEX</h1>
-        <p>Loading enhanced 4D polytopal gallery system...</p>
+    <!-- 4D Polytopal Visualizer Backgrounds -->
+    <div id="polytopBackgrounds">
+        <!-- 7 polytopal backgrounds will be created dynamically -->
     </div>
+    
+    <!-- Site Reaction Overlay -->
+    <div class="site-reaction" id="siteReaction"></div>
+    
+    <!-- Navigation Toggle -->
+    <div class="nav-toggle" id="navToggle">
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+    
+    <!-- Collapsible Navigation -->
+    <div class="nav-container" id="navContainer">
+        <div class="nav-header">
+            <div class="nav-title">Visual Codex</div>
+            <div class="nav-subtitle">4D Polytopal System</div>
+        </div>
+        <div class="nav-sections" id="navSections">
+            <!-- Navigation sections will be populated dynamically -->
+        </div>
+    </div>
+    
+    <!-- Section Indicator -->
+    <div class="section-indicator">
+        <div class="section-title" id="sectionTitle">Holographic Genesis</div>
+        <div class="section-subtitle" id="sectionSubtitle">4D Polytopal Visualizer</div>
+    </div>
+    
+    <!-- Momentum Indicator -->
+    <div class="momentum-indicator" id="momentumIndicator">
+        <div class="momentum-title">Scroll Power</div>
+        <div class="momentum-bar">
+            <div class="momentum-fill" id="momentumFill" style="width: 0%;"></div>
+        </div>
+    </div>
+    
+    <!-- Crystal Container -->
+    <div class="crystal-container" id="crystalContainer">
+        <!-- 3 crystal wafers will be created dynamically -->
+    </div>
+
+    <script>
+        console.log('💎 Visual Codex Proper 4D System v2.1 - Cache Busted - Polytopal Visualizers');
+        
+        // REAL VISUAL EFFECTS DATA
+        const contentSets = [
+            // Set 1: Holographic Genesis
+            [
+                { title: "Neoskeuomorphic", description: "Modern depth-based card design with advanced shadow systems and interactive hover states", tags: ["CSS", "Design", "Cards"], url: "demos/neoskeuomorphic-cards-demo.html", name: "Neoskeuomorphic Cards" },
+                { title: "Glassmorphism", description: "Translucent glass-like interface elements with backdrop blur and transparency", tags: ["CSS", "Glass", "Modern"], url: "demos/css-glassmorphism-demo.html", name: "Glassmorphism UI" },
+                { title: "Holographic Progress", description: "Futuristic progress indicators with neon glow effects and smooth animations", tags: ["CSS", "Progress", "Neon"], url: "demos/holographic-progress-indicators-demo.html", name: "Holographic Progress" },
+                { title: "State Control", description: "Interactive navigation dot systems with smooth state transitions", tags: ["CSS", "Controls", "Interactive"], url: "demos/state-control-dots-demo.html", name: "State Control Dots" },
+                { title: "Vaporwave", description: "Retro-futuristic aesthetic elements with classic 80s styling", tags: ["CSS", "Retro", "Aesthetic"], url: "demos/css-vaporwave-aesthetics-demo.html", name: "Vaporwave Aesthetics" },
+                { title: "Grid Overlay", description: "Dynamic grid pattern animations with morphing geometric structures", tags: ["CSS", "Grid", "Animation"], url: "demos/animated-grid-overlay-demo.html", name: "Animated Grid Overlay" }
+            ],
+            // Set 2: Plasma Emergence
+            [
+                { title: "Holographic Visualizer", description: "Multi-layer WebGL blend mode system with depth-based holographic effects", tags: ["WebGL", "Holographic", "Blend"], url: "effects/holographic-visualizer.html", name: "Holographic Visualizer" },
+                { title: "Cyberpunk UI", description: "Futuristic interface design elements with neon highlights and tech aesthetics", tags: ["CSS", "Cyberpunk", "Interface"], url: "demos/css-cyberpunk-ui-demo.html", name: "Cyberpunk UI" },
+                { title: "Particle System", description: "Advanced particle physics visualization with 3D depth and movement", tags: ["WebGL", "Particles", "Physics"], url: "demos/holographic-particle-system-demo.html", name: "Particle System" },
+                { title: "Glitch Effects", description: "Digital corruption and distortion effects with RGB channel separation", tags: ["CSS", "Glitch", "Digital"], url: "demos/css-glitch-effects-demo.html", name: "Glitch Effects" },
+                { title: "Depth Layers", description: "Multi-dimensional depth visualization with parallax scrolling effects", tags: ["CSS", "Depth", "Layers"], url: "demos/holographic-depth-layers-demo.html", name: "Depth Layers" },
+                { title: "Adaptive Cards", description: "Dynamic responsive card system with intelligent layout adaptation", tags: ["CSS", "Adaptive", "Responsive"], url: "demos/vib34d-adaptive-cards-demo.html", name: "VIB34D Adaptive Cards" }
+            ],
+            // Set 3: Neural Awakening
+            [
+                { title: "MVEP Hypercube", description: "4D hypercube with interference patterns and mathematical precision", tags: ["WebGL", "4D", "Hypercube"], url: "effects/mvep-moire-hypercube.html", name: "MVEP Hypercube" },
+                { title: "Hypercube Codex", description: "Advanced 4D mathematical visualization with interactive rotation controls", tags: ["WebGL", "Math", "4D"], url: "demos/moire-hypercube-codex-demo.html", name: "Hypercube Codex" },
+                { title: "Lattice Visualizer", description: "Geometric lattice structure system with crystalline formations", tags: ["WebGL", "Lattice", "Geometry"], url: "demos/hypercube-lattice-visualizer-demo.html", name: "Lattice Visualizer" },
+                { title: "Chaos Overlay", description: "Digital interference and chaos patterns with algorithmic generation", tags: ["WebGL", "Chaos", "Interference"], url: "demos/chaos-overlay-effects-demo.html", name: "Chaos Overlay" },
+                { title: "Orchestration Engine", description: "Coordinated multi-system visualization with synchronized behaviors", tags: ["WebGL", "System", "Orchestra"], url: "demos/system-orchestration-engine-demo.html", name: "System Orchestration" },
+                { title: "Reactive Core", description: "Reactive state management system with real-time data visualization", tags: ["WebGL", "Reactive", "Core"], url: "demos/vib3code-reactive-core-demo.html", name: "VIB3Code Reactive Core" }
+            ],
+            // Set 4: Crystal Resonance  
+            [
+                { title: "VIB34D Complete", description: "Revolutionary 4D framework with 8+ geometric systems and advanced rendering", tags: ["WebGL", "VIB34D", "Framework"], url: "effects/vib34d-complete-system.html", name: "VIB34D Complete System" },
+                { title: "4D HyperAV", description: "Proven 4D audiovisual system with synchronized sound and visuals", tags: ["WebGL", "4D", "Audio"], url: "effects/working-4d-hyperav.html", name: "4D HyperAV" },
+                { title: "Core Framework", description: "Core 4D mathematics framework with optimized projection algorithms", tags: ["WebGL", "Core", "Math"], url: "effects/hypercube-core-framework.html", name: "Hypercube Core Framework" },
+                { title: "Consciousness Shader", description: "N-dimensional consciousness visualization with abstract thought patterns", tags: ["WebGL", "Polytopal", "Consciousness"], url: "demos/polytopal-consciousness-shader-demo.html", name: "Polytopal Consciousness" },
+                { title: "Elegant 4D Flow", description: "Graceful 4D particle systems with fluid dynamics", tags: ["WebGL", "4D", "Flow"], url: "effects/elegant-4d-flow-visualizer.html", name: "Elegant 4D Flow" },
+                { title: "Holographic Pulse", description: "Rhythmic holographic pulse visualization system", tags: ["WebGL", "Holographic", "Pulse"], url: "effects/holographic-pulse-system.html", name: "Holographic Pulse" }
+            ],
+            // Set 5: Quantum Chaos
+            [
+                { title: "Hyperdimensional Matrix", description: "8D+ chaos visualization with fractal tessellations and infinite complexity", tags: ["WebGL", "8D", "Chaos"], url: "effects/insane-hyperdimensional-matrix.html", name: "Hyperdimensional Matrix" },
+                { title: "Card Bending", description: "Advanced 3D CSS transform morphing with 6 unique bending behaviors", tags: ["CSS", "3D", "Morphing"], url: "demos/morphing-glassmorphic-blog-demo.html", name: "VIB34D Card Bending" },
+                { title: "Color Shift", description: "Extreme filter effects with contrast shifts and chromatic aberration", tags: ["CSS", "Color", "Filters"], url: "effects/enhanced-color-shift-contrast-system.html", name: "Enhanced Color Shift" },
+                { title: "Maleficarum Codex", description: "Advanced magical interface system with spell-casting interactions", tags: ["WebGL", "Magic", "Interface"], url: "demos/millzmaleficarum-codex-demo.html", name: "Millzmaleficarum Codex" },
+                { title: "Morphing Blog", description: "Dynamic content morphing system with seamless transitions", tags: ["WebGL", "Morphing", "Blog"], url: "demos/vib34d-morphing-blog-demo.html", name: "VIB34D Morphing Blog" },
+                { title: "Multi Canvas", description: "Multiple synchronized visualizer instances with coordinated behaviors", tags: ["WebGL", "Multi", "Canvas"], url: "effects/multi-canvas-visualizer-system.html", name: "Multi Canvas System" }
+            ],
+            // Set 6: Fractal Storm
+            [
+                { title: "Narrative Choreography", description: "JSON-driven scroll transformations with story-based interactions", tags: ["WebGL", "Narrative", "Choreography"], url: "effects/narrative-choreography-engine.html", name: "Narrative Choreography" },
+                { title: "Tabbed Visualizer", description: "Advanced WebGL tab management with state preservation", tags: ["WebGL", "Tabs", "Management"], url: "effects/tabbed-visualizer-system.html", name: "Tabbed Visualizer" },
+                { title: "WebGL Framework", description: "High-performance shader framework with optimization algorithms", tags: ["WebGL", "Framework", "Performance"], url: "effects/hypercube-core-webgl-framework.html", name: "WebGL Framework" },
+                { title: "Digital Magazine", description: "Interactive digital publication with immersive page transitions", tags: ["WebGL", "Magazine", "Interactive"], url: "demos/vib3code-digital-magazine-demo.html", name: "VIB3Code Digital Magazine" },
+                { title: "Tech Layout", description: "Advanced layout with active systems and dynamic positioning", tags: ["WebGL", "Layout", "Tech"], url: "demos/tech-layout-active-holographic-demo.html", name: "Tech Layout Active" },
+                { title: "Parallax Systems", description: "Advanced parallax visualization with infinite depth perception", tags: ["WebGL", "Parallax", "System"], url: "demos/holographic-parallax-systems-mega-demo.html", name: "Holographic Parallax" }
+            ],
+            // Set 7: Dimensional Collapse
+            [
+                { title: "Active Holographic", description: "125 WebGL visualizers in mega-demo with coordinated chaos", tags: ["WebGL", "Mega", "Active"], url: "demos/active-holographic-systems-mega-demo.html", name: "Active Holographic Mega", isHeavy: true },
+                { title: "VIB34D Complete", description: "Revolutionary 4D framework with all geometric systems enabled", tags: ["WebGL", "VIB34D", "Complete"], url: "effects/vib34d-complete-system.html", name: "VIB34D Complete" },
+                { title: "Working 4D HyperAV", description: "Proven audiovisual 4D system with synchronized rendering", tags: ["WebGL", "4D", "Audio"], url: "effects/working-4d-hyperav.html", name: "Working 4D HyperAV" },
+                { title: "Hypercube Core", description: "Core hypercube framework with mathematical precision", tags: ["WebGL", "Hypercube", "Core"], url: "effects/hypercube-core-framework.html", name: "Hypercube Core" },
+                { title: "Insane Matrix", description: "8D+ hyperdimensional chaos with infinite complexity", tags: ["WebGL", "8D", "Matrix"], url: "effects/insane-hyperdimensional-matrix.html", name: "Hyperdimensional Matrix" },
+                { title: "MVEP Hypercube", description: "Production MVEP system with moire interference patterns", tags: ["WebGL", "MVEP", "Hypercube"], url: "effects/mvep-moire-hypercube.html", name: "MVEP Moire Hypercube" }
+            ]
+        ];
+        
+        // 4D POLYTOPAL VISUALIZER THEMES
+        const polytopThemes = [
+            { 
+                name: 'Holographic Genesis', 
+                geometry: 'hypercube',
+                rotation: [0.3, 0.2, 0.4, 0.1],
+                density: 5.0,
+                colors: [1.0, 0.0, 1.0]  // magenta
+            },
+            { 
+                name: 'Plasma Emergence', 
+                geometry: 'octaplex',
+                rotation: [0.4, 0.3, 0.2, 0.5],
+                density: 6.5,
+                colors: [0.0, 1.0, 1.0]  // cyan
+            },
+            { 
+                name: 'Neural Awakening', 
+                geometry: '16cell',
+                rotation: [0.2, 0.5, 0.3, 0.4],
+                density: 8.0,
+                colors: [1.0, 1.0, 0.0]  // yellow
+            },
+            { 
+                name: 'Crystal Resonance', 
+                geometry: '120cell',
+                rotation: [0.5, 0.1, 0.6, 0.2],
+                density: 10.0,
+                colors: [0.0, 1.0, 0.0]  // green
+            },
+            { 
+                name: 'Quantum Chaos', 
+                geometry: '600cell',
+                rotation: [0.6, 0.4, 0.1, 0.7],
+                density: 12.5,
+                colors: [1.0, 0.5, 0.0]  // orange
+            },
+            { 
+                name: 'Fractal Storm', 
+                geometry: 'tesseract',
+                rotation: [0.7, 0.6, 0.5, 0.3],
+                density: 15.0,
+                colors: [0.5, 0.0, 1.0]  // purple
+            },
+            { 
+                name: 'Dimensional Collapse', 
+                geometry: 'polytope',
+                rotation: [0.8, 0.7, 0.6, 0.8],
+                density: 20.0,
+                colors: [1.0, 0.0, 0.0]  // red
+            }
+        ];
+        
+        // 4D POLYTOPAL VISUALIZER CLASS
+        class PolytopBackgroundVisualizer {
+            constructor(canvas, theme, sectionIndex) {
+                this.canvas = canvas;
+                this.theme = theme;
+                this.sectionIndex = sectionIndex;
+                
+                // Force WebGL context creation with all possible options
+                const contextOptions = {
+                    alpha: true,
+                    depth: true,
+                    stencil: false,
+                    antialias: true,
+                    premultipliedAlpha: false,
+                    preserveDrawingBuffer: false,
+                    powerPreference: "default",
+                    failIfMajorPerformanceCaveat: false
+                };
+                
+                this.gl = canvas.getContext('webgl', contextOptions) || 
+                         canvas.getContext('experimental-webgl', contextOptions) ||
+                         canvas.getContext('webkit-3d', contextOptions) ||
+                         canvas.getContext('moz-webgl', contextOptions);
+                
+                if (!this.gl) {
+                    console.error(`❌ FORCING WebGL for visualizer ${sectionIndex} - trying alternative approaches`);
+                    
+                    // Try without options
+                    this.gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                    
+                    if (!this.gl) {
+                        console.error(`❌ WebGL completely failed for visualizer ${sectionIndex}`);
+                        console.error(`Canvas dimensions: ${canvas.width}x${canvas.height}`);
+                        console.error(`Canvas parent:`, canvas.parentElement);
+                        throw new Error('WebGL not available');
+                    }
+                }
+                
+                console.log(`🎯 FORCING WebGL context for visualizer ${sectionIndex}: ${theme.name}`);
+                console.log(`  - WebGL version: ${this.gl.getParameter(this.gl.VERSION)}`);
+                console.log(`  - Renderer: ${this.gl.getParameter(this.gl.RENDERER)}`);
+                console.log(`  - Vendor: ${this.gl.getParameter(this.gl.VENDOR)}`);
+                console.log(`  - Canvas: ${canvas.width}x${canvas.height}`);
+                
+                this.mouseX = 0.5;
+                this.mouseY = 0.5;
+                this.mouseIntensity = 0.0;
+                this.scrollProgress = 0.0;
+                this.timeScale = 1.0;
+                
+                this.startTime = Date.now();
+                this.initShaders();
+                this.initBuffers();
+                this.resize();
+                
+                console.log(`💎 Polytopal Visualizer ${sectionIndex}: ${theme.name} (${theme.geometry})`);
+            }
+            
+            initShaders() {
+                const vertexShaderSource = `
+                    attribute vec2 a_position;
+                    void main() {
+                        gl_Position = vec4(a_position, 0.0, 1.0);
+                    }
+                `;
+                
+                const fragmentShaderSource = `
+                    precision highp float;
+                    
+                    uniform vec2 u_resolution;
+                    uniform float u_time;
+                    uniform vec2 u_mouse;
+                    uniform float u_geometry;
+                    uniform float u_density;
+                    uniform vec4 u_rotation;
+                    uniform vec3 u_color;
+                    uniform float u_mouseIntensity;
+                    uniform float u_scrollProgress;
+                    
+                    // 4D rotation matrices for polytopal projections
+                    mat4 rotateXW(float theta) {
+                        float c = cos(theta);
+                        float s = sin(theta);
+                        return mat4(c, 0, 0, -s, 0, 1, 0, 0, 0, 0, 1, 0, s, 0, 0, c);
+                    }
+                    
+                    mat4 rotateYW(float theta) {
+                        float c = cos(theta);
+                        float s = sin(theta);
+                        return mat4(1, 0, 0, 0, 0, c, 0, -s, 0, 0, 1, 0, 0, s, 0, c);
+                    }
+                    
+                    mat4 rotateZW(float theta) {
+                        float c = cos(theta);
+                        float s = sin(theta);
+                        return mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, c, -s, 0, 0, s, c);
+                    }
+                    
+                    mat4 rotateXY(float theta) {
+                        float c = cos(theta);
+                        float s = sin(theta);
+                        return mat4(c, -s, 0, 0, s, c, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+                    }
+                    
+                    vec3 project4Dto3D(vec4 p) {
+                        float w = 2.0 / (2.0 + p.w + u_scrollProgress * 0.5);
+                        return vec3(p.x * w, p.y * w, p.z * w);
+                    }
+                    
+                    // Advanced polytopal geometry functions
+                    float hypercubeLattice(vec3 p, float gridSize) {
+                        vec3 grid = fract(p * gridSize);
+                        vec3 edges = 1.0 - smoothstep(0.0, 0.02, abs(grid - 0.5));
+                        float corners = length(grid - 0.5);
+                        corners = 1.0 - smoothstep(0.0, 0.3, corners);
+                        return max(max(max(edges.x, edges.y), edges.z), corners * 0.6);
+                    }
+                    
+                    float octaplexLattice(vec3 p, float gridSize) {
+                        vec3 q = fract(p * gridSize) - 0.5;
+                        
+                        // 8 vertices of octaplex
+                        float d1 = length(q - vec3(0.5, 0.0, 0.0));
+                        float d2 = length(q - vec3(-0.5, 0.0, 0.0));
+                        float d3 = length(q - vec3(0.0, 0.5, 0.0));
+                        float d4 = length(q - vec3(0.0, -0.5, 0.0));
+                        float d5 = length(q - vec3(0.0, 0.0, 0.5));
+                        float d6 = length(q - vec3(0.0, 0.0, -0.5));
+                        
+                        float minDist = min(min(min(d1, d2), min(d3, d4)), min(d5, d6));
+                        return 1.0 - smoothstep(0.0, 0.2, minDist);
+                    }
+                    
+                    float cell16Lattice(vec3 p, float gridSize) {
+                        vec3 q = fract(p * gridSize) - 0.5;
+                        
+                        // 16-cell vertices (4D cross-polytope projection)
+                        float lattice = 0.0;
+                        for (int i = 0; i < 4; i++) {
+                            float fi = float(i);
+                            vec3 vertex = vec3(
+                                cos(fi * 1.57) * 0.3,
+                                sin(fi * 1.57) * 0.3,
+                                cos(fi * 3.14) * 0.2
+                            );
+                            float dist = length(q - vertex);
+                            lattice += exp(-dist * 8.0);
+                        }
+                        return lattice;
+                    }
+                    
+                    float cell120Lattice(vec3 p, float gridSize) {
+                        vec3 q = fract(p * gridSize) - 0.5;
+                        
+                        // 120-cell approximation with dodecahedral symmetry
+                        float lattice = 0.0;
+                        float phi = 1.618033988; // golden ratio
+                        
+                        // Icosahedral vertices
+                        for (int i = 0; i < 12; i++) {
+                            float fi = float(i);
+                            float angle = fi * 0.5236; // pi/6
+                            vec3 vertex = vec3(
+                                cos(angle) / phi * 0.4,
+                                sin(angle) / phi * 0.4,
+                                sin(angle * 2.0) * 0.3
+                            );
+                            float dist = length(q - vertex);
+                            lattice += exp(-dist * 6.0);
+                        }
+                        return lattice;
+                    }
+                    
+                    float cell600Lattice(vec3 p, float gridSize) {
+                        vec3 q = fract(p * gridSize) - 0.5;
+                        
+                        // 600-cell approximation (most complex regular polytope)
+                        float lattice = 0.0;
+                        float phi = 1.618033988;
+                        
+                        // Complex vertex arrangement
+                        for (int i = 0; i < 20; i++) {
+                            float fi = float(i);
+                            float angle1 = fi * 0.314159; // pi/10
+                            float angle2 = fi * 0.628318; // pi/5
+                            
+                            vec3 vertex = vec3(
+                                cos(angle1) * phi * 0.2,
+                                sin(angle1) * phi * 0.2,
+                                cos(angle2) * 0.3
+                            );
+                            float dist = length(q - vertex);
+                            lattice += exp(-dist * 4.0);
+                        }
+                        return lattice;
+                    }
+                    
+                    float tesseractLattice(vec3 p, float gridSize) {
+                        vec3 q = fract(p * gridSize) - 0.5;
+                        
+                        // Tesseract (8-cell) vertices - manual calculation
+                        float lattice = 0.0;
+                        
+                        // Calculate 8 cube vertices manually
+                        lattice += 1.0 - smoothstep(0.0, 0.25, length(q - vec3(-0.3, -0.3, -0.3)));
+                        lattice += 1.0 - smoothstep(0.0, 0.25, length(q - vec3( 0.3, -0.3, -0.3)));
+                        lattice += 1.0 - smoothstep(0.0, 0.25, length(q - vec3(-0.3,  0.3, -0.3)));
+                        lattice += 1.0 - smoothstep(0.0, 0.25, length(q - vec3( 0.3,  0.3, -0.3)));
+                        lattice += 1.0 - smoothstep(0.0, 0.25, length(q - vec3(-0.3, -0.3,  0.3)));
+                        lattice += 1.0 - smoothstep(0.0, 0.25, length(q - vec3( 0.3, -0.3,  0.3)));
+                        lattice += 1.0 - smoothstep(0.0, 0.25, length(q - vec3(-0.3,  0.3,  0.3)));
+                        lattice += 1.0 - smoothstep(0.0, 0.25, length(q - vec3( 0.3,  0.3,  0.3)));
+                        
+                        return lattice;
+                    }
+                    
+                    float polytopeLattice(vec3 p, float gridSize) {
+                        vec3 q = fract(p * gridSize) - 0.5;
+                        
+                        // General polytope with complex symmetries
+                        float lattice = 0.0;
+                        
+                        // Multiple symmetry groups
+                        for (int i = 0; i < 16; i++) {
+                            float fi = float(i);
+                            float angle = fi * 0.39269908; // 2*pi/16
+                            
+                            vec3 vertex = vec3(
+                                cos(angle) * 0.4,
+                                sin(angle) * 0.4,
+                                cos(angle * 3.0) * 0.3
+                            );
+                            
+                            float dist = length(q - vertex);
+                            lattice += exp(-dist * 5.0) * (1.0 + cos(fi));
+                        }
+                        
+                        return lattice;
+                    }
+                    
+                    float getPolytopValue(vec3 p, float density, float geomType) {
+                        if (geomType < 0.5) return hypercubeLattice(p, density);
+                        else if (geomType < 1.5) return octaplexLattice(p, density);
+                        else if (geomType < 2.5) return cell16Lattice(p, density);
+                        else if (geomType < 3.5) return cell120Lattice(p, density);
+                        else if (geomType < 4.5) return cell600Lattice(p, density);
+                        else if (geomType < 5.5) return tesseractLattice(p, density);
+                        else return polytopeLattice(p, density);
+                    }
+                    
+                    vec3 hsv2rgb(vec3 c) {
+                        vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+                        vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+                        return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+                    }
+                    
+                    void main() {
+                        vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+                        float aspectRatio = u_resolution.x / u_resolution.y;
+                        uv.x *= aspectRatio;
+                        uv -= 0.5;
+                        
+                        // Time-based rotation with scroll influence
+                        float time = u_time * 0.0005;
+                        
+                        // Mouse influence on 4D space
+                        vec2 mouseOffset = (u_mouse - 0.5) * u_mouseIntensity * 0.5;
+                        
+                        // 4D space with scroll-influenced depth
+                        vec4 p4d = vec4(
+                            uv.x + mouseOffset.x, 
+                            uv.y + mouseOffset.y,
+                            sin(time + u_scrollProgress) * 0.3, 
+                            cos(time + u_scrollProgress) * 0.3
+                        );
+                        
+                        // Multi-axis 4D rotations with mathematical grace
+                        p4d = rotateXW(time * u_rotation.x + u_scrollProgress * 0.5) * p4d;
+                        p4d = rotateYW(time * u_rotation.y + u_mouseIntensity * 0.3) * p4d;
+                        p4d = rotateZW(time * u_rotation.z + u_scrollProgress * 0.3) * p4d;
+                        p4d = rotateXY(time * u_rotation.w + u_mouseIntensity * 0.2) * p4d;
+                        
+                        vec3 p = project4Dto3D(p4d);
+                        
+                        // Scroll-influenced density
+                        float density = u_density * (1.0 + u_scrollProgress * 0.5);
+                        
+                        // Get polytopal value
+                        float polytop = getPolytopValue(p, density, u_geometry);
+                        
+                        // Color based on polytope and interactions
+                        float baseHue = atan(u_color.r, u_color.g) + u_scrollProgress * 0.2;
+                        float hue = baseHue + u_mouseIntensity * 0.3;
+                        float saturation = 0.8 + polytop * 0.2;
+                        float brightness = 0.3 + polytop * 0.7 + u_mouseIntensity * 0.2;
+                        
+                        vec3 color = hsv2rgb(vec3(hue, saturation, brightness));
+                        
+                        // Mouse interaction glow
+                        float mouseDist = length(uv - mouseOffset);
+                        float mouseGlow = exp(-mouseDist * 3.0) * u_mouseIntensity * 0.3;
+                        color += vec3(mouseGlow) * u_color;
+                        
+                        gl_FragColor = vec4(color, 0.8);
+                    }
+                `;
+                
+                this.program = this.createProgram(vertexShaderSource, fragmentShaderSource);
+                this.uniforms = {
+                    resolution: this.gl.getUniformLocation(this.program, 'u_resolution'),
+                    time: this.gl.getUniformLocation(this.program, 'u_time'),
+                    mouse: this.gl.getUniformLocation(this.program, 'u_mouse'),
+                    geometry: this.gl.getUniformLocation(this.program, 'u_geometry'),
+                    density: this.gl.getUniformLocation(this.program, 'u_density'),
+                    rotation: this.gl.getUniformLocation(this.program, 'u_rotation'),
+                    color: this.gl.getUniformLocation(this.program, 'u_color'),
+                    mouseIntensity: this.gl.getUniformLocation(this.program, 'u_mouseIntensity'),
+                    scrollProgress: this.gl.getUniformLocation(this.program, 'u_scrollProgress')
+                };
+            }
+            
+            createProgram(vertexSource, fragmentSource) {
+                const vertexShader = this.createShader(this.gl.VERTEX_SHADER, vertexSource);
+                const fragmentShader = this.createShader(this.gl.FRAGMENT_SHADER, fragmentSource);
+                
+                const program = this.gl.createProgram();
+                this.gl.attachShader(program, vertexShader);
+                this.gl.attachShader(program, fragmentShader);
+                this.gl.linkProgram(program);
+                
+                if (!this.gl.getProgramParameter(program, this.gl.LINK_STATUS)) {
+                    console.error('Program linking failed:', this.gl.getProgramInfoLog(program));
+                    return null;
+                }
+                
+                return program;
+            }
+            
+            createShader(type, source) {
+                const shader = this.gl.createShader(type);
+                this.gl.shaderSource(shader, source);
+                this.gl.compileShader(shader);
+                
+                if (!this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS)) {
+                    console.error('Shader compilation failed:', this.gl.getShaderInfoLog(shader));
+                    return null;
+                }
+                
+                return shader;
+            }
+            
+            initBuffers() {
+                const positions = new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]);
+                
+                this.buffer = this.gl.createBuffer();
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffer);
+                this.gl.bufferData(this.gl.ARRAY_BUFFER, positions, this.gl.STATIC_DRAW);
+                
+                const positionLocation = this.gl.getAttribLocation(this.program, 'a_position');
+                this.gl.enableVertexAttribArray(positionLocation);
+                this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
+            }
+            
+            resize() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+                this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+            }
+            
+            updateInteraction(mouseX, mouseY, intensity) {
+                this.mouseX = mouseX;
+                this.mouseY = mouseY;
+                this.mouseIntensity = intensity;
+            }
+            
+            updateScroll(scrollProgress) {
+                this.scrollProgress = scrollProgress;
+            }
+            
+            setTimeScale(scale) {
+                this.timeScale = scale;
+            }
+            
+            render() {
+                if (!this.program) return;
+                
+                this.resize();
+                this.gl.useProgram(this.program);
+                
+                const time = (Date.now() - this.startTime) * (this.timeScale || 1.0);
+                
+                // Set uniforms
+                this.gl.uniform2f(this.uniforms.resolution, this.canvas.width, this.canvas.height);
+                this.gl.uniform1f(this.uniforms.time, time);
+                this.gl.uniform2f(this.uniforms.mouse, this.mouseX, this.mouseY);
+                this.gl.uniform1f(this.uniforms.geometry, this.sectionIndex);
+                this.gl.uniform1f(this.uniforms.density, this.theme.density);
+                this.gl.uniform4fv(this.uniforms.rotation, new Float32Array(this.theme.rotation));
+                this.gl.uniform3fv(this.uniforms.color, new Float32Array(this.theme.colors));
+                this.gl.uniform1f(this.uniforms.mouseIntensity, this.mouseIntensity);
+                this.gl.uniform1f(this.uniforms.scrollProgress, this.scrollProgress);
+                
+                this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+            }
+        }
+        
+        // PROPER SYSTEM MANAGER
+        class ProperSystemManager {
+            constructor() {
+                this.currentSection = 0;
+                this.scrollMomentum = 0;
+                this.isTransitioning = false;
+                this.momentumThreshold = 25;
+                this.polytopVisualizers = [];
+                this.mouseX = 0.5;
+                this.mouseY = 0.5;
+                this.mouseIntensity = 0.0;
+                
+                this.initialize();
+            }
+            
+            initialize() {
+                console.log('💎 Initializing Proper 4D System...');
+                
+                this.createPolytopBackgrounds();
+                this.createCrystalWafers();
+                this.createNavigation();
+                this.setupInteractions();
+                this.updateContent();
+                
+                console.log('✅ Proper System ready - 4D polytopal visualizers with reactive energy borders');
+            }
+            
+            createPolytopBackgrounds() {
+                const container = document.getElementById('polytopBackgrounds');
+                
+                // FORCE WebGL - always try to create visualizers
+                console.log('🔥 FORCING WebGL visualizer creation - ignoring detection');
+                console.log('  - User Agent:', navigator.userAgent);
+                console.log('  - Platform:', navigator.platform);
+                console.log('  - GitHub Pages:', window.location.hostname.includes('github.io'));
+                
+                const webglAvailable = true; // FORCE IT
+                
+                polytopThemes.forEach((theme, index) => {
+                    const backgroundDiv = document.createElement('div');
+                    backgroundDiv.className = 'polytopal-background';
+                    backgroundDiv.id = `polytop-${index}`;
+                    
+                    if (webglAvailable) {
+                        // Try WebGL first
+                        const canvas = document.createElement('canvas');
+                        canvas.className = 'polytopal-canvas';
+                        canvas.id = `polytop-canvas-${index}`;
+                        
+                        // FORCE proper canvas dimensions
+                        canvas.width = window.innerWidth || 1920;
+                        canvas.height = window.innerHeight || 1080;
+                        canvas.style.width = '100%';
+                        canvas.style.height = '100%';
+                        canvas.style.display = 'block';
+                        
+                        backgroundDiv.appendChild(canvas);
+                        
+                        console.log(`🎯 Canvas ${index} created: ${canvas.width}x${canvas.height}`);
+                        
+                        // Initialize visualizer array slot
+                        this.polytopVisualizers[index] = null;
+                        
+                        // Create polytopal visualizer after canvas is ready
+                        setTimeout(() => {
+                            try {
+                                const visualizer = new PolytopBackgroundVisualizer(canvas, theme, index);
+                                this.polytopVisualizers[index] = visualizer;
+                                console.log(`✅ WebGL Visualizer ${index}: ${theme.name}`);
+                            } catch (error) {
+                                console.log(`🎨 WebGL failed for ${index}, using CSS fallback: ${theme.name}`);
+                                this.polytopVisualizers[index] = null;
+                            }
+                        }, index * 100);
+                    } else {
+                        // Use CSS-only mode
+                        this.polytopVisualizers[index] = null;
+                        console.log(`🎨 CSS-Only Background ${index}: ${theme.name}`);
+                    }
+                    
+                    container.appendChild(backgroundDiv);
+                });
+                
+                // Activate first background immediately
+                setTimeout(() => {
+                    this.updatePolytopVisibility();
+                }, 500);
+            }
+            
+            createNavigation() {
+                const navSections = document.getElementById('navSections');
+                
+                polytopThemes.forEach((theme, index) => {
+                    const section = document.createElement('div');
+                    section.className = 'nav-section';
+                    section.innerHTML = `
+                        <div class="nav-section-name">Section ${index + 1}: ${theme.name}</div>
+                        <div class="nav-section-info">${theme.geometry} • density: ${theme.density} • 3 cards</div>
+                    `;
+                    
+                    section.addEventListener('click', () => {
+                        this.jumpToSection(index);
+                    });
+                    
+                    navSections.appendChild(section);
+                });
+            }
+            
+            setupInteractions() {
+                // Navigation toggle
+                const navToggle = document.getElementById('navToggle');
+                const navContainer = document.getElementById('navContainer');
+                
+                navToggle.addEventListener('click', () => {
+                    navToggle.classList.toggle('open');
+                    navContainer.classList.toggle('open');
+                });
+                
+                // Close nav when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (!navContainer.contains(e.target) && !navToggle.contains(e.target)) {
+                        navToggle.classList.remove('open');
+                        navContainer.classList.remove('open');
+                    }
+                });
+                
+                // Mouse tracking for reactive effects
+                document.addEventListener('mousemove', (e) => {
+                    this.mouseX = e.clientX / window.innerWidth;
+                    this.mouseY = 1.0 - (e.clientY / window.innerHeight);
+                    this.mouseIntensity = Math.min(1.0, Math.sqrt(e.movementX*e.movementX + e.movementY*e.movementY) / 50);
+                    
+                    // Update all visualizers
+                    this.polytopVisualizers.forEach(viz => {
+                        if (viz) viz.updateInteraction(this.mouseX, this.mouseY, this.mouseIntensity);
+                    });
+                });
+                
+                // Scroll physics
+                this.setupScrollPhysics();
+                
+                // Click reactions
+                this.setupClickReactions();
+            }
+            
+            setupScrollPhysics() {
+                const isMobile = window.innerWidth <= 768;
+                
+                if (isMobile) {
+                    // Mobile: Use native scroll snap
+                    console.log('📱 Mobile scroll snap enabled');
+                    document.body.style.overflowY = 'auto';
+                    document.body.style.scrollSnapType = 'y mandatory';
+                    
+                    // Simple touch-friendly transitions
+                    let scrollTimeout;
+                    window.addEventListener('scroll', () => {
+                        clearTimeout(scrollTimeout);
+                        scrollTimeout = setTimeout(() => {
+                            // Basic section detection for mobile
+                            const scrollPercent = window.scrollY / (document.body.scrollHeight - window.innerHeight);
+                            const newSection = Math.round(scrollPercent * 6);
+                            if (newSection !== this.currentSection && newSection >= 0 && newSection <= 6) {
+                                this.currentSection = newSection;
+                                this.updatePolytopVisibility();
+                                this.updateUI();
+                            }
+                        }, 100);
+                    });
+                    
+                    return;
+                }
+                
+                // Desktop: Original momentum system
+                let momentumDecay;
+                
+                console.log('🌀 Desktop tactile scroll physics initialized - threshold:', this.momentumThreshold);
+                
+                window.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    
+                    if (this.isTransitioning) return;
+                    
+                    // Build momentum - slower accumulation for proper threshold feel
+                    const delta = Math.abs(e.deltaY);
+                    this.scrollMomentum += delta * 0.25; // Reduced from 0.4 to build slower
+                    this.scrollMomentum = Math.min(this.scrollMomentum, 100);
+                    
+                    // Update scroll progress for visualizers
+                    const scrollProgress = this.scrollMomentum / 100;
+                    this.polytopVisualizers.forEach(viz => {
+                        if (viz) viz.updateScroll(scrollProgress);
+                    });
+                    
+                    // Update card momentum effects as it builds
+                    this.updateCardMomentumEffects();
+                    
+                    // Show momentum indicator
+                    this.showMomentumIndicator();
+                    
+                    // Clear previous decay
+                    clearTimeout(momentumDecay);
+                    
+                    // Debug tactile scroll behavior
+                    if (this.scrollMomentum > 15) {
+                        console.log(`⚡ Building momentum: ${this.scrollMomentum.toFixed(1)}/${this.momentumThreshold} - cards anticipating`);
+                    }
+                    
+                    // Check for transition threshold - only trigger at 25, not before
+                    if (this.scrollMomentum >= this.momentumThreshold) {
+                        console.log(`🚀 THRESHOLD REACHED! Triggering transition at ${this.scrollMomentum.toFixed(1)}`);
+                        this.triggerTransition(e.deltaY > 0 ? 1 : -1);
+                    } else {
+                        // Set momentum decay - longer delay to allow building
+                        momentumDecay = setTimeout(() => {
+                            this.decayMomentum();
+                        }, 200); // Increased from 150ms
+                    }
+                }, { passive: false });
+            }
+            
+            setupClickReactions() {
+                document.addEventListener('click', (e) => {
+                    // Site-wide reaction
+                    this.triggerSiteReaction(e.clientX, e.clientY);
+                    
+                    // Check if click was on a card
+                    const card = e.target.closest('.crystal-wafer');
+                    if (card) {
+                        card.classList.add('clicked');
+                        setTimeout(() => {
+                            card.classList.remove('clicked');
+                        }, 600);
+                        
+                        // Check if click was on preview
+                        const preview = e.target.closest('.wafer-preview');
+                        if (preview) {
+                            preview.classList.add('clicked');
+                            setTimeout(() => {
+                                preview.classList.remove('clicked');
+                            }, 400);
+                        }
+                    }
+                });
+            }
+            
+            triggerSiteReaction(x, y) {
+                const siteReaction = document.getElementById('siteReaction');
+                siteReaction.style.setProperty('--click-x', (x / window.innerWidth * 100) + '%');
+                siteReaction.style.setProperty('--click-y', (y / window.innerHeight * 100) + '%');
+                
+                // Reset animation
+                siteReaction.style.animation = 'none';
+                siteReaction.offsetHeight; // Trigger reflow
+                siteReaction.style.animation = 'siteReaction 0.8s ease-out';
+            }
+            
+            jumpToSection(sectionIndex) {
+                if (this.isTransitioning) return;
+                
+                console.log(`💎 Navigation Jump: ${this.currentSection} → ${sectionIndex}`);
+                
+                this.isTransitioning = true;
+                this.performTransition(sectionIndex);
+                
+                // Close navigation
+                document.getElementById('navToggle').classList.remove('open');
+                document.getElementById('navContainer').classList.remove('open');
+                
+                setTimeout(() => {
+                    this.isTransitioning = false;
+                }, 1000);
+            }
+            
+            triggerTransition(direction) {
+                if (this.isTransitioning) return;
+                
+                const newSection = this.currentSection + direction;
+                
+                // Boundary check with wraparound
+                let targetSection;
+                if (newSection < 0) {
+                    targetSection = 6; // Wrap to last section
+                } else if (newSection > 6) {
+                    targetSection = 0; // Wrap to first section
+                } else {
+                    targetSection = newSection;
+                }
+                
+                console.log(`💎 Transition: ${this.currentSection} → ${targetSection} (momentum: ${this.scrollMomentum.toFixed(1)})`);
+                
+                this.isTransitioning = true;
+                this.scrollMomentum = 0;
+                this.hideMomentumIndicator();
+                
+                this.performTransition(targetSection);
+                
+                setTimeout(() => {
+                    this.isTransitioning = false;
+                }, 1000);
+            }
+            
+            performTransition(targetSection) {
+                this.currentSection = targetSection;
+                
+                // Update polytopal background with mathematical grace
+                this.updatePolytopVisibility();
+                
+                // Update navigation
+                this.updateNavigation();
+                
+                // Crystal breaking and reforming sequence
+                this.crystalBreakingSequence();
+                
+                // Update UI
+                setTimeout(() => {
+                    this.updateUI();
+                }, 200);
+            }
+            
+            updatePolytopVisibility() {
+                const backgrounds = document.querySelectorAll('.polytopal-background');
+                backgrounds.forEach((bg, index) => {
+                    bg.classList.toggle('active', index === this.currentSection);
+                    
+                    // Ensure visualizer exists and is rendering
+                    if (index === this.currentSection && this.polytopVisualizers[index]) {
+                        // Activate the current visualizer
+                        console.log(`🎯 Activating visualizer ${index}: ${polytopThemes[index].name}`);
+                    }
+                });
+            }
+            
+            crystalBreakingSequence() {
+                const wafers = document.querySelectorAll('.crystal-wafer');
+                
+                // Clear any momentum effects before starting
+                wafers.forEach(wafer => {
+                    wafer.style.transform = '';
+                    wafer.style.filter = '';
+                    wafer.style.transition = '';
+                });
+                
+                // Phase 1: Breaking animation
+                wafers.forEach((wafer, index) => {
+                    setTimeout(() => {
+                        wafer.classList.add('breaking');
+                        
+                        // Remove breaking class and add reforming
+                        setTimeout(() => {
+                            wafer.classList.remove('breaking');
+                            wafer.classList.add('reforming');
+                            
+                            // Update content during reform
+                            setTimeout(() => {
+                                this.updateWaferContent(index);
+                            }, 200);
+                            
+                            // Remove reforming class and ensure clean state
+                            setTimeout(() => {
+                                wafer.classList.remove('reforming');
+                                // Ensure clean state after reforming
+                                wafer.style.transform = '';
+                                wafer.style.filter = '';
+                                wafer.style.transition = '';
+                            }, 1000);
+                            
+                        }, 800);
+                    }, index * 80);
+                });
+            }
+            
+            // Add momentum-responsive card effects
+            updateCardMomentumEffects() {
+                // Don't interfere during transitions
+                if (this.isTransitioning) return;
+                
+                const wafers = document.querySelectorAll('.crystal-wafer');
+                const momentumPercent = this.scrollMomentum / this.momentumThreshold;
+                
+                wafers.forEach((wafer, index) => {
+                    // Skip if card is in breaking/reforming state
+                    if (wafer.classList.contains('breaking') || wafer.classList.contains('reforming')) {
+                        return;
+                    }
+                    
+                    const stagger = index * 0.1;
+                    const effectIntensity = Math.max(0, momentumPercent - stagger);
+                    
+                    if (effectIntensity > 0) {
+                        // Cards start to anticipate transition
+                        const anticipationScale = 1 + (effectIntensity * 0.01); // Reduced intensity
+                        const anticipationBrightness = 1 + (effectIntensity * 0.1);
+                        
+                        wafer.style.transform = `scale(${anticipationScale})`;
+                        wafer.style.filter = `brightness(${anticipationBrightness})`;
+                        wafer.style.transition = 'all 0.1s ease-out';
+                    } else {
+                        // Reset to normal only if not in animation state
+                        wafer.style.transform = '';
+                        wafer.style.filter = '';
+                        wafer.style.transition = 'all 0.3s ease-out';
+                    }
+                });
+            }
+            
+            createCrystalWafers() {
+                const container = document.getElementById('crystalContainer');
+                
+                // Clear any existing content
+                container.innerHTML = '';
+                
+                console.log('🔧 Creating 3 crystal wafers for desktop display');
+                
+                // Desktop: Always create exactly 3 cards in a centered grid
+                container.style.display = 'grid';
+                container.style.gridTemplateColumns = 'repeat(3, 1fr)';
+                container.style.gridTemplateRows = '1fr';
+                container.style.justifyContent = 'center';
+                container.style.alignItems = 'center';
+                container.style.gap = '30px';
+                
+                for (let i = 0; i < 3; i++) {
+                    const wafer = this.createWaferElement(i);
+                    container.appendChild(wafer);
+                    console.log(`✅ Created crystal wafer ${i}`);
+                }
+                
+                console.log('💎 Crystal wafers created successfully');
+            }
+            
+            createWaferElement(index) {
+                const wafer = document.createElement('div');
+                wafer.className = 'crystal-wafer';
+                wafer.id = `crystal-wafer-${index}`;
+                
+                wafer.innerHTML = `
+                    <div class="wafer-title" id="title-${index}">Loading...</div>
+                    <div class="wafer-preview" id="preview-${index}">
+                        <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--crystal-teal); font-size: 1.0em;">
+                            ◆ Initializing polytopal matrix...
+                        </div>
+                    </div>
+                    <div class="wafer-info" id="info-${index}">
+                        <div class="info-title" id="info-title-${index}">4D Analysis</div>
+                        <div class="info-description" id="info-description-${index}">Scanning polytopal structure...</div>
+                        <div class="info-tags" id="info-tags-${index}">
+                            <!-- Tags will be populated dynamically -->
+                        </div>
+                    </div>
+                `;
+                
+                // Add hover effects for background visualizer slowdown
+                wafer.addEventListener('mouseenter', () => {
+                    this.slowDownVisualizers();
+                });
+                
+                wafer.addEventListener('mouseleave', () => {
+                    this.speedUpVisualizers();
+                });
+                
+                // Add click to navigate to source
+                wafer.addEventListener('click', (e) => {
+                    const currentSet = contentSets[this.currentSection];
+                    const content = currentSet[index];
+                    if (content && content.url) {
+                        // Open demo in new tab
+                        window.open(content.url, '_blank');
+                        console.log(`🎯 Opening demo: ${content.name} → ${content.url}`);
+                    }
+                });
+                
+                return wafer;
+            }
+            
+            updateWaferContent(waferIndex) {
+                const currentSet = contentSets[this.currentSection];
+                const content = currentSet[waferIndex];
+                
+                // Handle case where there are fewer than 3 items in a section
+                if (!content) {
+                    const wafer = document.getElementById(`crystal-wafer-${waferIndex}`);
+                    if (wafer) {
+                        wafer.style.display = 'none';
+                        console.log(`⚠️ Hiding wafer ${waferIndex} - no content available`);
+                    }
+                    return;
+                }
+                
+                const wafer = document.getElementById(`crystal-wafer-${waferIndex}`);
+                if (wafer) {
+                    wafer.style.display = 'flex';
+                    console.log(`✅ Showing wafer ${waferIndex}:`, content.title);
+                } else {
+                    console.error(`❌ Wafer element ${waferIndex} not found!`);
+                }
+                
+                // Update text content without destroying DOM structure
+                const titleEl = document.getElementById(`title-${waferIndex}`);
+                const infoTitleEl = document.getElementById(`info-title-${waferIndex}`);
+                const infoDescEl = document.getElementById(`info-description-${waferIndex}`);
+                
+                if (titleEl) titleEl.textContent = content.title;
+                if (infoTitleEl) infoTitleEl.textContent = content.title;
+                if (infoDescEl) infoDescEl.textContent = content.description;
+                
+                // Update tags
+                const tagsContainer = document.getElementById(`info-tags-${waferIndex}`);
+                if (tagsContainer) {
+                    tagsContainer.innerHTML = content.tags.map(tag => 
+                        `<span class="info-tag">${tag}</span>`
+                    ).join('');
+                }
+                
+                // Auto-load preview
+                this.autoLoadPreview(waferIndex, content);
+            }
+            
+            updateContent() {
+                const currentSet = contentSets[this.currentSection];
+                
+                console.log(`🔄 Updating content for section ${this.currentSection}:`, currentSet);
+                
+                for (let i = 0; i < 3; i++) {
+                    this.updateWaferContent(i);
+                    console.log(`✅ Updated wafer ${i} content`);
+                }
+                
+                console.log('💎 All wafers updated with current section content');
+            }
+            
+            autoLoadPreview(waferIndex, content) {
+                const preview = document.getElementById(`preview-${waferIndex}`);
+                
+                if (content.isHeavy) {
+                    preview.innerHTML = `
+                        <div style="padding: 20px; text-align: center;">
+                            <div style="color: var(--crystal-teal); margin-bottom: 15px; font-size: 1.1em;">⚡ MEGA SYSTEM</div>
+                            <div style="font-size: 0.8em; line-height: 1.6; color: var(--crystal-teal);">
+                                125 WebGL visualizers<br>
+                                <button onclick="window.open('${content.url}', '_blank')" 
+                                        style="margin-top: 10px; padding: 8px 16px; background: var(--silicon-green); 
+                                               border: 2px solid var(--crystal-teal); color: var(--crystal-teal); 
+                                               border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.8em;">
+                                    ◆ Launch System
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // Auto-load with staggered entrance
+                    setTimeout(() => {
+                        preview.innerHTML = `
+                            <iframe src="${content.url}" 
+                                    width="100%" 
+                                    height="100%" 
+                                    frameborder="0"
+                                    loading="lazy"
+                                    style="opacity: 0; transition: opacity 0.6s ease;">
+                            </iframe>
+                        `;
+                        
+                        const iframe = preview.querySelector('iframe');
+                        iframe.onload = () => {
+                            iframe.style.opacity = '1';
+                        };
+                    }, waferIndex * 150 + 300);
+                }
+            }
+            
+            updateNavigation() {
+                const navSections = document.querySelectorAll('.nav-section');
+                navSections.forEach((section, index) => {
+                    section.classList.toggle('active', index === this.currentSection);
+                });
+            }
+            
+            showMomentumIndicator() {
+                const indicator = document.getElementById('momentumIndicator');
+                const fill = document.getElementById('momentumFill');
+                
+                indicator.classList.add('active');
+                fill.style.width = `${this.scrollMomentum}%`;
+            }
+            
+            hideMomentumIndicator() {
+                const indicator = document.getElementById('momentumIndicator');
+                indicator.classList.remove('active');
+            }
+            
+            decayMomentum() {
+                const decayInterval = setInterval(() => {
+                    this.scrollMomentum -= 2; // Slower decay for better feel
+                    
+                    if (this.scrollMomentum <= 0) {
+                        this.scrollMomentum = 0;
+                        this.hideMomentumIndicator();
+                        clearInterval(decayInterval);
+                        
+                        // Reset scroll progress
+                        this.polytopVisualizers.forEach(viz => {
+                            if (viz) viz.updateScroll(0);
+                        });
+                        
+                        // Reset card effects
+                        this.updateCardMomentumEffects();
+                    } else {
+                        this.showMomentumIndicator();
+                        
+                        // Update scroll progress and card effects during decay
+                        const scrollProgress = this.scrollMomentum / 100;
+                        this.polytopVisualizers.forEach(viz => {
+                            if (viz) viz.updateScroll(scrollProgress);
+                        });
+                        this.updateCardMomentumEffects();
+                    }
+                }, 60); // Slightly slower decay rate
+            }
+            
+            updateUI() {
+                const theme = polytopThemes[this.currentSection];
+                
+                // Update section info
+                document.getElementById('sectionTitle').textContent = theme.name;
+                document.getElementById('sectionSubtitle').textContent = `4D Polytopal Visualizer`;
+            }
+            
+            slowDownVisualizers() {
+                // Slow down all background visualizers
+                const backgrounds = document.querySelectorAll('.polytopal-background');
+                backgrounds.forEach(bg => {
+                    bg.classList.add('slowed');
+                });
+                
+                // Reduce visualizer speed
+                this.polytopVisualizers.forEach(viz => {
+                    if (viz) viz.setTimeScale(0.3);
+                });
+                
+                console.log('🐌 Visualizers slowed down for focus mode');
+            }
+            
+            speedUpVisualizers() {
+                // Return visualizers to normal speed
+                const backgrounds = document.querySelectorAll('.polytopal-background');
+                backgrounds.forEach(bg => {
+                    bg.classList.remove('slowed');
+                });
+                
+                // Reset visualizer speed
+                this.polytopVisualizers.forEach(viz => {
+                    if (viz) viz.setTimeScale(1.0);
+                });
+                
+                console.log('⚡ Visualizers returned to normal speed');
+            }
+            
+            startRenderLoop() {
+                const render = () => {
+                    this.polytopVisualizers.forEach((viz, index) => {
+                        if (viz && viz.gl && !viz.gl.isContextLost()) {
+                            try {
+                                viz.render();
+                            } catch (error) {
+                                console.warn(`⚠️ Visualizer ${index} render error:`, error);
+                                // Don't break the entire render loop for one failed visualizer
+                            }
+                        }
+                    });
+                    requestAnimationFrame(render);
+                };
+                
+                render();
+                console.log('🎬 4D polytopal render loop started');
+            }
+        }
+        
+        // Initialize when page loads
+        window.addEventListener('load', () => {
+            console.log('💎 Starting Visual Codex Proper 4D System...');
+            const manager = new ProperSystemManager();
+            manager.startRenderLoop();
+            window.properManager = manager;
+        });
+        
+    </script>
 </body>
 </html>
