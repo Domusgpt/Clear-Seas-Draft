@@ -44,6 +44,9 @@
   <!-- ENHANCED MASTER CONDUCTOR - Total Reactivity System -->
   <script src="scripts/enhanced-master-conductor.js" defer></script>
   
+  <!-- CONTAINED VISUALIZERS - Stay within card boundaries -->
+  <script src="scripts/contained-card-visualizers.js" defer></script>
+
   <!-- SUPPORTING SYSTEMS -->
   <script src="scripts/zone-visualizers.js" defer></script>
   <script src="scripts/mobile-navigation-injector.js" defer></script>
@@ -201,7 +204,7 @@
       
       <div class="tech-grid">
         <!-- Polytopal Projection Engine -->
-        <div id="tech-card-polychora" class="tech-card unified-card" data-profile="tech-card" data-interaction-type="cosmic">
+        <div id="tech-card-polychora" class="tech-card unified-card polytopal-card" data-profile="tech-card" data-interaction-type="cosmic" data-visualizer="polytopal">
           <div class="card-depth-background"></div>
           <div class="card-depth-shadow"></div>
           <div class="card-content">
@@ -223,7 +226,7 @@
         </div>
         
         <!-- GPU Shader Systems -->
-        <div id="tech-card-quantum" class="tech-card unified-card" data-profile="tech-card" data-interaction-type="precision">
+        <div id="tech-card-quantum" class="tech-card unified-card quantum-card" data-profile="tech-card" data-interaction-type="precision" data-visualizer="quantum">
           <div class="card-depth-background"></div>
           <div class="card-depth-shadow"></div>
           <div class="card-content">
@@ -249,7 +252,7 @@
         </div>
         
         <!-- Agentic Integration -->
-        <div id="tech-card-holographic" class="tech-card unified-card" data-profile="tech-card" data-interaction-type="creative">
+        <div id="tech-card-holographic" class="tech-card unified-card neural-card" data-profile="tech-card" data-interaction-type="creative" data-visualizer="neural">
           <div class="card-depth-background"></div>
           <div class="card-depth-shadow"></div>
           <div class="card-content">
