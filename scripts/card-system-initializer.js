@@ -41,7 +41,39 @@ class CardSystemController {
         colorScheme: 'portfolio'
       }
     };
-    
+
+    this.brandAssets = {
+      images: [
+        'assets/Screenshot_20250430-141821.png',
+        'assets/Screenshot_20241012-073718.png',
+        'assets/Screenshot_20250430-142024~2.png',
+        'assets/Screenshot_20250430-142002~2.png',
+        'assets/Screenshot_20250430-142032~2.png',
+        'assets/file_00000000fc08623085668cf8b5e0a1e5.png',
+        'assets/file_0000000054a06230817873012865d150.png',
+        'assets/file_0000000006fc6230a8336bfa1fcebd89.png',
+        'assets/image_8 (1).png'
+      ],
+      videos: [
+        '20250505_1321_Neon Blossom Transformation_simple_compose_01jtgqf5vjevn8nbrnsx8yd5fs.mp4',
+        '20250505_1726_Noir Filament Mystery_simple_compose_01jth5f1kwe9r9zxqet54bz3q0.mp4',
+        '20250506_0014_Gemstone Coral Transformation_remix_01jthwv071e06vmjd0mn60zm3s.mp4',
+        '20250506_0014_Gemstone Coral Transformation_remix_01jthwv0c4fxk8m0e79ry2t4ke.mp4',
+        '1746496560073.mp4',
+        '1746500614769.mp4',
+        '1746576068221.mp4'
+      ]
+    };
+
+    this.brandAssignmentIndex = 0;
+    this.scrollTilt = 0;
+    this.scrollTiltTarget = 0;
+    this.scrollTiltRaf = null;
+
+    this.ensureBrandStyles();
+    this.setupScrollTiltSync();
+    this.applyScrollTiltToCards(this.scrollTilt);
+
     console.log('🎨 Card System Controller initialized');
   }
   
@@ -108,8 +140,10 @@ class CardSystemController {
     
     // Setup card-specific interactions
     this.setupCardInteractions(cardElement, cardData);
-    
+    this.decorateCard(cardElement, cardData);
+
     this.cards.set(cardId, cardData);
+    this.applyScrollTiltToCards(this.scrollTilt);
   }
   
   applyCardConfiguration(visualizer, config, role) {
@@ -148,6 +182,286 @@ class CardSystemController {
     if (roleIntensityMods[role]) {
       visualizer.roleParams.intensity *= roleIntensityMods[role];
     }
+  }
+
+  decorateCard(cardElement, cardData) {
+    if (!cardElement || cardElement.dataset.brandDecorated === 'true') return;
+
+    cardElement.dataset.brandDecorated = 'true';
+    cardElement.classList.add('card-brand-enhanced');
+    cardElement.style.setProperty('--scroll-tilt', this.scrollTilt.toFixed(4));
+    cardElement.style.setProperty('--visualizer-scroll-tilt', this.scrollTilt.toFixed(4));
+    cardElement.style.setProperty('--scroll-tilt-deg', `${(this.scrollTilt * 12).toFixed(2)}deg`);
+
+    const targetContainer =
+      cardElement.querySelector('.visualization-container') ||
+      cardElement.querySelector('.card-preview') ||
+      cardElement.querySelector('.card-visual') ||
+      cardElement;
+
+    if (targetContainer && !['relative', 'absolute', 'fixed'].includes(getComputedStyle(targetContainer).position)) {
+      targetContainer.style.position = 'relative';
+    }
+
+    this.expandCanvasBounds(targetContainer);
+    this.insertBrandOverlay(targetContainer, cardData);
+
+    const observer = new MutationObserver(() => {
+      this.expandCanvasBounds(targetContainer);
+      this.insertBrandOverlay(targetContainer, cardData);
+    });
+
+    observer.observe(targetContainer, { childList: true, subtree: true });
+
+    const previousCleanup = cardData.cleanup;
+    cardData.cleanup = () => {
+      observer.disconnect();
+      if (typeof previousCleanup === 'function') {
+        previousCleanup();
+      }
+    };
+  }
+
+  expandCanvasBounds(container) {
+    if (!container) return;
+    const canvases = container.querySelectorAll('canvas');
+    canvases.forEach(canvas => this.styleVisualizerCanvas(canvas));
+  }
+
+  styleVisualizerCanvas(canvas) {
+    if (!canvas || canvas.dataset.brandExpanded === 'true') return;
+
+    canvas.dataset.brandExpanded = 'true';
+    canvas.style.position = 'absolute';
+    canvas.style.top = '50%';
+    canvas.style.left = '50%';
+    canvas.style.width = '135%';
+    canvas.style.height = '135%';
+    canvas.style.transform = 'translate(-50%, -50%) scale(1.05)';
+    canvas.style.transformOrigin = 'center';
+    canvas.style.pointerEvents = 'none';
+    canvas.style.borderRadius = '20px';
+    canvas.style.willChange = 'transform, filter';
+  }
+
+  insertBrandOverlay(container, cardData) {
+    if (!container) return;
+
+    const hasOverlay = container.querySelector('.card-brand-overlay');
+    const hasVideo = container.querySelector('.card-brand-video');
+
+    if (hasOverlay && hasVideo) {
+      return;
+    }
+
+    const assetIndex = this.brandAssignmentIndex;
+    const imageSrc = hasOverlay ? null : this.selectAsset(this.brandAssets.images, assetIndex);
+    const videoSrc = hasVideo ? null : this.selectAsset(this.brandAssets.videos, assetIndex);
+    let assetApplied = false;
+
+    if (!hasOverlay && imageSrc) {
+      const overlay = document.createElement('div');
+      overlay.className = 'card-brand-overlay';
+      overlay.style.setProperty('--brand-rotation', `${(Math.random() * 12 - 6).toFixed(2)}deg`);
+      overlay.style.backgroundImage = `url('${this.getMediaPath(imageSrc)}')`;
+      overlay.setAttribute('aria-hidden', 'true');
+      container.appendChild(overlay);
+      assetApplied = true;
+    }
+
+    if (!hasVideo && videoSrc) {
+      const video = document.createElement('video');
+      video.className = 'card-brand-video';
+      video.muted = true;
+      video.loop = true;
+      video.autoplay = true;
+      video.playsInline = true;
+      video.preload = 'metadata';
+      video.src = this.getMediaPath(videoSrc);
+      video.style.setProperty('--brand-rotation', `${(Math.random() * 10 - 5).toFixed(2)}deg`);
+      video.setAttribute('aria-hidden', 'true');
+      video.addEventListener('error', () => video.remove());
+      video.addEventListener('loadeddata', () => {
+        video.play().catch(() => {});
+      });
+      container.appendChild(video);
+
+      if (cardData) {
+        cardData.brandVideo = video;
+      }
+      assetApplied = true;
+    }
+
+    if (assetApplied) {
+      this.brandAssignmentIndex++;
+    }
+  }
+
+  selectAsset(list, index) {
+    if (!Array.isArray(list) || list.length === 0) return null;
+    return list[index % list.length];
+  }
+
+  getMediaPath(assetPath) {
+    if (!assetPath) return '';
+    const trimmed = assetPath.trim();
+    if (trimmed.startsWith('http')) {
+      return trimmed;
+    }
+    if (trimmed.startsWith('assets/')) {
+      return encodeURI(trimmed);
+    }
+    return encodeURI(`./${trimmed}`);
+  }
+
+  ensureBrandStyles() {
+    if (document.getElementById('card-brand-enhancements')) return;
+
+    const style = document.createElement('style');
+    style.id = 'card-brand-enhancements';
+    style.textContent = `
+      .card-brand-enhanced {
+        position: relative;
+        --scroll-tilt: 0;
+        --visualizer-scroll-tilt: 0;
+      }
+
+      .card-brand-enhanced .visualization-container,
+      .card-brand-enhanced .card-preview,
+      .card-brand-enhanced .card-visual {
+        overflow: visible !important;
+        transform-style: preserve-3d;
+      }
+
+      .card-brand-enhanced canvas,
+      .card-brand-enhanced .visualizer-canvas {
+        will-change: transform, filter;
+      }
+
+      .card-brand-enhanced canvas.card-visualizer-canvas,
+      .card-brand-enhanced canvas.visualizer-canvas,
+      .card-brand-enhanced canvas[data-visualizer],
+      .card-brand-enhanced canvas[data-webgl] {
+        position: absolute !important;
+        top: 50% !important;
+        left: 50% !important;
+        width: 135% !important;
+        height: 135% !important;
+        transform: translate(-50%, -50%) scale(1.12)
+          rotateX(calc(var(--visualizer-scroll-tilt, 0) * -6deg))
+          rotateY(calc(var(--visualizer-scroll-tilt, 0) * 3deg));
+        transform-origin: center;
+        pointer-events: none;
+        border-radius: 20px;
+        filter: saturate(1.08) brightness(1.04);
+        box-shadow:
+          0 0 45px rgba(0, 255, 255, 0.22),
+          0 0 85px rgba(255, 0, 255, 0.18);
+      }
+
+      .card-brand-overlay {
+        position: absolute;
+        inset: -25%;
+        background-position: center;
+        background-size: contain;
+        background-repeat: no-repeat;
+        opacity: 0.32;
+        mix-blend-mode: screen;
+        pointer-events: none;
+        transform: rotate(var(--brand-rotation, 0deg));
+        animation: cardBrandFloat 18s ease-in-out infinite alternate;
+        filter: saturate(1.2) drop-shadow(0 0 25px rgba(0, 255, 255, 0.25));
+      }
+
+      .card-brand-video {
+        position: absolute;
+        inset: -30%;
+        object-fit: cover;
+        opacity: 0.28;
+        mix-blend-mode: lighten;
+        pointer-events: none;
+        border-radius: 28px;
+        transform: rotate(var(--brand-rotation, 0deg)) scale(1.05);
+        filter: saturate(1.2) contrast(1.05) blur(0.2px);
+        animation: cardBrandDrift 24s ease-in-out infinite;
+      }
+
+      @keyframes cardBrandFloat {
+        0% { transform: rotate(var(--brand-rotation, 0deg)) translate3d(-5%, -5%, 0); }
+        50% { transform: rotate(calc(var(--brand-rotation, 0deg) + 4deg)) translate3d(6%, 4%, 10px); }
+        100% { transform: rotate(calc(var(--brand-rotation, 0deg) - 3deg)) translate3d(-4%, 6%, -6px); }
+      }
+
+      @keyframes cardBrandDrift {
+        0% { transform: rotate(var(--brand-rotation, 0deg)) scale(1.02); opacity: 0.18; }
+        50% { transform: rotate(calc(var(--brand-rotation, 0deg) + 2deg)) scale(1.08); opacity: 0.33; }
+        100% { transform: rotate(calc(var(--brand-rotation, 0deg) - 2deg)) scale(1.04); opacity: 0.22; }
+      }
+    `;
+
+    document.head.appendChild(style);
+  }
+
+  setupScrollTiltSync() {
+    const wheelHandler = (event) => {
+      const delta = Math.max(-200, Math.min(200, event.deltaY || 0));
+      const normalized = delta / 160;
+      this.scrollTiltTarget += normalized;
+      this.scrollTiltTarget = Math.max(-3, Math.min(3, this.scrollTiltTarget));
+
+      if (!this.scrollTiltRaf) {
+        this.scrollTiltRaf = requestAnimationFrame(() => this.updateScrollTiltAnimation());
+      }
+    };
+
+    window.addEventListener('wheel', wheelHandler, { passive: true });
+
+    window.addEventListener('scroll', () => {
+      if (!this.scrollTiltRaf) {
+        this.scrollTiltRaf = requestAnimationFrame(() => this.updateScrollTiltAnimation());
+      }
+    }, { passive: true });
+  }
+
+  updateScrollTiltAnimation() {
+    this.scrollTilt += (this.scrollTiltTarget - this.scrollTilt) * 0.2;
+    this.scrollTiltTarget *= 0.88;
+
+    if (Math.abs(this.scrollTilt) < 0.0005) {
+      this.scrollTilt = 0;
+    }
+
+    this.applyScrollTiltToCards(this.scrollTilt);
+
+    if (Math.abs(this.scrollTilt) > 0.001 || Math.abs(this.scrollTiltTarget) > 0.001) {
+      this.scrollTiltRaf = requestAnimationFrame(() => this.updateScrollTiltAnimation());
+    } else {
+      this.scrollTiltRaf = null;
+      this.scrollTilt = 0;
+      this.scrollTiltTarget = 0;
+      this.applyScrollTiltToCards(this.scrollTilt);
+    }
+  }
+
+  applyScrollTiltToCards(tiltValue) {
+    const clamped = Math.max(-2, Math.min(2, tiltValue));
+    const tiltString = clamped.toFixed(4);
+
+    document.documentElement.style.setProperty('--scroll-tilt', tiltString);
+    document.documentElement.style.setProperty('--visualizer-scroll-tilt', tiltString);
+    document.documentElement.style.setProperty('--scroll-tilt-deg', `${(clamped * 12).toFixed(2)}deg`);
+
+    this.cards.forEach(cardData => {
+      if (cardData?.element) {
+        cardData.element.style.setProperty('--scroll-tilt', tiltString);
+        cardData.element.style.setProperty('--visualizer-scroll-tilt', tiltString);
+        cardData.element.style.setProperty('--scroll-tilt-deg', `${(clamped * 12).toFixed(2)}deg`);
+      }
+    });
+
+    window.dispatchEvent(new CustomEvent('visualizer-scroll-tilt', {
+      detail: { tilt: clamped }
+    }));
   }
   
   setupCardInteractions(cardElement, cardData) {
@@ -349,7 +663,15 @@ class CardSystemController {
     if (cardData.cleanup) {
       cardData.cleanup();
     }
-    
+
+    if (cardData.brandVideo?.parentElement) {
+      cardData.brandVideo.remove();
+    }
+    const overlay = cardData.element?.querySelector('.card-brand-overlay');
+    if (overlay) {
+      overlay.remove();
+    }
+
     this.cards.delete(cardId);
     console.log(`🗑️ Card destroyed: ${cardId}`);
   }
