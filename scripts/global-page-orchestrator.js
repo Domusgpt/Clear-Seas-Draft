@@ -1,11 +1,36 @@
 import { resolvePageProfile, applyProfileMetadata } from './page-profile-registry.js';
 
-const BRAND_OVERRIDE_EVENT = window.__CLEAR_SEAS_BRAND_OVERRIDE_EVENT || 'clear-seas:brand-overrides-changed';
+const cssWebMasterGlobals = window.__CSS_WEB_MASTER_GLOBALS || (window.__CSS_WEB_MASTER_GLOBALS = {});
 
-const GLOBAL_MOTION_EVENT = window.__CLEAR_SEAS_GLOBAL_MOTION_EVENT || 'clear-seas:motion-updated';
-window.__CLEAR_SEAS_GLOBAL_MOTION_EVENT = GLOBAL_MOTION_EVENT;
+const DEFAULT_BRAND_EVENT = 'css-web-master:brand-overrides-changed';
+const DEFAULT_CLEAR_SEAS_BRAND_EVENT = 'clear-seas:brand-overrides-changed';
+const resolvedCssBrandEvent =
+  cssWebMasterGlobals.brandOverrideEvent ||
+  window.__CSS_WEB_MASTER_BRAND_OVERRIDE_EVENT ||
+  DEFAULT_BRAND_EVENT;
+const resolvedClearSeasBrandEvent = window.__CLEAR_SEAS_BRAND_OVERRIDE_EVENT || DEFAULT_CLEAR_SEAS_BRAND_EVENT;
+const BRAND_OVERRIDE_EVENTS = [...new Set([resolvedCssBrandEvent, resolvedClearSeasBrandEvent])];
+const BRAND_OVERRIDE_EVENT = resolvedCssBrandEvent;
+window.__CSS_WEB_MASTER_BRAND_OVERRIDE_EVENT = resolvedCssBrandEvent;
+window.__CLEAR_SEAS_BRAND_OVERRIDE_EVENT = resolvedClearSeasBrandEvent;
+cssWebMasterGlobals.brandOverrideEvent = resolvedCssBrandEvent;
+cssWebMasterGlobals.brandOverrideEvents = BRAND_OVERRIDE_EVENTS;
 
-const brandAssets = window.__CLEAR_SEAS_BRAND_ASSETS || (window.__CLEAR_SEAS_BRAND_ASSETS = {
+const DEFAULT_MOTION_EVENT = 'css-web-master:motion-updated';
+const DEFAULT_CLEAR_SEAS_MOTION_EVENT = 'clear-seas:motion-updated';
+const resolvedCssMotionEvent =
+  cssWebMasterGlobals.motionEvent ||
+  window.__CSS_WEB_MASTER_GLOBAL_MOTION_EVENT ||
+  DEFAULT_MOTION_EVENT;
+const resolvedClearSeasMotionEvent = window.__CLEAR_SEAS_GLOBAL_MOTION_EVENT || DEFAULT_CLEAR_SEAS_MOTION_EVENT;
+const GLOBAL_MOTION_EVENTS = [...new Set([resolvedCssMotionEvent, resolvedClearSeasMotionEvent])];
+const GLOBAL_MOTION_EVENT = resolvedCssMotionEvent;
+window.__CSS_WEB_MASTER_GLOBAL_MOTION_EVENT = resolvedCssMotionEvent;
+window.__CLEAR_SEAS_GLOBAL_MOTION_EVENT = resolvedClearSeasMotionEvent;
+cssWebMasterGlobals.motionEvent = resolvedCssMotionEvent;
+cssWebMasterGlobals.motionEvents = GLOBAL_MOTION_EVENTS;
+
+const DEFAULT_BRAND_ASSETS = {
   images: [
     'assets/Screenshot_20250430-141821.png',
     'assets/Screenshot_20241012-073718.png',
@@ -26,9 +51,31 @@ const brandAssets = window.__CLEAR_SEAS_BRAND_ASSETS || (window.__CLEAR_SEAS_BRA
     '1746500614769.mp4',
     '1746576068221.mp4'
   ]
-});
+};
+
+const existingBrandAssets = window.__CSS_WEB_MASTER_BRAND_ASSETS || window.__CLEAR_SEAS_BRAND_ASSETS;
+const brandAssets = (() => {
+  const source = existingBrandAssets && typeof existingBrandAssets === 'object' ? existingBrandAssets : DEFAULT_BRAND_ASSETS;
+  const ensureArray = (input, fallback) => {
+    if (Array.isArray(input) && input.length) {
+      return [...input];
+    }
+    return [...fallback];
+  };
+  const prepared = {
+    images: ensureArray(source.images, DEFAULT_BRAND_ASSETS.images),
+    videos: ensureArray(source.videos, DEFAULT_BRAND_ASSETS.videos)
+  };
+  window.__CSS_WEB_MASTER_BRAND_ASSETS = prepared;
+  window.__CLEAR_SEAS_BRAND_ASSETS = prepared;
+  cssWebMasterGlobals.brandAssets = prepared;
+  return prepared;
+})();
 
 const brandOverrideApi = (() => {
+  if (window.__CSS_WEB_MASTER_BRAND_OVERRIDE_API) {
+    return window.__CSS_WEB_MASTER_BRAND_OVERRIDE_API;
+  }
   if (window.__CLEAR_SEAS_BRAND_OVERRIDE_API) {
     return window.__CLEAR_SEAS_BRAND_OVERRIDE_API;
   }
@@ -102,7 +149,9 @@ const brandOverrideApi = (() => {
         eventDetail[key] = detail[key];
       });
     }
-    window.dispatchEvent(new CustomEvent(BRAND_OVERRIDE_EVENT, { detail: eventDetail }));
+    BRAND_OVERRIDE_EVENTS.forEach((eventName) => {
+      window.dispatchEvent(new CustomEvent(eventName, { detail: eventDetail }));
+    });
   };
 
   const refreshGlobalOverrides = (detail) => {
@@ -512,11 +561,15 @@ const brandOverrideApi = (() => {
     applyPalette,
     hasAssetList,
     refresh: refreshGlobalOverrides,
-    eventName: BRAND_OVERRIDE_EVENT
+    eventName: BRAND_OVERRIDE_EVENT,
+    events: BRAND_OVERRIDE_EVENTS
   };
 
-  window.__CLEAR_SEAS_BRAND_OVERRIDE_EVENT = BRAND_OVERRIDE_EVENT;
+  window.__CSS_WEB_MASTER_BRAND_OVERRIDE_EVENT = BRAND_OVERRIDE_EVENT;
+  window.__CLEAR_SEAS_BRAND_OVERRIDE_EVENT = resolvedClearSeasBrandEvent;
+  window.__CSS_WEB_MASTER_BRAND_OVERRIDE_API = api;
   window.__CLEAR_SEAS_BRAND_OVERRIDE_API = api;
+  cssWebMasterGlobals.brandOverrideApi = api;
   return api;
 })();
 
@@ -525,6 +578,7 @@ function detectActivePageProfile() {
   const profile = {
     key: resolved?.key || 'core-foundation',
     palette: resolved?.palette || 'foundation',
+    paletteKey: resolved?.paletteKey || resolved?.palette || 'foundation',
     family: resolved?.family || resolved?.key || 'core-foundation',
     layout: resolved?.layout || 'grid',
     accent: resolved?.accent || null,
@@ -535,7 +589,8 @@ function detectActivePageProfile() {
     canvas: resolved?.canvas || {},
     scripts: Array.isArray(resolved?.scripts) ? [...resolved.scripts] : [],
     signature: resolved?.signature || '',
-    seed: resolved?.seed || 0
+    seed: resolved?.seed || 0,
+    siteCode: resolved?.siteCode || null
   };
 
   profile.imageSeed = brandAssets.images.length ? profile.seed % brandAssets.images.length : 0;
@@ -547,6 +602,10 @@ function detectActivePageProfile() {
 
   applyProfileMetadata(profile);
   window.__CLEAR_SEAS_PAGE_PROFILE = profile;
+  window.__CSS_WEB_MASTER_PAGE_PROFILE = profile;
+  cssWebMasterGlobals.pageProfile = profile;
+  cssWebMasterGlobals.siteCode = profile.siteCode || null;
+  cssWebMasterGlobals.paletteKey = profile.paletteKey || profile.palette;
   return profile;
 }
 
@@ -568,6 +627,7 @@ function preparePageProfile(profile) {
     sharedMotion.collection = profile.key || null;
     sharedMotion.family = profile.family || null;
     sharedMotion.layout = profile.layout || null;
+    sharedMotion.siteCode = profile.siteCode || null;
   }
 }
 
@@ -589,8 +649,11 @@ function refreshAllCardOverrides(options = {}) {
   });
 }
 
-window.addEventListener(BRAND_OVERRIDE_EVENT, () => {
+const handleBrandOverridesUpdated = () => {
   refreshAllCardOverrides({ resetCycle: true });
+};
+BRAND_OVERRIDE_EVENTS.forEach((eventName) => {
+  window.addEventListener(eventName, handleBrandOverridesUpdated);
 });
 const groupStates = new Map();
 let activeCardState = null;
@@ -626,7 +689,7 @@ const globalState = {
   warp: { current: 0, target: 0 }
 };
 
-const sharedMotion = window.__CLEAR_SEAS_GLOBAL_MOTION || (window.__CLEAR_SEAS_GLOBAL_MOTION = {
+const DEFAULT_MOTION_STATE = {
   focus: { x: 0.5, y: 0.5, amount: 0 },
   tilt: { x: 0, y: 0, strength: 0 },
   bend: 0,
@@ -639,9 +702,41 @@ const sharedMotion = window.__CLEAR_SEAS_GLOBAL_MOTION || (window.__CLEAR_SEAS_G
   synergy: 0,
   palette: null,
   collection: null,
+  family: null,
+  layout: null,
+  siteCode: null,
   updatedAt: performance.now(),
   eventName: GLOBAL_MOTION_EVENT
-});
+};
+
+const existingMotionState = window.__CSS_WEB_MASTER_GLOBAL_MOTION || window.__CLEAR_SEAS_GLOBAL_MOTION;
+const sharedMotion = existingMotionState && typeof existingMotionState === 'object' ? existingMotionState : {};
+sharedMotion.focus = { ...DEFAULT_MOTION_STATE.focus, ...(sharedMotion.focus || {}) };
+sharedMotion.tilt = { ...DEFAULT_MOTION_STATE.tilt, ...(sharedMotion.tilt || {}) };
+sharedMotion.bend = Number.isFinite(sharedMotion.bend) ? sharedMotion.bend : DEFAULT_MOTION_STATE.bend;
+sharedMotion.warp = Number.isFinite(sharedMotion.warp) ? sharedMotion.warp : DEFAULT_MOTION_STATE.warp;
+sharedMotion.scroll = Number.isFinite(sharedMotion.scroll) ? sharedMotion.scroll : DEFAULT_MOTION_STATE.scroll;
+sharedMotion.scrollDirection = Number.isFinite(sharedMotion.scrollDirection)
+  ? sharedMotion.scrollDirection
+  : DEFAULT_MOTION_STATE.scrollDirection;
+sharedMotion.scrollSpeed = Number.isFinite(sharedMotion.scrollSpeed)
+  ? sharedMotion.scrollSpeed
+  : DEFAULT_MOTION_STATE.scrollSpeed;
+sharedMotion.focusTrend = Number.isFinite(sharedMotion.focusTrend)
+  ? sharedMotion.focusTrend
+  : DEFAULT_MOTION_STATE.focusTrend;
+sharedMotion.tiltSkew = Number.isFinite(sharedMotion.tiltSkew) ? sharedMotion.tiltSkew : DEFAULT_MOTION_STATE.tiltSkew;
+sharedMotion.synergy = Number.isFinite(sharedMotion.synergy) ? sharedMotion.synergy : DEFAULT_MOTION_STATE.synergy;
+sharedMotion.palette = sharedMotion.palette ?? DEFAULT_MOTION_STATE.palette;
+sharedMotion.collection = sharedMotion.collection ?? DEFAULT_MOTION_STATE.collection;
+sharedMotion.family = sharedMotion.family ?? DEFAULT_MOTION_STATE.family;
+sharedMotion.layout = sharedMotion.layout ?? DEFAULT_MOTION_STATE.layout;
+sharedMotion.siteCode = sharedMotion.siteCode ?? DEFAULT_MOTION_STATE.siteCode;
+sharedMotion.updatedAt = sharedMotion.updatedAt ?? DEFAULT_MOTION_STATE.updatedAt;
+sharedMotion.eventName = GLOBAL_MOTION_EVENT;
+window.__CSS_WEB_MASTER_GLOBAL_MOTION = sharedMotion;
+window.__CLEAR_SEAS_GLOBAL_MOTION = sharedMotion;
+cssWebMasterGlobals.motionState = sharedMotion;
 
 const motionEventState = {
   lastDispatch: 0,
@@ -710,7 +805,9 @@ function maybeDispatchGlobalMotionEvent() {
 
   motionEventState.lastDetail = { ...detail };
   motionEventState.lastDispatch = now;
-  window.dispatchEvent(new CustomEvent(GLOBAL_MOTION_EVENT, { detail }));
+  GLOBAL_MOTION_EVENTS.forEach((eventName) => {
+    window.dispatchEvent(new CustomEvent(eventName, { detail }));
+  });
 }
 
 const supportsVisibilityObserver = typeof window !== 'undefined' && 'IntersectionObserver' in window;
