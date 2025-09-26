@@ -21,6 +21,223 @@ const brandAssets = window.__CLEAR_SEAS_BRAND_ASSETS || (window.__CLEAR_SEAS_BRA
   ]
 });
 
+const pageCollectionProfiles = [
+  {
+    key: 'meta-index',
+    palette: 'meta',
+    fileNames: new Set(['index.html']),
+    tags: new Set(['index', 'map', 'meta']),
+    titleTokens: ['all versions', 'collections'],
+    videoPattern: [0, 1],
+    imageOrder: [2, 3, 4, 0, 1, 5, 6, 7, 8],
+    videoOrder: [4, 5, 6, 0, 1, 2, 3],
+    overlay: {
+      blend: 'screen',
+      opacity: 1.08,
+      filter: 'hue-rotate(18deg) saturate(1.35) brightness(1.1)',
+      rotate: '6deg',
+      depth: '18px'
+    },
+    canvas: {
+      scale: 0.08,
+      depth: '12px'
+    }
+  },
+  {
+    key: 'core-foundation',
+    palette: 'foundation',
+    fileNames: new Set([
+      '1-index.html',
+      '2-index-optimized.html',
+      '3-index-fixed.html',
+      '4-index-unified.html',
+      '5-index-vib34d-integrated.html',
+      '6-index-totalistic.html'
+    ]),
+    tags: new Set(['core', 'foundation', 'totalistic', 'unified']),
+    titleTokens: ['clear seas solutions', 'totalistic', 'integrated'],
+    videoPattern: [0, 1, 0, 0],
+    imageOrder: [0, 5, 1, 6, 2, 7, 3, 8, 4],
+    videoOrder: [1, 2, 3, 0, 4, 5, 6],
+    overlay: {
+      blend: 'soft-light',
+      opacity: 0.96,
+      filter: 'saturate(1.2) brightness(1.05)',
+      rotate: '2deg',
+      depth: '8px'
+    },
+    canvas: {
+      scale: 0.12,
+      depth: '18px'
+    }
+  },
+  {
+    key: 'immersive-ai',
+    palette: 'immersive',
+    fileNames: new Set([
+      '10-pr-4.html', '11-pr-5.html', '12-pr-6.html',
+      '14-pr-8.html', '15-pr-9.html', '16-pr-10.html',
+      '17-pr-11.html', '18-pr-12.html', '19-pr-13.html',
+      '20-pr-14.html', '21-pr-15.html', '22-pr-16.html',
+      '23-pr-17.html', '24-pr-18.html', '25-pr-19.html',
+      '26-pr-20.html', '27-pr-21.html', '28-pr-22.html',
+      '29-pr-23.html', '30-pr-24.html'
+    ]),
+    tags: new Set(['immersive', 'mission', 'pulse', 'signal', 'pr', 'blueprint']),
+    titleTokens: ['immersive experience', 'mission axis', 'experience blueprint'],
+    videoPattern: [1, 0, 1, 1],
+    imageOrder: [4, 0, 5, 1, 6, 2, 7, 3, 8],
+    videoOrder: [4, 5, 6, 0, 1, 2, 3],
+    overlay: {
+      blend: 'color-dodge',
+      opacity: 1.14,
+      filter: 'hue-rotate(32deg) saturate(1.5) brightness(1.18)',
+      rotate: '9deg',
+      depth: '28px'
+    },
+    canvas: {
+      scale: 0.18,
+      depth: '26px'
+    },
+    scripts: ['scripts/immersive-experience-actualizer.js']
+  },
+  {
+    key: 'concept-labs',
+    palette: 'concept',
+    fileNames: new Set([
+      '7-pr-1.html',
+      '8-pr-2.html',
+      '9-pr-3.html',
+      '13-pr-7.html',
+      '25-orthogonal-depth-progression.html',
+      'ultimate-clear-seas-holistic-system.html'
+    ]),
+    tags: new Set(['concept', 'lab', 'gallery', 'codex', 'orthogonal', 'ultimate']),
+    titleTokens: ['visual codex', 'orthogonal depth', 'holistic system'],
+    videoPattern: [1, 1, 0, 1],
+    imageOrder: [6, 7, 8, 3, 4, 0, 1, 2, 5],
+    videoOrder: [2, 3, 4, 5, 6, 0, 1],
+    overlay: {
+      blend: 'lighten',
+      opacity: 1.22,
+      filter: 'hue-rotate(280deg) saturate(1.45) brightness(1.12)',
+      rotate: '-7deg',
+      depth: '32px'
+    },
+    canvas: {
+      scale: 0.22,
+      depth: '34px'
+    }
+  }
+];
+
+function normaliseFileName(name) {
+  if (!name) {
+    return 'index.html';
+  }
+  const trimmed = name.trim().toLowerCase();
+  if (!trimmed) {
+    return 'index.html';
+  }
+  if (trimmed.endsWith('.html')) {
+    return trimmed;
+  }
+  return `${trimmed}.html`;
+}
+
+function computeHashSeed(input) {
+  let hash = 0;
+  const source = input || '';
+  for (let i = 0; i < source.length; i += 1) {
+    hash = (hash * 131 + source.charCodeAt(i)) >>> 0;
+  }
+  return hash;
+}
+
+function detectActivePageProfile() {
+  const docEl = document.documentElement;
+  const body = document.body || null;
+  const path = typeof window !== 'undefined' && window.location ? window.location.pathname : '';
+  const pathToken = path ? path.split('/').filter(Boolean).pop() : '';
+  const metaName = normaliseFileName(pathToken || docEl.dataset.pageId || '');
+  const candidateTokens = [
+    docEl.dataset.pageCollection,
+    docEl.dataset.collection,
+    docEl.dataset.showcaseTheme,
+    docEl.dataset.showcaseCard,
+    body && body.dataset ? body.dataset.pageCollection : null,
+    body && body.dataset ? body.dataset.collection : null
+  ].filter(Boolean).map((token) => token.toLowerCase());
+  const title = (document.title || '').toLowerCase();
+
+  let matched = pageCollectionProfiles.find((profile) => profile.fileNames.has(metaName));
+  if (!matched) {
+    matched = pageCollectionProfiles.find((profile) => candidateTokens.some((token) => profile.tags.has(token)));
+  }
+  if (!matched) {
+    matched = pageCollectionProfiles.find((profile) => profile.titleTokens.some((token) => title.includes(token)));
+  }
+  if (!matched) {
+    matched = pageCollectionProfiles.find((profile) => profile.key === 'core-foundation') || pageCollectionProfiles[0];
+  }
+
+  const signatureParts = [metaName, title].concat(candidateTokens);
+  const signature = signatureParts.filter(Boolean).join('|') || metaName;
+  const seed = computeHashSeed(signature);
+  const imageSeed = brandAssets.images.length ? seed % brandAssets.images.length : 0;
+  const videoSeed = brandAssets.videos.length ? Math.floor(seed / 7) % brandAssets.videos.length : 0;
+
+  const profile = {
+    key: matched.key,
+    palette: matched.palette,
+    videoPattern: matched.videoPattern || null,
+    imageOrder: matched.imageOrder || null,
+    videoOrder: matched.videoOrder || null,
+    overlay: matched.overlay || {},
+    canvas: matched.canvas || {},
+    scripts: matched.scripts ? [...matched.scripts] : [],
+    signature,
+    seed,
+    imageSeed,
+    videoSeed
+  };
+
+  if (metaName === 'ultimate-clear-seas-holistic-system.html') {
+    profile.scripts.push('scripts/ultimate-holistic-vib34d-system.js');
+  }
+
+  docEl.dataset.globalPageCollection = profile.key;
+  docEl.dataset.globalBrandPalette = profile.palette;
+  if (body) {
+    body.dataset.globalPageCollection = profile.key;
+    body.dataset.globalBrandPalette = profile.palette;
+  }
+  docEl.style.setProperty('--global-brand-palette', profile.palette);
+  if (profile.overlay?.filter) {
+    docEl.style.setProperty('--global-brand-overlay-filter', profile.overlay.filter);
+  }
+  if (profile.overlay?.opacity != null) {
+    docEl.style.setProperty('--global-brand-overlay-opacity', profile.overlay.opacity.toString());
+  }
+  window.__CLEAR_SEAS_PAGE_PROFILE = profile;
+  return profile;
+}
+
+const activePageProfile = detectActivePageProfile();
+
+function preparePageProfile(profile) {
+  if (!profile) {
+    return;
+  }
+  const overlaySettings = profile.overlay || {};
+  if (overlaySettings.blend) {
+    document.documentElement.style.setProperty('--global-brand-overlay-blend', overlaySettings.blend);
+  }
+  if (Array.isArray(profile.scripts) && profile.scripts.length) {
+    profile.scripts.forEach((src) => ensureScript(src));
+  }
+}
+
 const stylesLoaded = new Set();
 const scriptsLoaded = new Map();
 const cardStates = new Map();
@@ -180,18 +397,53 @@ function shouldRegister(element) {
   return true;
 }
 
+function resolveAssetIndex(order, seed, offset, length) {
+  if (!length) {
+    return 0;
+  }
+  if (Array.isArray(order) && order.length) {
+    const orderIndex = (seed + offset) % order.length;
+    return order[orderIndex % order.length] % length;
+  }
+  return (seed + offset) % length;
+}
+
 function pickBrandImage(index) {
   if (!brandAssets.images.length) {
     return null;
   }
-  return brandAssets.images[index % brandAssets.images.length];
+  const assetIndex = resolveAssetIndex(activePageProfile.imageOrder, activePageProfile.imageSeed || 0, index, brandAssets.images.length);
+  return brandAssets.images[assetIndex];
 }
 
 function pickBrandVideo(index) {
   if (!brandAssets.videos.length) {
     return null;
   }
-  return brandAssets.videos[index % brandAssets.videos.length];
+  const assetIndex = resolveAssetIndex(activePageProfile.videoOrder, activePageProfile.videoSeed || 0, index, brandAssets.videos.length);
+  return brandAssets.videos[assetIndex];
+}
+
+function shouldPreferVideo(state) {
+  const element = state?.element;
+  if (!element) {
+    return false;
+  }
+  if (element.dataset.brandVideo === 'true') {
+    return true;
+  }
+  if (element.dataset.brandVideo === 'false') {
+    return false;
+  }
+  if (element.classList.contains('brand-video-card')) {
+    return true;
+  }
+  const pattern = activePageProfile.videoPattern;
+  if (Array.isArray(pattern) && pattern.length) {
+    const cycleIndex = state.index % pattern.length;
+    return Boolean(pattern[cycleIndex]);
+  }
+  return state.index % 3 === 0;
 }
 
 function ensureBrandLayer(state) {
@@ -213,10 +465,31 @@ function ensureBrandLayer(state) {
     state.brandVideo = existingVideo;
   }
 
-  const preferVideo = card.dataset.brandVideo === 'true' || card.classList.contains('brand-video-card') || state.index % 3 === 0;
+  const overlaySettings = activePageProfile.overlay || {};
+
+  card.dataset.brandPalette = activePageProfile.palette;
+  card.style.setProperty('--brand-overlay-opacity', overlaySettings.opacity != null ? String(overlaySettings.opacity) : '1');
+  card.style.setProperty('--brand-overlay-filter', overlaySettings.filter || 'brightness(1)');
+  card.style.setProperty('--brand-overlay-blend', overlaySettings.blend || 'screen');
+  card.style.setProperty('--brand-overlay-rotate', overlaySettings.rotate || '0deg');
+  card.style.setProperty('--brand-overlay-depth', overlaySettings.depth || '0px');
+  if (activePageProfile.canvas?.scale != null) {
+    card.style.setProperty('--card-canvas-scale', String(activePageProfile.canvas.scale));
+  }
+  if (activePageProfile.canvas?.depth) {
+    card.style.setProperty('--card-canvas-depth', activePageProfile.canvas.depth);
+  }
+
+  const preferVideo = shouldPreferVideo(state);
   const videoSource = preferVideo ? pickBrandVideo(state.index) : null;
 
   overlay.dataset.brandIndex = state.index;
+  overlay.dataset.brandPalette = activePageProfile.palette;
+  overlay.style.setProperty('--brand-overlay-opacity', overlaySettings.opacity != null ? String(overlaySettings.opacity) : '1');
+  overlay.style.setProperty('--brand-overlay-filter', overlaySettings.filter || 'brightness(1)');
+  overlay.style.setProperty('--brand-overlay-blend', overlaySettings.blend || 'screen');
+  overlay.style.setProperty('--brand-overlay-rotate', overlaySettings.rotate || '0deg');
+  overlay.style.setProperty('--brand-overlay-depth', overlaySettings.depth || '0px');
 
   if (videoSource) {
     overlay.style.backgroundImage = 'none';
@@ -755,6 +1028,8 @@ function step() {
     element.style.setProperty('--card-twist', `${twistDeg.toFixed(3)}deg`);
     element.style.setProperty('--card-pulse', pulse.toFixed(4));
     element.style.setProperty('--card-scroll-momentum', state.scroll.toFixed(4));
+    const rotationPhase = ((state.pointer.smoothX - 0.5) * 0.65) - ((state.pointer.smoothY - 0.5) * 0.55) + state.scroll * 0.32 + supportStrength * 0.18;
+    element.style.setProperty('--card-rotation-phase', rotationPhase.toFixed(4));
     if (!supportsVisibilityObserver) {
       element.style.setProperty('--card-visibility', state.isVisible ? '1' : '0');
     }
@@ -888,6 +1163,7 @@ function observeMutations() {
 }
 
 async function initialise() {
+  preparePageProfile(activePageProfile);
   ensureStylesheet('styles/global-card-synergy.css', 'global-card-synergy');
   collectCandidateElements().forEach((element) => registerCard(element));
   updateSupportTargets(null);

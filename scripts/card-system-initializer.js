@@ -13,7 +13,19 @@ class CardSystemController {
       maxVisualizers: 6,
       performanceMode: 'auto'
     };
-    
+
+    this.pageProfile = window.__CLEAR_SEAS_PAGE_PROFILE || {
+      key: 'core-foundation',
+      palette: 'foundation',
+      imageSeed: 0,
+      videoSeed: 0,
+      overlay: {},
+      canvas: {},
+      videoPattern: null,
+      imageOrder: null,
+      videoOrder: null
+    };
+
     this.cardConfigs = {
       'hero-section': {
         roles: ['background'],
@@ -42,7 +54,7 @@ class CardSystemController {
       }
     };
 
-    this.brandAssets = {
+    const fallbackBrandAssets = {
       images: [
         'assets/Screenshot_20250430-141821.png',
         'assets/Screenshot_20241012-073718.png',
@@ -65,7 +77,21 @@ class CardSystemController {
       ]
     };
 
+    const sharedBrandAssets = window.__CLEAR_SEAS_BRAND_ASSETS;
+    const sharedImages = Array.isArray(sharedBrandAssets?.images) && sharedBrandAssets.images.length
+      ? sharedBrandAssets.images
+      : fallbackBrandAssets.images;
+    const sharedVideos = Array.isArray(sharedBrandAssets?.videos) && sharedBrandAssets.videos.length
+      ? sharedBrandAssets.videos
+      : fallbackBrandAssets.videos;
+
+    this.brandAssets = {
+      images: [...sharedImages],
+      videos: [...sharedVideos]
+    };
+
     this.brandAssignmentIndex = 0;
+    this.assetCursor = { images: 0, videos: 0 };
     this.scrollTilt = 0;
     this.scrollTiltTarget = 0;
     this.scrollTiltRaf = null;
@@ -209,6 +235,19 @@ class CardSystemController {
 
     cardElement.dataset.brandDecorated = 'true';
     cardElement.classList.add('card-brand-enhanced');
+    const overlaySettings = this.pageProfile.overlay || {};
+    cardElement.dataset.brandPalette = this.pageProfile.palette || 'foundation';
+    cardElement.style.setProperty('--brand-overlay-opacity', overlaySettings.opacity != null ? String(overlaySettings.opacity) : '1');
+    cardElement.style.setProperty('--brand-overlay-filter', overlaySettings.filter || 'brightness(1)');
+    cardElement.style.setProperty('--brand-overlay-blend', overlaySettings.blend || 'screen');
+    cardElement.style.setProperty('--brand-overlay-rotate', overlaySettings.rotate || '0deg');
+    cardElement.style.setProperty('--brand-overlay-depth', overlaySettings.depth || '0px');
+    if (this.pageProfile.canvas?.scale != null) {
+      cardElement.style.setProperty('--card-canvas-scale', String(this.pageProfile.canvas.scale));
+    }
+    if (this.pageProfile.canvas?.depth) {
+      cardElement.style.setProperty('--card-canvas-depth', this.pageProfile.canvas.depth);
+    }
     cardElement.dataset.focusState = cardElement.dataset.focusState || 'idle';
     cardElement.style.setProperty('--scroll-tilt', this.scrollTilt.toFixed(4));
     cardElement.style.setProperty('--visualizer-scroll-tilt', this.scrollTilt.toFixed(4));
@@ -280,9 +319,10 @@ class CardSystemController {
       return;
     }
 
-    const assetIndex = this.brandAssignmentIndex;
-    const imageSrc = hasOverlay ? null : this.selectAsset(this.brandAssets.images, assetIndex);
-    const videoSrc = hasVideo ? null : this.selectAsset(this.brandAssets.videos, assetIndex);
+    const overlaySettings = this.pageProfile.overlay || {};
+    const imageSrc = hasOverlay ? null : this.selectAssetWithType(this.brandAssets.images, this.brandAssignmentIndex, 'images');
+    const allowVideo = !hasVideo && this.shouldDecorateWithVideo(cardData);
+    const videoSrc = allowVideo ? this.selectAssetWithType(this.brandAssets.videos, this.brandAssignmentIndex, 'videos') : null;
     let assetApplied = false;
 
     if (!hasOverlay && imageSrc) {
@@ -292,6 +332,12 @@ class CardSystemController {
       overlay.style.backgroundImage = `url('${this.getMediaPath(imageSrc)}')`;
       overlay.setAttribute('aria-hidden', 'true');
       overlay.dataset.focusReactive = 'true';
+      overlay.dataset.brandPalette = this.pageProfile.palette || 'foundation';
+      overlay.style.setProperty('--brand-overlay-opacity', overlaySettings.opacity != null ? String(overlaySettings.opacity) : '1');
+      overlay.style.setProperty('--brand-overlay-filter', overlaySettings.filter || 'brightness(1)');
+      overlay.style.setProperty('--brand-overlay-blend', overlaySettings.blend || 'screen');
+      overlay.style.setProperty('--brand-overlay-rotate', overlaySettings.rotate || '0deg');
+      overlay.style.setProperty('--brand-overlay-depth', overlaySettings.depth || '0px');
       container.appendChild(overlay);
       if (cardData) {
         cardData.layers.overlay = overlay;
@@ -299,7 +345,7 @@ class CardSystemController {
       assetApplied = true;
     }
 
-    if (!hasVideo && videoSrc) {
+    if (videoSrc) {
       const video = document.createElement('video');
       video.className = 'card-brand-video';
       video.muted = true;
@@ -311,6 +357,10 @@ class CardSystemController {
       video.style.setProperty('--brand-rotation', `${(Math.random() * 10 - 5).toFixed(2)}deg`);
       video.setAttribute('aria-hidden', 'true');
       video.dataset.focusReactive = 'true';
+      video.dataset.brandPalette = this.pageProfile.palette || 'foundation';
+      video.style.setProperty('--brand-overlay-opacity', overlaySettings.opacity != null ? String(overlaySettings.opacity) : '1');
+      video.style.setProperty('--brand-overlay-filter', overlaySettings.filter || 'brightness(1)');
+      video.style.setProperty('--brand-overlay-blend', overlaySettings.blend || 'screen');
       video.addEventListener('error', () => {
         if (video.parentElement) {
           video.remove();
@@ -513,9 +563,42 @@ class CardSystemController {
     });
   }
 
+  shouldDecorateWithVideo(cardData) {
+    const element = cardData?.element;
+    if (!element) return false;
+    if (element.dataset.brandVideo === 'true') return true;
+    if (element.dataset.brandVideo === 'false') return false;
+    if (element.classList.contains('brand-video-card')) return true;
+    const pattern = Array.isArray(this.pageProfile.videoPattern) ? this.pageProfile.videoPattern : null;
+    if (pattern && pattern.length) {
+      const index = this.brandAssignmentIndex % pattern.length;
+      return Boolean(pattern[index]);
+    }
+    return this.brandAssignmentIndex % 3 === 0;
+  }
+
   selectAsset(list, index) {
+    return this.selectAssetWithType(list, index, 'images');
+  }
+
+  selectAssetWithType(list, index, typeHint) {
     if (!Array.isArray(list) || list.length === 0) return null;
-    return list[index % list.length];
+    const cursorKey = typeHint === 'videos' ? 'videos' : 'images';
+    if (!this.assetCursor) {
+      this.assetCursor = { images: 0, videos: 0 };
+    }
+    const cursor = this.assetCursor[cursorKey] || 0;
+    const order = cursorKey === 'videos' ? this.pageProfile.videoOrder : this.pageProfile.imageOrder;
+    const seed = cursorKey === 'videos' ? (this.pageProfile.videoSeed || 0) : (this.pageProfile.imageSeed || 0);
+    let assetIndex;
+    if (Array.isArray(order) && order.length) {
+      const orderIndex = (seed + cursor) % order.length;
+      assetIndex = order[orderIndex % order.length] % list.length;
+    } else {
+      assetIndex = (seed + cursor) % list.length;
+    }
+    this.assetCursor[cursorKey] = cursor + 1;
+    return list[assetIndex];
   }
 
   getMediaPath(assetPath) {
@@ -620,29 +703,30 @@ class CardSystemController {
         background-position: center;
         background-size: contain;
         background-repeat: no-repeat;
-        opacity: calc(0.24 + var(--focus-intensity) * 0.28 + var(--focus-pulse) * 0.18);
-        mix-blend-mode: screen;
+        opacity: calc((0.24 + var(--focus-intensity) * 0.28 + var(--focus-pulse) * 0.18) * var(--brand-overlay-opacity, 1));
+        mix-blend-mode: var(--brand-overlay-blend, screen);
         pointer-events: none;
         transform:
           rotate(var(--brand-rotation, 0deg))
           translate3d(
             calc(var(--focus-parallax-x) * -0.35 + var(--scroll-momentum) * -14px),
             calc(var(--focus-parallax-y) * 0.35 + var(--scroll-momentum) * 18px),
-            calc(var(--focus-depth, 0px) * 0.45 + var(--scroll-momentum) * 28px)
+            calc(var(--focus-depth, 0px) * 0.45 + var(--scroll-momentum) * 28px + var(--brand-overlay-depth, 0px))
           )
           scale(calc(1.04 + var(--focus-intensity) * 0.08 + var(--focus-pulse) * 0.04));
         animation: cardBrandFloat 18s ease-in-out infinite alternate;
         filter:
           saturate(calc(1.2 + var(--focus-intensity) * 0.25))
-          drop-shadow(0 0 calc(25px + 25px * var(--focus-intensity)) rgba(0, 255, 255, 0.25));
+          drop-shadow(0 0 calc(25px + 25px * var(--focus-intensity)) rgba(0, 255, 255, 0.25))
+          var(--brand-overlay-filter, brightness(1));
       }
 
       .card-brand-video {
         position: absolute;
         inset: -30%;
         object-fit: cover;
-        opacity: calc(0.22 + var(--focus-intensity) * 0.35 + var(--focus-pulse) * 0.22);
-        mix-blend-mode: lighten;
+        opacity: calc((0.22 + var(--focus-intensity) * 0.35 + var(--focus-pulse) * 0.22) * var(--brand-overlay-opacity, 1));
+        mix-blend-mode: var(--brand-overlay-blend, lighten);
         pointer-events: none;
         border-radius: 28px;
         transform:
@@ -650,13 +734,14 @@ class CardSystemController {
           translate3d(
             calc(var(--focus-parallax-x) * -0.28 + var(--scroll-momentum) * -10px),
             calc(var(--focus-parallax-y) * 0.28 + var(--scroll-momentum) * 20px),
-            calc(var(--focus-depth, 0px) * 0.65 + var(--scroll-momentum) * 36px)
+            calc(var(--focus-depth, 0px) * 0.65 + var(--scroll-momentum) * 36px + var(--brand-overlay-depth, 0px))
           )
           scale(calc(1.05 + var(--focus-intensity) * 0.08));
         filter:
           saturate(calc(1.2 + var(--focus-intensity) * 0.3))
           contrast(calc(1.05 + var(--focus-intensity) * 0.2))
-          blur(0.2px);
+          blur(0.2px)
+          var(--brand-overlay-filter, brightness(1));
         animation: cardBrandDrift 24s ease-in-out infinite;
       }
 

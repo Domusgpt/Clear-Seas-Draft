@@ -44,3 +44,21 @@ These builds experiment with alternative canvases, typography systems, or resear
 
 ## Meta
 - **`index.html`** now surfaces these collections with descriptive section copy, meta chips, and lab highlights so teams can jump directly into comparable builds.
+
+## Brand Palette Synchronization
+
+The `global-page-orchestrator` now detects which collection a page belongs to and shares that profile through `window.__CLEAR_SEAS_PAGE_PROFILE`. The four active palettes are:
+
+- **Meta Index (`meta-index`)** – used for the overview map.
+- **Core Foundation (`core-foundation`)** – powers the 1–6 flagship builds.
+- **Immersive AI (`immersive-ai`)** – covers PR #4–#24 experiences.
+- **Concept Labs (`concept-labs`)** – all experimental lab studies.
+
+Each palette drives:
+
+- Unique brand overlay blends, hues, and depth offsets.
+- Canvas overscan/tilt scaling so holograms always clear card edges.
+- Deterministic brand asset rotation (images & mp4 overlays) so every build receives a distinct mix of the uploaded footage.
+- Conditional script preloads (e.g., immersive pages auto-load `immersive-experience-actualizer.js`).
+
+Any custom page can opt into a palette by setting `data-page-collection` or `data-showcase-theme` on `<html>`/`<body>` before loading the orchestrator.

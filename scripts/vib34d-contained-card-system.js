@@ -50,12 +50,19 @@ function ensureVibSharedBrandLibrary() {
     return window.clearSeasAcquireBrandAsset;
   }
 
+  const pageProfile = window.__CLEAR_SEAS_PAGE_PROFILE || {};
   const library = {
     overlays: [...VIB34D_BRAND_LIBRARY_DEFAULTS.overlays],
     videos: [...VIB34D_BRAND_LIBRARY_DEFAULTS.videos],
     logos: [...VIB34D_BRAND_LIBRARY_DEFAULTS.logos],
-    cursor: 0
+    cursor: 0,
+    palette: pageProfile.palette || 'foundation'
   };
+
+  if (typeof pageProfile.seed === 'number') {
+    const poolSize = Math.max(1, library.overlays.length + library.videos.length + library.logos.length);
+    library.cursor = Math.abs(pageProfile.seed) % poolSize;
+  }
 
   const getPool = (preference) => {
     const pref = (preference || '').toLowerCase();
