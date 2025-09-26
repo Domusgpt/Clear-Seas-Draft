@@ -1021,22 +1021,44 @@ class CardSystemController {
 
 // Global card system instance
 window.cardSystemController = null;
+window.cardSystemStatusInterval = null;
 
-// Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', async () => {
+async function bootCardSystem() {
+  if (window.cardSystemController) {
+    return window.cardSystemController;
+  }
+
   // Wait a bit for other scripts to load
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
+  await new Promise(resolve => setTimeout(resolve, 200));
+
   window.cardSystemController = new CardSystemController();
   await window.cardSystemController.initialize();
-  
-  // Debug status logging
-  setInterval(() => {
-    if (window.cardSystemController) {
-      const status = window.cardSystemController.getCardStatus();
-      console.log('🎨 Card System Status:', status);
-    }
-  }, 10000); // Log every 10 seconds
-});
+
+  if (!window.cardSystemStatusInterval) {
+    window.cardSystemStatusInterval = setInterval(() => {
+      if (window.cardSystemController) {
+        const status = window.cardSystemController.getCardStatus();
+        console.log('🎨 Card System Status:', status);
+      }
+    }, 10000); // Log every 10 seconds
+  }
+
+  return window.cardSystemController;
+}
+
+window.bootCardSystem = bootCardSystem;
+
+const handleReady = () => {
+  bootCardSystem().catch(error => {
+    console.error('❌ Failed to boot card system:', error);
+  });
+};
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', handleReady);
+} else {
+  handleReady();
+}
 
 console.log('🎨 Card System Initializer loaded');
+
