@@ -77,5 +77,19 @@ Additional CSS-Web-Master documentation is tracked in:
 - `node [tools/validate-asset-manifest.mjs](tools/validate-asset-manifest.mjs)` – verifies manifest paths exist and that site
   manifests include tagged assets before deployment.
 
+## 🚀 Launching from GitHub Pages
+
+The repository is already structured for static hosting, so GitHub Pages can serve it directly without a build step. To publish
+this branch:
+
+1. Push the branch to GitHub and open the repository settings.
+2. Under **Pages**, choose **Deploy from a branch**, select the branch you want to publish (for example `main` or
+   `css-web-master`), and set the folder to **/** (root).
+3. Save the configuration—GitHub Pages will provision the site using the existing `index.html`.
+
+All other HTML experiences (e.g., `parserator.html`, the PR galleries, and index variants) reference scripts, styles, and
+assets with relative paths, so they will resolve correctly whether the site is hosted at `https://<org>.github.io/` or
+`https://<org>.github.io/Clear-Seas-Draft/`.
+
 ---
 © 2025 Paul Phillips - Clear Seas Solutions LLC
