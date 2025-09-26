@@ -512,13 +512,31 @@ class CardSpecificVIB34DVisualizer {
       const rect = this.cardElement.getBoundingClientRect();
       const x = (e.clientX - rect.left) / rect.width;
       const y = (e.clientY - rect.top) / rect.height;
-      
-      this.updateInteraction(x, y, 0.5);
-      
+
+      const tiltX = (0.5 - y) * 2;
+      const tiltY = (x - 0.5) * 2;
+      const pointerMagnitude = Math.min(1.2, Math.hypot(tiltX, tiltY));
+      const bendStrength = Math.min(1, 0.18 + pointerMagnitude * 0.6);
+      const bendTiltX = -tiltX * 12 * bendStrength;
+      const bendTiltY = tiltY * 14 * bendStrength;
+      const bendSkewX = -tiltY * 6 * bendStrength;
+      const bendSkewY = tiltX * 5 * bendStrength;
+      const bendTwist = tiltX * tiltY * 16 * bendStrength;
+      const bendDepth = bendStrength * 28;
+
+      this.updateInteraction(x, y, bendStrength);
+
       // Update CSS custom properties for card transforms
       this.cardElement.style.setProperty('--mouse-x', (x * 100) + '%');
       this.cardElement.style.setProperty('--mouse-y', (y * 100) + '%');
-      this.cardElement.style.setProperty('--bend-intensity', this.mouseIntensity);
+      this.cardElement.style.setProperty('--bend-intensity', bendStrength.toFixed(3));
+      this.cardElement.style.setProperty('--bend-tilt-x-deg', `${bendTiltX.toFixed(3)}deg`);
+      this.cardElement.style.setProperty('--bend-tilt-y-deg', `${bendTiltY.toFixed(3)}deg`);
+      this.cardElement.style.setProperty('--bend-skew-x-deg', `${bendSkewX.toFixed(3)}deg`);
+      this.cardElement.style.setProperty('--bend-skew-y-deg', `${bendSkewY.toFixed(3)}deg`);
+      this.cardElement.style.setProperty('--bend-twist-deg', `${bendTwist.toFixed(3)}deg`);
+      this.cardElement.style.setProperty('--bend-depth', `${bendDepth.toFixed(3)}px`);
+      this.cardElement.style.setProperty('--visualizer-bend-depth', `${(bendDepth * 0.6).toFixed(3)}px`);
     });
     
     // Click interactions
@@ -540,11 +558,18 @@ class CardSpecificVIB34DVisualizer {
       this.cardElement.classList.remove('visualizer-active');
       this.reactivity = 1.0;
       this.mouseIntensity *= 0.8; // Gradual fade
-      
+
       // Reset CSS transforms
       this.cardElement.style.setProperty('--mouse-x', '50%');
       this.cardElement.style.setProperty('--mouse-y', '50%');
       this.cardElement.style.setProperty('--bend-intensity', '0');
+      this.cardElement.style.setProperty('--bend-tilt-x-deg', '0deg');
+      this.cardElement.style.setProperty('--bend-tilt-y-deg', '0deg');
+      this.cardElement.style.setProperty('--bend-skew-x-deg', '0deg');
+      this.cardElement.style.setProperty('--bend-skew-y-deg', '0deg');
+      this.cardElement.style.setProperty('--bend-twist-deg', '0deg');
+      this.cardElement.style.setProperty('--bend-depth', '0px');
+      this.cardElement.style.setProperty('--visualizer-bend-depth', '0px');
     });
   }
   
