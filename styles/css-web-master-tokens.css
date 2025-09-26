@@ -1,0 +1,181 @@
+/*
+ * CSS-Web-Master neutral design tokens
+ * These tokens provide site-agnostic typography, color, and motion defaults
+ * so each property can override them without editing downstream stylesheets.
+ */
+
+:root {
+    /* Typography */
+    --csswm-font-family-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --csswm-font-family-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+    --csswm-font-size-xs: clamp(0.75rem, 0.5vw + 0.5rem, 0.875rem);
+    --csswm-font-size-sm: clamp(0.875rem, 1vw + 0.5rem, 1rem);
+    --csswm-font-size-base: clamp(1rem, 1.5vw + 0.5rem, 1.125rem);
+    --csswm-font-size-lg: clamp(1.125rem, 2vw + 0.5rem, 1.25rem);
+    --csswm-font-size-xl: clamp(1.25rem, 2.5vw + 0.5rem, 1.5rem);
+    --csswm-font-size-2xl: clamp(1.5rem, 3vw + 1rem, 2rem);
+    --csswm-font-size-3xl: clamp(1.875rem, 4vw + 1rem, 2.5rem);
+    --csswm-font-size-4xl: clamp(2.25rem, 5vw + 1rem, 3.5rem);
+    --csswm-font-size-5xl: clamp(3rem, 6vw + 1rem, 4.5rem);
+    --csswm-font-size-6xl: clamp(4rem, 7vw + 1rem, 6rem);
+
+    /* Core colors */
+    --csswm-color-bg-primary: #0a0b0d;
+    --csswm-color-bg-secondary: #141619;
+    --csswm-color-bg-tertiary: #1f2128;
+
+    --csswm-color-surface-primary: rgba(255, 255, 255, 0.02);
+    --csswm-color-surface-secondary: rgba(255, 255, 255, 0.05);
+    --csswm-color-surface-accent: rgba(255, 255, 255, 0.12);
+
+    --csswm-color-text-primary: #ffffff;
+    --csswm-color-text-secondary: rgba(255, 255, 255, 0.8);
+    --csswm-color-text-tertiary: rgba(255, 255, 255, 0.6);
+    --csswm-color-text-quaternary: rgba(255, 255, 255, 0.4);
+
+    --csswm-color-border-primary: rgba(255, 255, 255, 0.1);
+    --csswm-color-border-secondary: rgba(255, 255, 255, 0.15);
+    --csswm-color-border-accent: rgba(255, 255, 255, 0.2);
+
+    /* Motion + timing */
+    --csswm-duration-instant: 0.1s;
+    --csswm-duration-fast: 0.2s;
+    --csswm-duration-normal: 0.4s;
+    --csswm-duration-slow: 0.8s;
+    --csswm-duration-slower: 1.2s;
+    --csswm-duration-cinematic: 2s;
+
+    --csswm-ease-in: cubic-bezier(0.4, 0, 1, 1);
+    --csswm-ease-out: cubic-bezier(0, 0, 0.2, 1);
+    --csswm-ease-in-out: cubic-bezier(0.42, 0, 0.58, 1);
+    --csswm-ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    --csswm-ease-cinematic: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+    /* Highlight palette */
+    --csswm-theme-primary: #00d4ff;
+    --csswm-theme-secondary: #ff006e;
+    --csswm-theme-tertiary: #ff3300;
+    --csswm-theme-quaternary: #33ff00;
+    --csswm-theme-primary-dark: #0099cc;
+    --csswm-theme-primary-light: #66e6ff;
+    --csswm-theme-secondary-dark: #cc0055;
+    --csswm-theme-secondary-light: #ff66a3;
+
+    /* Glass + depth */
+    --csswm-glass-background: rgba(16, 18, 27, 0.4);
+    --csswm-glass-border: rgba(255, 255, 255, 0.1);
+    --csswm-glass-shadow: rgba(0, 0, 0, 0.3);
+    --csswm-blur-amount: 20px;
+    --csswm-blur-subtle: 10px;
+    --csswm-blur-intense: 40px;
+
+    /* Shadows */
+    --csswm-shadow-light: rgba(40, 40, 60, 0.5);
+    --csswm-shadow-dark: rgba(0, 0, 0, 0.3);
+    --csswm-shadow-highlight: rgba(255, 255, 255, 0.1);
+
+    /* Perspective */
+    --csswm-perspective: 2000px;
+    --csswm-pop-out-scale: 1.1;
+    --csswm-pop-out-translate-z: 120px;
+    --csswm-tilt-max: 15deg;
+
+    /* Breakpoints */
+    --csswm-breakpoint-mobile: 768px;
+    --csswm-breakpoint-tablet: 1024px;
+    --csswm-breakpoint-desktop: 1200px;
+    --csswm-breakpoint-wide: 1440px;
+
+    /* Z-index ladder */
+    --csswm-z-underground: -1;
+    --csswm-z-default: 0;
+    --csswm-z-elevated: 10;
+    --csswm-z-overlay: 100;
+    --csswm-z-modal: 1000;
+    --csswm-z-toast: 9999;
+}
+
+:root {
+    /* Map neutral tokens into legacy Clear Seas variables */
+    --font-family-primary: var(--csswm-font-family-primary);
+    --font-family-mono: var(--csswm-font-family-mono);
+
+    --font-size-xs: var(--csswm-font-size-xs);
+    --font-size-sm: var(--csswm-font-size-sm);
+    --font-size-base: var(--csswm-font-size-base);
+    --font-size-lg: var(--csswm-font-size-lg);
+    --font-size-xl: var(--csswm-font-size-xl);
+    --font-size-2xl: var(--csswm-font-size-2xl);
+    --font-size-3xl: var(--csswm-font-size-3xl);
+    --font-size-4xl: var(--csswm-font-size-4xl);
+    --font-size-5xl: var(--csswm-font-size-5xl);
+    --font-size-6xl: var(--csswm-font-size-6xl);
+
+    --bg-primary: var(--csswm-color-bg-primary);
+    --bg-secondary: var(--csswm-color-bg-secondary);
+    --bg-tertiary: var(--csswm-color-bg-tertiary);
+
+    --surface-primary: var(--csswm-color-surface-primary);
+    --surface-secondary: var(--csswm-color-surface-secondary);
+    --surface-accent: var(--csswm-color-surface-accent);
+
+    --text-primary: var(--csswm-color-text-primary);
+    --text-secondary: var(--csswm-color-text-secondary);
+    --text-tertiary: var(--csswm-color-text-tertiary);
+    --text-quaternary: var(--csswm-color-text-quaternary);
+
+    --border-primary: var(--csswm-color-border-primary);
+    --border-secondary: var(--csswm-color-border-secondary);
+    --border-accent: var(--csswm-color-border-accent);
+
+    --duration-instant: var(--csswm-duration-instant);
+    --duration-fast: var(--csswm-duration-fast);
+    --duration-normal: var(--csswm-duration-normal);
+    --duration-slow: var(--csswm-duration-slow);
+    --duration-slower: var(--csswm-duration-slower);
+    --duration-cinematic: var(--csswm-duration-cinematic);
+
+    --ease-in: var(--csswm-ease-in);
+    --ease-out: var(--csswm-ease-out);
+    --ease-in-out: var(--csswm-ease-in-out);
+    --ease-spring: var(--csswm-ease-spring);
+    --ease-cinematic: var(--csswm-ease-cinematic);
+
+    --theme-primary: var(--csswm-theme-primary);
+    --theme-secondary: var(--csswm-theme-secondary);
+    --theme-tertiary: var(--csswm-theme-tertiary);
+    --theme-quaternary: var(--csswm-theme-quaternary);
+    --theme-primary-dark: var(--csswm-theme-primary-dark);
+    --theme-primary-light: var(--csswm-theme-primary-light);
+    --theme-secondary-dark: var(--csswm-theme-secondary-dark);
+    --theme-secondary-light: var(--csswm-theme-secondary-light);
+
+    --glass-bg: var(--csswm-glass-background);
+    --glass-border: var(--csswm-glass-border);
+    --glass-shadow: var(--csswm-glass-shadow);
+    --blur-amount: var(--csswm-blur-amount);
+    --blur-subtle: var(--csswm-blur-subtle);
+    --blur-intense: var(--csswm-blur-intense);
+
+    --neo-shadow-light: var(--csswm-shadow-light);
+    --neo-shadow-dark: var(--csswm-shadow-dark);
+    --neo-highlight: var(--csswm-shadow-highlight);
+
+    --perspective: var(--csswm-perspective);
+    --pop-out-scale: var(--csswm-pop-out-scale);
+    --pop-out-translate-z: var(--csswm-pop-out-translate-z);
+    --tilt-max: var(--csswm-tilt-max);
+
+    --breakpoint-mobile: var(--csswm-breakpoint-mobile);
+    --breakpoint-tablet: var(--csswm-breakpoint-tablet);
+    --breakpoint-desktop: var(--csswm-breakpoint-desktop);
+    --breakpoint-wide: var(--csswm-breakpoint-wide);
+
+    --z-underground: var(--csswm-z-underground);
+    --z-default: var(--csswm-z-default);
+    --z-elevated: var(--csswm-z-elevated);
+    --z-overlay: var(--csswm-z-overlay);
+    --z-modal: var(--csswm-z-modal);
+    --z-toast: var(--csswm-z-toast);
+}
