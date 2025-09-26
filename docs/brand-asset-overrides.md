@@ -49,6 +49,37 @@ window.__CLEAR_SEAS_CARD_BRAND_OVERRIDES = [
 
 Keys mirror the data attributes and accept the same value shapes. The orchestrator merges all matching descriptors (ordered as provided), then layers data attributes on top.
 
+## Site asset manifest
+
+Each site can point the orchestrator at a different base image/video rotation without editing the core script. The default packs
+live in `scripts/site-asset-manifest.js`, and the orchestrator exposes a helper for runtime updates:
+
+```html
+<script type="module">
+  window.__CSS_WEB_MASTER_REGISTER_ASSET_MANIFEST?.({
+    parserator: {
+      images: [
+        // Replace with parserator-specific assets once they are uploaded
+        'assets/parserator/logo.png',
+        'assets/parserator/hangar.png'
+      ],
+      videos: [
+        'assets/parserator/atmos-loop.mp4'
+      ]
+    }
+  }, { reason: 'parserator-brand-pack' });
+</script>
+```
+
+The helper merges the manifest, refreshes the current page profile's media selection, and dispatches the same
+`css-web-master:brand-overrides-changed` / `clear-seas:brand-overrides-changed` events that card systems already listen for.
+If no runtime manifest is provided the default Clear Seas pack remains in rotation.
+
+Each manifest entry can also expose tagged rotations via a `tags` map. When the orchestrator resolves a page profile it passes
+the detected site code or family as the preferred tag, letting you maintain deterministic asset orders for `foundation`,
+`immersive`, `labs`, or `parserator` without duplicating the entire list. Tagged bundles inherit any untagged `images`/`videos`
+from their parent entry, so you can declare a short, site-specific subset and fall back to the shared rotation when necessary.
+
 ## Updating overrides at runtime
 
 When overrides change after the orchestrator has initialised, call the shared refresh helper to keep every card system in sync:
