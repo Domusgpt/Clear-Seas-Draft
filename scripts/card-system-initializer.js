@@ -4,7 +4,12 @@
  * Manages canvas creation/destruction and performance optimization
  */
 
-const BRAND_OVERRIDE_EVENT = window.__CLEAR_SEAS_BRAND_OVERRIDE_EVENT || 'clear-seas:brand-overrides-changed';
+const PRIMARY_BRAND_OVERRIDE_EVENT =
+  window.__CSS_WEB_MASTER_BRAND_OVERRIDE_EVENT ||
+  window.__CLEAR_SEAS_BRAND_OVERRIDE_EVENT ||
+  'css-web-master:brand-overrides-changed';
+const LEGACY_BRAND_OVERRIDE_EVENT = window.__CLEAR_SEAS_BRAND_OVERRIDE_EVENT || 'clear-seas:brand-overrides-changed';
+const BRAND_OVERRIDE_EVENTS = [...new Set([PRIMARY_BRAND_OVERRIDE_EVENT, LEGACY_BRAND_OVERRIDE_EVENT])];
 
 const fallbackBrandOverrideApi = {
   collect: () => null,
@@ -32,14 +37,17 @@ const fallbackBrandOverrideApi = {
         eventDetail[key] = detail[key];
       });
     }
-    window.dispatchEvent(new CustomEvent(BRAND_OVERRIDE_EVENT, { detail: eventDetail }));
+    BRAND_OVERRIDE_EVENTS.forEach((eventName) => {
+      window.dispatchEvent(new CustomEvent(eventName, { detail: eventDetail }));
+    });
     return [];
   },
-  eventName: BRAND_OVERRIDE_EVENT
+  eventName: PRIMARY_BRAND_OVERRIDE_EVENT,
+  events: BRAND_OVERRIDE_EVENTS
 };
 
 function useBrandOverrideApi() {
-  return window.__CLEAR_SEAS_BRAND_OVERRIDE_API || fallbackBrandOverrideApi;
+  return window.__CSS_WEB_MASTER_BRAND_OVERRIDE_API || window.__CLEAR_SEAS_BRAND_OVERRIDE_API || fallbackBrandOverrideApi;
 }
 
 class CardSystemController {
@@ -52,8 +60,24 @@ class CardSystemController {
       performanceMode: 'auto'
     };
 
-    this.brandOverrideEvent = (useBrandOverrideApi().eventName) || BRAND_OVERRIDE_EVENT;
-    this.globalMotionEvent = window.__CLEAR_SEAS_GLOBAL_MOTION_EVENT || 'clear-seas:motion-updated';
+    const overrideApi = useBrandOverrideApi();
+    const overrideEvents = new Set(overrideApi.events || [overrideApi.eventName || PRIMARY_BRAND_OVERRIDE_EVENT]);
+    BRAND_OVERRIDE_EVENTS.forEach((eventName) => overrideEvents.add(eventName));
+    this.brandOverrideEvents = [...overrideEvents];
+    this.globalMotionEvents = [
+      window.__CSS_WEB_MASTER_GLOBAL_MOTION_EVENT,
+      window.__CLEAR_SEAS_GLOBAL_MOTION_EVENT,
+      'css-web-master:motion-updated',
+      'clear-seas:motion-updated'
+    ]
+      .filter(Boolean)
+      .reduce((set, eventName) => {
+        if (!set.includes(eventName)) {
+          set.push(eventName);
+        }
+        return set;
+      }, []);
+    this.brandOverrideEvent = overrideApi.eventName || PRIMARY_BRAND_OVERRIDE_EVENT;
     this.globalMotionState = {
       focusAmount: 0,
       synergy: 0,
@@ -80,7 +104,9 @@ class CardSystemController {
         this.refreshBrandAssets(cardData, { keepOverrides: true });
       });
     };
-    window.addEventListener(this.brandOverrideEvent, this.handleBrandOverridesChanged);
+    this.brandOverrideEvents.forEach((eventName) => {
+      window.addEventListener(eventName, this.handleBrandOverridesChanged);
+    });
     this.handleGlobalMotionUpdate = (event) => {
       const detail = event?.detail || {};
       this.globalMotionState = {
@@ -117,9 +143,11 @@ class CardSystemController {
         cardData.element.style.setProperty('--shared-tilt-skew', this.globalMotionState.tiltSkew.toFixed(4));
       });
     };
-    window.addEventListener(this.globalMotionEvent, this.handleGlobalMotionUpdate);
+    this.globalMotionEvents.forEach((eventName) => {
+      window.addEventListener(eventName, this.handleGlobalMotionUpdate);
+    });
 
-    this.pageProfile = window.__CLEAR_SEAS_PAGE_PROFILE || {
+    this.pageProfile = window.__CSS_WEB_MASTER_PAGE_PROFILE || window.__CLEAR_SEAS_PAGE_PROFILE || {
       key: 'core-foundation',
       palette: 'foundation',
       imageSeed: 0,
@@ -182,7 +210,7 @@ class CardSystemController {
       ]
     };
 
-    const sharedBrandAssets = window.__CLEAR_SEAS_BRAND_ASSETS;
+    const sharedBrandAssets = window.__CSS_WEB_MASTER_BRAND_ASSETS || window.__CLEAR_SEAS_BRAND_ASSETS;
     const sharedImages = Array.isArray(sharedBrandAssets?.images) && sharedBrandAssets.images.length
       ? sharedBrandAssets.images
       : fallbackBrandAssets.images;

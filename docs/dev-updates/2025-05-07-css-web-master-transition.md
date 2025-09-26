@@ -7,7 +7,7 @@
 - Authored the **CSS-Web-Master System Overview** documenting the orchestration layers, workflow, and asset strategy for
   multi-site reuse.
 - Captured a **Gap Analysis** outlining Clear Seas-specific assumptions that need generalization before deploying to
-  paraerator.com, vib3code.com, or other destinations.
+  parserator.com, vib3code.com, or other destinations.
 
 ## Why it matters
 
@@ -18,7 +18,7 @@
 
 ## Next recommendations
 
-1. Prototype a new page profile (e.g., `paraerator`) in `scripts/page-profile-registry.js` to validate the workflow and confirm
+1. Prototype a new page profile (e.g., `parserator`) in `scripts/page-profile-registry.js` to validate the workflow and confirm
    asset overrides behave as expected.
 2. Introduce namespace aliases for the global motion object/event to decouple future builds from the `clear-seas` prefix.
 3. Begin extracting neutral typography and color tokens into a shared variables file so each site can ship with its own brand
