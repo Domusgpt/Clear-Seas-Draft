@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Seas Blog - Elegant VIB34D Design</title>
+
+    <!-- Clean Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@300;400&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --text-primary: #1a1a1a;
+            --text-secondary: #666;
+            --accent: #00a8cc;
+            --accent-light: rgba(0, 168, 204, 0.1);
+            --bg: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --border: #e5e7eb;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --text-primary: #e5e5e5;
+                --text-secondary: #999;
+                --accent: #00d4ff;
+                --accent-light: rgba(0, 212, 255, 0.1);
+                --bg: #0a0a0a;
+                --bg-secondary: #141414;
+                --border: #2a2a2a;
+            }
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* CLEAN HEADER */
+        header {
+            padding: 2rem 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 4rem;
+            position: relative;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        nav {
+            display: flex;
+            gap: 2rem;
+        }
+
+        nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: color 0.2s ease;
+        }
+
+        nav a:hover {
+            color: var(--accent);
+        }
+
+        /* SUBTLE VIB34D ACCENT */
+        .header-visualizer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.03;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* MAIN CONTENT AREA */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem 4rem;
+        }
+
+        /* HERO SECTION */
+        .hero {
+            margin-bottom: 5rem;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* BLOG GRID */
+        .blog-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 3rem;
+            margin-bottom: 5rem;
+        }
+
+        /* ELEGANT BLOG CARDS */
+        .blog-card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            border: 1px solid var(--border);
+        }
+
+        .blog-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+            border-color: var(--accent);
+        }
+
+        .blog-card-visual {
+            height: 200px;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, var(--accent-light), transparent);
+        }
+
+        .blog-card-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.3;
+            transition: opacity 0.3s ease;
+        }
+
+        .blog-card:hover .blog-card-canvas {
+            opacity: 0.6;
+        }
+
+        .blog-card-content {
+            padding: 2rem;
+        }
+
+        .blog-card-date {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .blog-card h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            line-height: 1.3;
+        }
+
+        .blog-card p {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .blog-card-link {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: gap 0.2s ease;
+        }
+
+        .blog-card-link:hover {
+            gap: 0.75rem;
+        }
+
+        /* FEATURED ARTICLE */
+        .featured-article {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 3rem;
+            margin-bottom: 5rem;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .featured-visual {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 40%;
+            height: 100%;
+            opacity: 0.05;
+            pointer-events: none;
+        }
+
+        .featured-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .featured-tag {
+            display: inline-block;
+            background: var(--accent);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
+
+        .featured-content h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            max-width: 70%;
+            line-height: 1.2;
+        }
+
+        .featured-content p {
+            font-size: 1.125rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            max-width: 70%;
+            margin-bottom: 2rem;
+        }
+
+        /* MINIMAL FOOTER */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 3rem 0;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .hero p {
+                font-size: 1.1rem;
+            }
+
+            .blog-grid {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .featured-content h2,
+            .featured-content p {
+                max-width: 100%;
+            }
+
+            .featured-visual {
+                opacity: 0.02;
+                width: 100%;
+            }
+
+            nav {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- CLEAN HEADER -->
+    <header>
+        <canvas class="header-visualizer" id="headerVisualizer"></canvas>
+        <div class="header-content">
+            <a href="#" class="logo">Clear Seas</a>
+            <nav>
+                <a href="#articles">Articles</a>
+                <a href="#technology">Technology</a>
+                <a href="#research">Research</a>
+                <a href="#about">About</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- MAIN CONTAINER -->
+    <div class="container">
+        <!-- HERO SECTION -->
+        <section class="hero">
+            <h1>Exploring the Future of<br>Geometric Processing</h1>
+            <p>Insights on 4D visualization, maritime autonomy, and breakthrough computational architectures</p>
+        </section>
+
+        <!-- FEATURED ARTICLE -->
+        <article class="featured-article">
+            <canvas class="featured-visual" id="featuredVisualizer"></canvas>
+            <div class="featured-content">
+                <span class="featured-tag">Featured</span>
+                <h2>Understanding VIB34D: A New Paradigm in Visualization</h2>
+                <p>
+                    The VIB34D system represents a breakthrough in multi-dimensional data visualization,
+                    combining quantum lattice structures with real-time parameter modulation to create
+                    unprecedented visual experiences. This article explores the mathematical foundations
+                    and practical applications.
+                </p>
+                <a href="#" class="blog-card-link">
+                    Read full article →
+                </a>
+            </div>
+        </article>
+
+        <!-- BLOG GRID -->
+        <section class="blog-grid" id="articles">
+            <article class="blog-card">
+                <div class="blog-card-visual">
+                    <canvas class="blog-card-canvas" data-vib34d="quantum"></canvas>
+                </div>
+                <div class="blog-card-content">
+                    <div class="blog-card-date">January 15, 2025</div>
+                    <h2>Quantum Lattice Visualization Techniques</h2>
+                    <p>
+                        Exploring advanced methods for visualizing quantum state superposition
+                        through geometric lattice structures and 4D projections.
+                    </p>
+                    <a href="#" class="blog-card-link">Read more →</a>
+                </div>
+            </article>
+
+            <article class="blog-card">
+                <div class="blog-card-visual">
+                    <canvas class="blog-card-canvas" data-vib34d="holographic"></canvas>
+                </div>
+                <div class="blog-card-content">
+                    <div class="blog-card-date">January 12, 2025</div>
+                    <h2>Holographic UI Patterns for Web 3.0</h2>
+                    <p>
+                        How holographic visualization principles are reshaping user interface
+                        design for the next generation of web applications.
+                    </p>
+                    <a href="#" class="blog-card-link">Read more →</a>
+                </div>
+            </article>
+
+            <article class="blog-card">
+                <div class="blog-card-visual">
+                    <canvas class="blog-card-canvas" data-vib34d="faceted"></canvas>
+                </div>
+                <div class="blog-card-content">
+                    <div class="blog-card-date">January 8, 2025</div>
+                    <h2>Maritime Autonomy Through Geometric Processing</h2>
+                    <p>
+                        Revolutionary approaches to autonomous navigation using faceted
+                        geometric algorithms and real-time spatial analysis.
+                    </p>
+                    <a href="#" class="blog-card-link">Read more →</a>
+                </div>
+            </article>
+
+            <article class="blog-card">
+                <div class="blog-card-visual">
+                    <canvas class="blog-card-canvas" data-vib34d="quantum"></canvas>
+                </div>
+                <div class="blog-card-content">
+                    <div class="blog-card-date">January 5, 2025</div>
+                    <h2>The Mathematics of 4D Rotation</h2>
+                    <p>
+                        Deep dive into quaternion mathematics and their application in
+                        four-dimensional rotation systems for advanced visualization.
+                    </p>
+                    <a href="#" class="blog-card-link">Read more →</a>
+                </div>
+            </article>
+
+            <article class="blog-card">
+                <div class="blog-card-visual">
+                    <canvas class="blog-card-canvas" data-vib34d="holographic"></canvas>
+                </div>
+                <div class="blog-card-content">
+                    <div class="blog-card-date">January 2, 2025</div>
+                    <h2>Building Responsive Visualization Systems</h2>
+                    <p>
+                        Best practices for creating high-performance, responsive visualizations
+                        that adapt to user interaction and device capabilities.
+                    </p>
+                    <a href="#" class="blog-card-link">Read more →</a>
+                </div>
+            </article>
+
+            <article class="blog-card">
+                <div class="blog-card-visual">
+                    <canvas class="blog-card-canvas" data-vib34d="faceted"></canvas>
+                </div>
+                <div class="blog-card-content">
+                    <div class="blog-card-date">December 28, 2024</div>
+                    <h2>Computational Geometry in Practice</h2>
+                    <p>
+                        Real-world applications of computational geometry in solving complex
+                        spatial problems across various industries.
+                    </p>
+                    <a href="#" class="blog-card-link">Read more →</a>
+                </div>
+            </article>
+        </section>
+    </div>
+
+    <!-- MINIMAL FOOTER -->
+    <footer>
+        <p>© 2025 Clear Seas Solutions • Paul Phillips</p>
+    </footer>
+
+    <script>
+        // SIMPLE, ELEGANT VIB34D VISUALIZERS
+        class ElegantVIB34DVisualizer {
+            constructor(canvas, type = 'quantum') {
+                this.canvas = canvas;
+                this.ctx = canvas.getContext('2d');
+                this.type = type;
+                this.time = 0;
+                this.mouseX = 0;
+                this.mouseY = 0;
+                this.isHovered = false;
+
+                this.setupCanvas();
+                this.setupInteraction();
+                this.animate();
+            }
+
+            setupCanvas() {
+                const resize = () => {
+                    const rect = this.canvas.getBoundingClientRect();
+                    const dpr = window.devicePixelRatio || 1;
+                    this.canvas.width = rect.width * dpr;
+                    this.canvas.height = rect.height * dpr;
+                    this.ctx.scale(dpr, dpr);
+                    this.width = rect.width;
+                    this.height = rect.height;
+                };
+
+                resize();
+                window.addEventListener('resize', resize);
+            }
+
+            setupInteraction() {
+                const parent = this.canvas.closest('.blog-card') || this.canvas.parentElement;
+
+                parent.addEventListener('mouseenter', () => {
+                    this.isHovered = true;
+                });
+
+                parent.addEventListener('mouseleave', () => {
+                    this.isHovered = false;
+                });
+
+                parent.addEventListener('mousemove', (e) => {
+                    const rect = this.canvas.getBoundingClientRect();
+                    this.mouseX = (e.clientX - rect.left) / rect.width;
+                    this.mouseY = (e.clientY - rect.top) / rect.height;
+                });
+            }
+
+            animate() {
+                this.time += 0.01;
+                this.render();
+                requestAnimationFrame(() => this.animate());
+            }
+
+            render() {
+                const ctx = this.ctx;
+                ctx.clearRect(0, 0, this.width, this.height);
+
+                const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                const baseAlpha = this.isHovered ? 0.6 : 0.3;
+
+                switch(this.type) {
+                    case 'quantum':
+                        this.renderQuantum(ctx, baseAlpha, isDark);
+                        break;
+                    case 'holographic':
+                        this.renderHolographic(ctx, baseAlpha, isDark);
+                        break;
+                    case 'faceted':
+                        this.renderFaceted(ctx, baseAlpha, isDark);
+                        break;
+                }
+            }
+
+            renderQuantum(ctx, alpha, isDark) {
+                const centerX = this.width / 2;
+                const centerY = this.height / 2;
+                const points = 12;
+                const radius = Math.min(this.width, this.height) * 0.3;
+
+                ctx.strokeStyle = isDark ?
+                    `rgba(0, 212, 255, ${alpha})` :
+                    `rgba(0, 168, 204, ${alpha})`;
+                ctx.lineWidth = 1.5;
+
+                for (let i = 0; i < points; i++) {
+                    const angle = (i / points) * Math.PI * 2 + this.time;
+                    const r = radius * (0.5 + Math.sin(this.time + i) * 0.5);
+                    const x = centerX + Math.cos(angle) * r;
+                    const y = centerY + Math.sin(angle) * r;
+
+                    ctx.beginPath();
+                    ctx.arc(x, y, 3, 0, Math.PI * 2);
+                    ctx.stroke();
+
+                    if (i > 0) {
+                        const prevAngle = ((i - 1) / points) * Math.PI * 2 + this.time;
+                        const prevR = radius * (0.5 + Math.sin(this.time + i - 1) * 0.5);
+                        const prevX = centerX + Math.cos(prevAngle) * prevR;
+                        const prevY = centerY + Math.sin(prevAngle) * prevR;
+
+                        ctx.beginPath();
+                        ctx.moveTo(prevX, prevY);
+                        ctx.lineTo(x, y);
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            renderHolographic(ctx, alpha, isDark) {
+                const centerX = this.width / 2;
+                const centerY = this.height / 2;
+                const layers = 3;
+
+                for (let layer = 0; layer < layers; layer++) {
+                    const layerAlpha = alpha * (1 - layer * 0.3);
+                    ctx.strokeStyle = isDark ?
+                        `rgba(0, 212, 255, ${layerAlpha})` :
+                        `rgba(0, 168, 204, ${layerAlpha})`;
+                    ctx.lineWidth = 2 - layer * 0.5;
+
+                    const radius = Math.min(this.width, this.height) * (0.35 - layer * 0.08);
+                    const sides = 6;
+
+                    ctx.save();
+                    ctx.translate(centerX, centerY);
+                    ctx.rotate(this.time * (0.5 - layer * 0.1));
+
+                    ctx.beginPath();
+                    for (let i = 0; i <= sides; i++) {
+                        const angle = (i / sides) * Math.PI * 2;
+                        const x = Math.cos(angle) * radius;
+                        const y = Math.sin(angle) * radius;
+
+                        if (i === 0) {
+                            ctx.moveTo(x, y);
+                        } else {
+                            ctx.lineTo(x, y);
+                        }
+                    }
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            }
+
+            renderFaceted(ctx, alpha, isDark) {
+                const centerX = this.width / 2;
+                const centerY = this.height / 2;
+                const facets = 8;
+                const radius = Math.min(this.width, this.height) * 0.25;
+
+                ctx.fillStyle = isDark ?
+                    `rgba(0, 212, 255, ${alpha * 0.1})` :
+                    `rgba(0, 168, 204, ${alpha * 0.1})`;
+                ctx.strokeStyle = isDark ?
+                    `rgba(0, 212, 255, ${alpha})` :
+                    `rgba(0, 168, 204, ${alpha})`;
+                ctx.lineWidth = 1.5;
+
+                for (let i = 0; i < facets; i++) {
+                    const angle = (i / facets) * Math.PI * 2 + this.time * 0.3;
+                    const nextAngle = ((i + 1) / facets) * Math.PI * 2 + this.time * 0.3;
+
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY);
+                    ctx.lineTo(
+                        centerX + Math.cos(angle) * radius,
+                        centerY + Math.sin(angle) * radius
+                    );
+                    ctx.lineTo(
+                        centerX + Math.cos(nextAngle) * radius,
+                        centerY + Math.sin(nextAngle) * radius
+                    );
+                    ctx.closePath();
+
+                    if (i % 2 === 0) {
+                        ctx.fill();
+                    }
+                    ctx.stroke();
+                }
+            }
+        }
+
+        // Initialize visualizers
+        document.addEventListener('DOMContentLoaded', () => {
+            // Header visualizer
+            const headerCanvas = document.getElementById('headerVisualizer');
+            if (headerCanvas) {
+                new ElegantVIB34DVisualizer(headerCanvas, 'quantum');
+            }
+
+            // Featured visualizer
+            const featuredCanvas = document.getElementById('featuredVisualizer');
+            if (featuredCanvas) {
+                new ElegantVIB34DVisualizer(featuredCanvas, 'holographic');
+            }
+
+            // Blog card visualizers
+            const blogCanvases = document.querySelectorAll('.blog-card-canvas');
+            blogCanvases.forEach(canvas => {
+                const type = canvas.dataset.vib34d || 'quantum';
+                new ElegantVIB34DVisualizer(canvas, type);
+            });
+        });
+    </script>
+</body>
+</html>
