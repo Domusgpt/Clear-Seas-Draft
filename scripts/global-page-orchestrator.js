@@ -1,34 +1,105 @@
 import { resolvePageProfile, applyProfileMetadata } from './page-profile-registry.js';
+import { mergeAssetManifest, resolveBrandAssets, getAssetManifestSnapshot } from './site-asset-manifest.js';
 
-const BRAND_OVERRIDE_EVENT = window.__CLEAR_SEAS_BRAND_OVERRIDE_EVENT || 'clear-seas:brand-overrides-changed';
+const cssWebMasterGlobals = window.__CSS_WEB_MASTER_GLOBALS || (window.__CSS_WEB_MASTER_GLOBALS = {});
 
-const GLOBAL_MOTION_EVENT = window.__CLEAR_SEAS_GLOBAL_MOTION_EVENT || 'clear-seas:motion-updated';
-window.__CLEAR_SEAS_GLOBAL_MOTION_EVENT = GLOBAL_MOTION_EVENT;
+const DEFAULT_BRAND_EVENT = 'css-web-master:brand-overrides-changed';
+const DEFAULT_CLEAR_SEAS_BRAND_EVENT = 'clear-seas:brand-overrides-changed';
+const resolvedCssBrandEvent =
+  cssWebMasterGlobals.brandOverrideEvent ||
+  window.__CSS_WEB_MASTER_BRAND_OVERRIDE_EVENT ||
+  DEFAULT_BRAND_EVENT;
+const resolvedClearSeasBrandEvent = window.__CLEAR_SEAS_BRAND_OVERRIDE_EVENT || DEFAULT_CLEAR_SEAS_BRAND_EVENT;
+const BRAND_OVERRIDE_EVENTS = [...new Set([resolvedCssBrandEvent, resolvedClearSeasBrandEvent])];
+const BRAND_OVERRIDE_EVENT = resolvedCssBrandEvent;
+window.__CSS_WEB_MASTER_BRAND_OVERRIDE_EVENT = resolvedCssBrandEvent;
+window.__CLEAR_SEAS_BRAND_OVERRIDE_EVENT = resolvedClearSeasBrandEvent;
+cssWebMasterGlobals.brandOverrideEvent = resolvedCssBrandEvent;
+cssWebMasterGlobals.brandOverrideEvents = BRAND_OVERRIDE_EVENTS;
 
-const brandAssets = window.__CLEAR_SEAS_BRAND_ASSETS || (window.__CLEAR_SEAS_BRAND_ASSETS = {
-  images: [
-    'assets/Screenshot_20250430-141821.png',
-    'assets/Screenshot_20241012-073718.png',
-    'assets/Screenshot_20250430-142024~2.png',
-    'assets/Screenshot_20250430-142002~2.png',
-    'assets/Screenshot_20250430-142032~2.png',
-    'assets/file_00000000fc08623085668cf8b5e0a1e5.png',
-    'assets/file_0000000054a06230817873012865d150.png',
-    'assets/file_0000000006fc6230a8336bfa1fcebd89.png',
-    'assets/image_8 (1).png'
-  ],
-  videos: [
-    '20250505_1321_Neon Blossom Transformation_simple_compose_01jtgqf5vjevn8nbrnsx8yd5fs.mp4',
-    '20250505_1726_Noir Filament Mystery_simple_compose_01jth5f1kwe9r9zxqet54bz3q0.mp4',
-    '20250506_0014_Gemstone Coral Transformation_remix_01jthwv071e06vmjd0mn60zm3s.mp4',
-    '20250506_0014_Gemstone Coral Transformation_remix_01jthwv0c4fxk8m0e79ry2t4ke.mp4',
-    '1746496560073.mp4',
-    '1746500614769.mp4',
-    '1746576068221.mp4'
-  ]
+const DEFAULT_MOTION_EVENT = 'css-web-master:motion-updated';
+const DEFAULT_CLEAR_SEAS_MOTION_EVENT = 'clear-seas:motion-updated';
+const resolvedCssMotionEvent =
+  cssWebMasterGlobals.motionEvent ||
+  window.__CSS_WEB_MASTER_GLOBAL_MOTION_EVENT ||
+  DEFAULT_MOTION_EVENT;
+const resolvedClearSeasMotionEvent = window.__CLEAR_SEAS_GLOBAL_MOTION_EVENT || DEFAULT_CLEAR_SEAS_MOTION_EVENT;
+const GLOBAL_MOTION_EVENTS = [...new Set([resolvedCssMotionEvent, resolvedClearSeasMotionEvent])];
+const GLOBAL_MOTION_EVENT = resolvedCssMotionEvent;
+window.__CSS_WEB_MASTER_GLOBAL_MOTION_EVENT = resolvedCssMotionEvent;
+window.__CLEAR_SEAS_GLOBAL_MOTION_EVENT = resolvedClearSeasMotionEvent;
+cssWebMasterGlobals.motionEvent = resolvedCssMotionEvent;
+cssWebMasterGlobals.motionEvents = GLOBAL_MOTION_EVENTS;
+
+const existingBrandAssets = window.__CSS_WEB_MASTER_BRAND_ASSETS || window.__CLEAR_SEAS_BRAND_ASSETS;
+
+if (existingBrandAssets && typeof existingBrandAssets === 'object') {
+  try {
+    mergeAssetManifest({
+      key: 'default',
+      images: existingBrandAssets.images,
+      videos: existingBrandAssets.videos
+    });
+  } catch (error) {
+    console.warn('⚠️ Failed to merge legacy brand asset globals into manifest', error);
+  }
+}
+
+const runtimeAssetManifests = [
+  window.__CSS_WEB_MASTER_ASSET_MANIFEST,
+  window.__CLEAR_SEAS_ASSET_MANIFEST
+].filter((value) => value && typeof value === 'object');
+runtimeAssetManifests.forEach((manifest) => {
+  try {
+    mergeAssetManifest(manifest);
+  } catch (error) {
+    console.warn('⚠️ Failed to merge runtime asset manifest', error);
+  }
 });
 
+let brandAssets = { images: [], videos: [] };
+let brandAssetKey = null;
+let activePageProfile = null;
+
+const updateManifestSnapshot = () => {
+  const snapshot = getAssetManifestSnapshot();
+  cssWebMasterGlobals.assetManifest = snapshot;
+  window.__CSS_WEB_MASTER_ASSET_MANIFEST = snapshot;
+  window.__CLEAR_SEAS_ASSET_MANIFEST = snapshot;
+  return snapshot;
+};
+
+updateManifestSnapshot();
+
+const syncBrandAssets = (siteCode) => {
+  const resolved = resolveBrandAssets(siteCode);
+  const meta =
+    resolved && resolved.meta
+      ? {
+          images: { ...(resolved.meta.images || {}) },
+          videos: { ...(resolved.meta.videos || {}) }
+        }
+      : { images: {}, videos: {} };
+  brandAssets = {
+    images: Array.isArray(resolved.images) ? [...resolved.images] : [],
+    videos: Array.isArray(resolved.videos) ? [...resolved.videos] : [],
+    meta
+  };
+  brandAssetKey = resolved.key || null;
+  window.__CSS_WEB_MASTER_BRAND_ASSETS = brandAssets;
+  window.__CLEAR_SEAS_BRAND_ASSETS = brandAssets;
+  window.__CSS_WEB_MASTER_BRAND_ASSET_META = meta;
+  window.__CLEAR_SEAS_BRAND_ASSET_META = meta;
+  cssWebMasterGlobals.brandAssets = brandAssets;
+  cssWebMasterGlobals.brandAssetKey = brandAssetKey;
+  cssWebMasterGlobals.brandAssetMeta = meta;
+  return resolved;
+};
+
 const brandOverrideApi = (() => {
+  if (window.__CSS_WEB_MASTER_BRAND_OVERRIDE_API) {
+    return window.__CSS_WEB_MASTER_BRAND_OVERRIDE_API;
+  }
   if (window.__CLEAR_SEAS_BRAND_OVERRIDE_API) {
     return window.__CLEAR_SEAS_BRAND_OVERRIDE_API;
   }
@@ -102,7 +173,9 @@ const brandOverrideApi = (() => {
         eventDetail[key] = detail[key];
       });
     }
-    window.dispatchEvent(new CustomEvent(BRAND_OVERRIDE_EVENT, { detail: eventDetail }));
+    BRAND_OVERRIDE_EVENTS.forEach((eventName) => {
+      window.dispatchEvent(new CustomEvent(eventName, { detail: eventDetail }));
+    });
   };
 
   const refreshGlobalOverrides = (detail) => {
@@ -512,19 +585,26 @@ const brandOverrideApi = (() => {
     applyPalette,
     hasAssetList,
     refresh: refreshGlobalOverrides,
-    eventName: BRAND_OVERRIDE_EVENT
+    eventName: BRAND_OVERRIDE_EVENT,
+    events: BRAND_OVERRIDE_EVENTS
   };
 
-  window.__CLEAR_SEAS_BRAND_OVERRIDE_EVENT = BRAND_OVERRIDE_EVENT;
+  window.__CSS_WEB_MASTER_BRAND_OVERRIDE_EVENT = BRAND_OVERRIDE_EVENT;
+  window.__CLEAR_SEAS_BRAND_OVERRIDE_EVENT = resolvedClearSeasBrandEvent;
+  window.__CSS_WEB_MASTER_BRAND_OVERRIDE_API = api;
   window.__CLEAR_SEAS_BRAND_OVERRIDE_API = api;
+  cssWebMasterGlobals.brandOverrideApi = api;
   return api;
 })();
 
 function detectActivePageProfile() {
   const resolved = resolvePageProfile();
+  const brandPackage = syncBrandAssets(resolved?.siteCode || resolved?.requestedSiteCode || null);
+
   const profile = {
     key: resolved?.key || 'core-foundation',
     palette: resolved?.palette || 'foundation',
+    paletteKey: resolved?.paletteKey || resolved?.palette || 'foundation',
     family: resolved?.family || resolved?.key || 'core-foundation',
     layout: resolved?.layout || 'grid',
     accent: resolved?.accent || null,
@@ -535,11 +615,14 @@ function detectActivePageProfile() {
     canvas: resolved?.canvas || {},
     scripts: Array.isArray(resolved?.scripts) ? [...resolved.scripts] : [],
     signature: resolved?.signature || '',
-    seed: resolved?.seed || 0
+    seed: resolved?.seed || 0,
+    siteCode: resolved?.siteCode || null,
+    requestedSiteCode: resolved?.requestedSiteCode || null,
+    brandAssetKey: brandAssetKey
   };
 
-  profile.imageSeed = brandAssets.images.length ? profile.seed % brandAssets.images.length : 0;
-  profile.videoSeed = brandAssets.videos.length ? Math.floor(profile.seed / 7) % brandAssets.videos.length : 0;
+  profile.imageSeed = brandPackage.images.length ? profile.seed % brandPackage.images.length : 0;
+  profile.videoSeed = brandPackage.videos.length ? Math.floor(profile.seed / 7) % brandPackage.videos.length : 0;
 
   if (resolved?.metaName === 'ultimate-clear-seas-holistic-system.html') {
     profile.scripts.push('scripts/ultimate-holistic-vib34d-system.js');
@@ -547,10 +630,61 @@ function detectActivePageProfile() {
 
   applyProfileMetadata(profile);
   window.__CLEAR_SEAS_PAGE_PROFILE = profile;
+  window.__CSS_WEB_MASTER_PAGE_PROFILE = profile;
+  cssWebMasterGlobals.pageProfile = profile;
+  cssWebMasterGlobals.siteCode = profile.siteCode || null;
+  cssWebMasterGlobals.paletteKey = profile.paletteKey || profile.palette;
   return profile;
 }
 
-const activePageProfile = detectActivePageProfile();
+activePageProfile = detectActivePageProfile();
+
+const registerAssetManifest = (input, detail = {}) => {
+  if (!input || typeof input !== 'object') {
+    return updateManifestSnapshot();
+  }
+
+  mergeAssetManifest(input);
+  const snapshot = updateManifestSnapshot();
+
+  const detailPayload = {
+    reason: (detail && typeof detail === 'object' && detail.reason) || 'asset-manifest-update',
+    timestamp: Date.now()
+  };
+  if (detail && typeof detail === 'object') {
+    Object.keys(detail).forEach((key) => {
+      if (key === 'reason') {
+        return;
+      }
+      detailPayload[key] = detail[key];
+    });
+  }
+
+  const currentSiteCode =
+    (activePageProfile && (activePageProfile.siteCode || activePageProfile.requestedSiteCode)) || null;
+  syncBrandAssets(currentSiteCode);
+
+  if (activePageProfile) {
+    activePageProfile.brandAssetKey = brandAssetKey;
+    activePageProfile.imageSeed = brandAssets.images.length
+      ? activePageProfile.seed % brandAssets.images.length
+      : 0;
+    activePageProfile.videoSeed = brandAssets.videos.length
+      ? Math.floor(activePageProfile.seed / 7) % brandAssets.videos.length
+      : 0;
+    cssWebMasterGlobals.pageProfile = activePageProfile;
+  }
+
+  BRAND_OVERRIDE_EVENTS.forEach((eventName) => {
+    window.dispatchEvent(new CustomEvent(eventName, { detail: detailPayload }));
+  });
+
+  return snapshot;
+};
+
+cssWebMasterGlobals.registerAssetManifest = registerAssetManifest;
+window.__CSS_WEB_MASTER_REGISTER_ASSET_MANIFEST = registerAssetManifest;
+window.__CLEAR_SEAS_REGISTER_ASSET_MANIFEST = registerAssetManifest;
 
 function preparePageProfile(profile) {
   if (!profile) {
@@ -568,6 +702,7 @@ function preparePageProfile(profile) {
     sharedMotion.collection = profile.key || null;
     sharedMotion.family = profile.family || null;
     sharedMotion.layout = profile.layout || null;
+    sharedMotion.siteCode = profile.siteCode || null;
   }
 }
 
@@ -589,8 +724,11 @@ function refreshAllCardOverrides(options = {}) {
   });
 }
 
-window.addEventListener(BRAND_OVERRIDE_EVENT, () => {
+const handleBrandOverridesUpdated = () => {
   refreshAllCardOverrides({ resetCycle: true });
+};
+BRAND_OVERRIDE_EVENTS.forEach((eventName) => {
+  window.addEventListener(eventName, handleBrandOverridesUpdated);
 });
 const groupStates = new Map();
 let activeCardState = null;
@@ -626,7 +764,7 @@ const globalState = {
   warp: { current: 0, target: 0 }
 };
 
-const sharedMotion = window.__CLEAR_SEAS_GLOBAL_MOTION || (window.__CLEAR_SEAS_GLOBAL_MOTION = {
+const DEFAULT_MOTION_STATE = {
   focus: { x: 0.5, y: 0.5, amount: 0 },
   tilt: { x: 0, y: 0, strength: 0 },
   bend: 0,
@@ -639,9 +777,41 @@ const sharedMotion = window.__CLEAR_SEAS_GLOBAL_MOTION || (window.__CLEAR_SEAS_G
   synergy: 0,
   palette: null,
   collection: null,
+  family: null,
+  layout: null,
+  siteCode: null,
   updatedAt: performance.now(),
   eventName: GLOBAL_MOTION_EVENT
-});
+};
+
+const existingMotionState = window.__CSS_WEB_MASTER_GLOBAL_MOTION || window.__CLEAR_SEAS_GLOBAL_MOTION;
+const sharedMotion = existingMotionState && typeof existingMotionState === 'object' ? existingMotionState : {};
+sharedMotion.focus = { ...DEFAULT_MOTION_STATE.focus, ...(sharedMotion.focus || {}) };
+sharedMotion.tilt = { ...DEFAULT_MOTION_STATE.tilt, ...(sharedMotion.tilt || {}) };
+sharedMotion.bend = Number.isFinite(sharedMotion.bend) ? sharedMotion.bend : DEFAULT_MOTION_STATE.bend;
+sharedMotion.warp = Number.isFinite(sharedMotion.warp) ? sharedMotion.warp : DEFAULT_MOTION_STATE.warp;
+sharedMotion.scroll = Number.isFinite(sharedMotion.scroll) ? sharedMotion.scroll : DEFAULT_MOTION_STATE.scroll;
+sharedMotion.scrollDirection = Number.isFinite(sharedMotion.scrollDirection)
+  ? sharedMotion.scrollDirection
+  : DEFAULT_MOTION_STATE.scrollDirection;
+sharedMotion.scrollSpeed = Number.isFinite(sharedMotion.scrollSpeed)
+  ? sharedMotion.scrollSpeed
+  : DEFAULT_MOTION_STATE.scrollSpeed;
+sharedMotion.focusTrend = Number.isFinite(sharedMotion.focusTrend)
+  ? sharedMotion.focusTrend
+  : DEFAULT_MOTION_STATE.focusTrend;
+sharedMotion.tiltSkew = Number.isFinite(sharedMotion.tiltSkew) ? sharedMotion.tiltSkew : DEFAULT_MOTION_STATE.tiltSkew;
+sharedMotion.synergy = Number.isFinite(sharedMotion.synergy) ? sharedMotion.synergy : DEFAULT_MOTION_STATE.synergy;
+sharedMotion.palette = sharedMotion.palette ?? DEFAULT_MOTION_STATE.palette;
+sharedMotion.collection = sharedMotion.collection ?? DEFAULT_MOTION_STATE.collection;
+sharedMotion.family = sharedMotion.family ?? DEFAULT_MOTION_STATE.family;
+sharedMotion.layout = sharedMotion.layout ?? DEFAULT_MOTION_STATE.layout;
+sharedMotion.siteCode = sharedMotion.siteCode ?? DEFAULT_MOTION_STATE.siteCode;
+sharedMotion.updatedAt = sharedMotion.updatedAt ?? DEFAULT_MOTION_STATE.updatedAt;
+sharedMotion.eventName = GLOBAL_MOTION_EVENT;
+window.__CSS_WEB_MASTER_GLOBAL_MOTION = sharedMotion;
+window.__CLEAR_SEAS_GLOBAL_MOTION = sharedMotion;
+cssWebMasterGlobals.motionState = sharedMotion;
 
 const motionEventState = {
   lastDispatch: 0,
@@ -710,7 +880,9 @@ function maybeDispatchGlobalMotionEvent() {
 
   motionEventState.lastDetail = { ...detail };
   motionEventState.lastDispatch = now;
-  window.dispatchEvent(new CustomEvent(GLOBAL_MOTION_EVENT, { detail }));
+  GLOBAL_MOTION_EVENTS.forEach((eventName) => {
+    window.dispatchEvent(new CustomEvent(eventName, { detail }));
+  });
 }
 
 const supportsVisibilityObserver = typeof window !== 'undefined' && 'IntersectionObserver' in window;
@@ -1631,15 +1803,26 @@ function step() {
   globalState.focus.targetY = focusY;
   globalState.focus.targetAmount = focusAmount;
 
-  const tiltBase = 0.9 + globalState.synergy.current * 0.4;
-  const scrollInfluence = globalState.scroll.current * 0.18;
-  globalState.tilt.targetX = (focusX - 0.5) * tiltBase + scrollInfluence;
-  globalState.tilt.targetY = (0.5 - focusY) * tiltBase - scrollInfluence * 0.6;
+  const focusPresence = focusAmount > 0.08;
+  const scrollEnergy = Math.abs(globalState.scroll.current);
+  const tiltBase = focusPresence ? 0.35 + globalState.synergy.current * 0.2 : 0;
+  const scrollInfluence = focusPresence ? globalState.scroll.current * 0.06 : 0;
 
-  const synergyWeight = globalState.synergy.current * 0.55;
-  const momentumWeight = Math.min(0.6, Math.abs(globalState.scroll.current) * 0.85);
-  globalState.bend.target = Math.min(1, focusAmount * 0.65 + synergyWeight + momentumWeight);
-  globalState.warp.target = Math.max(-1, Math.min(1, (globalState.tilt.targetX - globalState.tilt.targetY) * 0.5));
+  if (focusPresence || scrollEnergy > 0.08) {
+    globalState.tilt.targetX = (focusX - 0.5) * tiltBase + scrollInfluence;
+    globalState.tilt.targetY = (0.5 - focusY) * tiltBase - scrollInfluence * 0.6;
+  } else {
+    globalState.tilt.targetX = 0;
+    globalState.tilt.targetY = 0;
+  }
+
+  const synergyWeight = globalState.synergy.current * 0.35;
+  const momentumWeight = Math.min(0.3, scrollEnergy * 0.5);
+  const bendBase = focusPresence ? focusAmount * 0.45 : 0;
+  globalState.bend.target = Math.min(0.6, bendBase + synergyWeight + momentumWeight);
+
+  const tiltDelta = (globalState.tilt.targetX - globalState.tilt.targetY) * 0.22;
+  globalState.warp.target = Math.max(-0.35, Math.min(0.35, tiltDelta));
 
   globalState.focus.currentX += (globalState.focus.targetX - globalState.focus.currentX) * 0.12;
   globalState.focus.currentY += (globalState.focus.targetY - globalState.focus.currentY) * 0.12;
@@ -1649,7 +1832,8 @@ function step() {
   globalState.bend.current += (globalState.bend.target - globalState.bend.current) * 0.14;
   globalState.warp.current += (globalState.warp.target - globalState.warp.current) * 0.14;
 
-  const tiltStrength = Math.min(1, Math.sqrt((globalState.tilt.currentX ** 2) + (globalState.tilt.currentY ** 2)) * 1.2 + globalState.bend.current * 0.5);
+  const tiltMagnitude = Math.sqrt((globalState.tilt.currentX ** 2) + (globalState.tilt.currentY ** 2)) * 0.6;
+  const tiltStrength = Math.min(0.45, tiltMagnitude + globalState.bend.current * 0.3);
 
   const focusDelta = globalState.focus.currentAmount - globalState.focus.lastAmount;
   globalState.focus.trend += (focusDelta - globalState.focus.trend) * 0.28;
@@ -1676,7 +1860,7 @@ function step() {
 
   const root = document.documentElement;
   root.style.setProperty('--global-scroll-momentum', globalState.scroll.current.toFixed(4));
-  root.style.setProperty('--global-scroll-tilt', `${(globalState.scroll.current * 10).toFixed(3)}deg`);
+  root.style.setProperty('--global-scroll-tilt', `${(globalState.scroll.current * 6).toFixed(3)}deg`);
   root.style.setProperty('--global-synergy-glow', globalState.synergy.current.toFixed(4));
   root.style.setProperty('--global-focus-x', globalState.focus.currentX.toFixed(4));
   root.style.setProperty('--global-focus-y', globalState.focus.currentY.toFixed(4));
