@@ -24,6 +24,7 @@ const brandAssets = window.__CLEAR_SEAS_BRAND_ASSETS || (window.__CLEAR_SEAS_BRA
 const stylesLoaded = new Set();
 const scriptsLoaded = new Map();
 const cardStates = new Map();
+const groupStates = new Map();
 let activeCardState = null;
 let rafId = null;
 
@@ -202,6 +203,103 @@ function ensureBrandLayer(state) {
   return overlay;
 }
 
+function resolveGroupElement(element) {
+  if (!(element instanceof HTMLElement)) {
+    return null;
+  }
+  const groupSelectors = [
+    '[data-card-group]',
+    '.version-grid',
+    '.card-grid',
+    '.cards-grid',
+    '.cards',
+    '.card-collection',
+    '.visualizer-grid',
+    '.layout-grid',
+    '.module-grid',
+    '.experience-grid',
+    '.card-stack',
+    '.card-list'
+  ];
+  const selector = groupSelectors.join(', ');
+  const matched = element.closest(selector);
+  if (matched) {
+    return matched;
+  }
+  const fallback = element.parentElement;
+  if (fallback && fallback !== document.body && fallback !== document.documentElement) {
+    return fallback;
+  }
+  return null;
+}
+
+function attachToGroup(state) {
+  const group = resolveGroupElement(state.element);
+  if (!group) {
+    return null;
+  }
+  group.dataset.globalCardGroup = 'true';
+  let groupState = groupStates.get(group);
+  if (!groupState) {
+    groupState = {
+      element: group,
+      cards: new Set(),
+      focus: { current: 0, target: 0 },
+      pointer: {
+        currentX: 0.5,
+        currentY: 0.5,
+        targetX: 0.5,
+        targetY: 0.5
+      },
+      synergy: { current: 0, target: 0 },
+      section: null
+    };
+    groupStates.set(group, groupState);
+  }
+  groupState.cards.add(state);
+  state.group = group;
+  return group;
+}
+
+function detachFromGroup(state) {
+  if (!state.group) {
+    return;
+  }
+  const groupState = groupStates.get(state.group);
+  if (!groupState) {
+    state.group = null;
+    return;
+  }
+  groupState.cards.delete(state);
+  if (groupState.cards.size === 0) {
+    const { element, section } = groupState;
+    element.removeAttribute('data-global-card-group');
+    element.removeAttribute('data-global-group-active');
+    element.style.removeProperty('--group-focus-amount');
+    element.style.removeProperty('--group-focus-x');
+    element.style.removeProperty('--group-focus-y');
+    element.style.removeProperty('--group-synergy');
+    if (section) {
+      section.removeAttribute('data-global-group-active');
+      section.style.removeProperty('--section-focus-amount');
+      section.style.removeProperty('--section-synergy');
+    }
+    groupStates.delete(state.group);
+  }
+  state.group = null;
+}
+
+function syncGroupAssociation(state) {
+  const resolvedGroup = resolveGroupElement(state.element);
+  if (resolvedGroup === state.group) {
+    return;
+  }
+  detachFromGroup(state);
+  if (resolvedGroup) {
+    attachToGroup(state);
+  }
+}
+
 function createState(element, index) {
   element.classList.add('global-visualizer-card');
   element.dataset.globalCardSynergy = 'applied';
@@ -222,20 +320,50 @@ function createState(element, index) {
     pulse: { current: 0, target: 0 },
     scroll: 0,
     overlay: null,
-    brandVideo: null
+    brandVideo: null,
+    group: null
   };
   state.overlay = ensureBrandLayer(state);
+  state.element.dataset.supportRole = 'neutral';
+  state.group = attachToGroup(state);
   cardStates.set(element, state);
   return state;
 }
 
 function updateSupportTargets(activeState) {
   activeCardState = activeState;
+  const activeGroup = activeState && activeState.group ? activeState.group : null;
+
+  groupStates.forEach((groupState, groupElement) => {
+    if (!activeGroup) {
+      groupState.synergy.target = 0;
+      groupElement.dataset.globalGroupActive = 'false';
+      return;
+    }
+    if (groupElement === activeGroup) {
+      groupState.synergy.target = 1;
+      groupElement.dataset.globalGroupActive = 'true';
+    } else {
+      groupState.synergy.target = 0.32;
+      groupElement.dataset.globalGroupActive = 'false';
+    }
+  });
+
   cardStates.forEach((state) => {
     if (activeState) {
-      state.support.target = state === activeState ? 0.12 : 0.45;
+      if (state === activeState) {
+        state.support.target = 0.38;
+        state.element.dataset.supportRole = 'primary';
+      } else if (activeGroup && state.group === activeGroup) {
+        state.support.target = -0.24;
+        state.element.dataset.supportRole = 'supporting';
+      } else {
+        state.support.target = -0.12;
+        state.element.dataset.supportRole = 'ambient';
+      }
     } else {
       state.support.target = 0;
+      state.element.dataset.supportRole = 'neutral';
     }
   });
   globalState.synergy.target = activeState ? 1 : 0;
@@ -258,6 +386,15 @@ function handlePointerEnter(state, event) {
   state.focus.target = 1;
   state.element.dataset.hasFocus = 'true';
   state.element.dataset.interactionActive = 'true';
+  if (state.group) {
+    const groupState = groupStates.get(state.group);
+    if (groupState) {
+      groupState.pointer.targetX = x;
+      groupState.pointer.targetY = y;
+      groupState.focus.target = Math.max(groupState.focus.target, 0.85);
+      groupState.synergy.target = Math.max(groupState.synergy.target, 0.6);
+    }
+  }
   if (state.brandVideo) {
     state.brandVideo.play().catch(() => {});
   }
@@ -276,6 +413,14 @@ function handlePointerMove(state, event) {
   state.focus.target = Math.min(1.2, state.focus.target + 0.05);
   state.twist.target = Math.max(-22, Math.min(22, state.twist.target * 0.6 + deltaX * 0.18 - deltaY * 0.12));
   state.element.dataset.interactionActive = 'true';
+  if (state.group) {
+    const groupState = groupStates.get(state.group);
+    if (groupState) {
+      groupState.pointer.targetX = x;
+      groupState.pointer.targetY = y;
+      groupState.synergy.target = Math.max(groupState.synergy.target, 0.8);
+    }
+  }
   requestTick();
 }
 
@@ -288,6 +433,15 @@ function handlePointerLeave(state) {
   state.twist.target = 0;
   state.element.dataset.hasFocus = 'false';
   state.element.dataset.interactionActive = 'false';
+  if (state.group) {
+    const groupState = groupStates.get(state.group);
+    if (groupState && groupState.cards.size <= 1) {
+      groupState.pointer.targetX = 0.5;
+      groupState.pointer.targetY = 0.5;
+      groupState.focus.target = 0;
+      groupState.synergy.target = Math.max(0, groupState.synergy.target - 0.35);
+    }
+  }
   if (activeCardState === state) {
     updateSupportTargets(null);
   }
@@ -302,6 +456,13 @@ function handleClick(state) {
 function handleFocusIn(state) {
   state.focus.target = 0.85;
   state.element.dataset.hasFocus = 'true';
+  if (state.group) {
+    const groupState = groupStates.get(state.group);
+    if (groupState) {
+      groupState.focus.target = Math.max(groupState.focus.target, 0.85);
+      groupState.synergy.target = Math.max(groupState.synergy.target, 0.7);
+    }
+  }
   updateSupportTargets(state);
   requestTick();
 }
@@ -309,6 +470,13 @@ function handleFocusIn(state) {
 function handleFocusOut(state) {
   state.focus.target = 0;
   state.element.dataset.hasFocus = 'false';
+  if (state.group) {
+    const groupState = groupStates.get(state.group);
+    if (groupState && groupState.cards.size <= 1) {
+      groupState.focus.target = 0;
+      groupState.synergy.target = Math.max(0, groupState.synergy.target - 0.4);
+    }
+  }
   if (activeCardState === state) {
     updateSupportTargets(null);
   }
@@ -402,10 +570,12 @@ function step() {
   const toRemove = [];
 
   cardStates.forEach((state, element) => {
+    syncGroupAssociation(state);
     if (!document.body.contains(element)) {
       if (state.cleanup) {
         state.cleanup();
       }
+      detachFromGroup(state);
       toRemove.push(element);
       return;
     }
@@ -425,7 +595,7 @@ function step() {
     state.pulse.target *= 0.76;
 
     const focusStrength = Math.max(0, Math.min(1.2, state.focus.current));
-    const supportStrength = Math.max(0, Math.min(1, state.support.current));
+    const supportStrength = Math.max(-1, Math.min(1, state.support.current));
     const twistDeg = state.twist.current;
     const pulse = Math.max(0, state.pulse.current);
 
@@ -449,6 +619,51 @@ function step() {
         Math.abs(state.support.target - state.support.current) > 0.001 ||
         Math.abs(state.twist.target - state.twist.current) > 0.001 ||
         state.pulse.current > 0.01) {
+      continueAnimation = true;
+    }
+  });
+
+  groupStates.forEach((groupState) => {
+    let weightedGroupX = 0;
+    let weightedGroupY = 0;
+    let groupFocus = 0;
+    groupState.cards.forEach((cardState) => {
+      const cardFocus = Math.max(0, Math.min(1.2, cardState.focus.current));
+      if (cardFocus > 0.05) {
+        weightedGroupX += cardState.pointer.smoothX * cardFocus;
+        weightedGroupY += cardState.pointer.smoothY * cardFocus;
+        groupFocus += cardFocus;
+      }
+    });
+
+    groupState.pointer.targetX = groupFocus > 0 ? weightedGroupX / groupFocus : 0.5;
+    groupState.pointer.targetY = groupFocus > 0 ? weightedGroupY / groupFocus : 0.5;
+    groupState.focus.target = Math.min(1, groupFocus);
+
+    groupState.pointer.currentX += (groupState.pointer.targetX - groupState.pointer.currentX) * 0.16;
+    groupState.pointer.currentY += (groupState.pointer.targetY - groupState.pointer.currentY) * 0.16;
+    groupState.focus.current += (groupState.focus.target - groupState.focus.current) * 0.12;
+    groupState.synergy.current += (groupState.synergy.target - groupState.synergy.current) * 0.12;
+
+    const { element, section } = groupState;
+    element.style.setProperty('--group-focus-amount', groupState.focus.current.toFixed(4));
+    element.style.setProperty('--group-focus-x', groupState.pointer.currentX.toFixed(4));
+    element.style.setProperty('--group-focus-y', groupState.pointer.currentY.toFixed(4));
+    element.style.setProperty('--group-synergy', groupState.synergy.current.toFixed(4));
+
+    if (!groupState.section) {
+      groupState.section = element.closest('.section, section, .section-block, .section-wrapper, .group-section') || null;
+    }
+    if (groupState.section) {
+      groupState.section.dataset.globalGroupActive = groupState.synergy.current > 0.05 ? 'true' : 'false';
+      groupState.section.style.setProperty('--section-focus-amount', groupState.focus.current.toFixed(4));
+      groupState.section.style.setProperty('--section-synergy', groupState.synergy.current.toFixed(4));
+    }
+
+    if (Math.abs(groupState.pointer.targetX - groupState.pointer.currentX) > 0.001 ||
+        Math.abs(groupState.pointer.targetY - groupState.pointer.currentY) > 0.001 ||
+        Math.abs(groupState.focus.current - groupState.focus.target) > 0.001 ||
+        Math.abs(groupState.synergy.current - groupState.synergy.target) > 0.001) {
       continueAnimation = true;
     }
   });
