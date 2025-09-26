@@ -110,7 +110,7 @@
 
         /* SCALE-BASED PROGRESSION STATES */
         .ultimate-card.background-state {
-            transform: translate(-50%, -50%) scale(var(--scale-background)) rotateY(5deg) rotateX(2deg);
+            transform: translate(-50%, -50%) scale(var(--scale-background)) rotateX(2deg);
             opacity: 0.15;
             filter: blur(4px) saturate(0.6);
             border-color: rgba(0, 255, 255, 0.1);
@@ -118,7 +118,7 @@
         }
 
         .ultimate-card.approaching-state {
-            transform: translate(-50%, -50%) scale(var(--scale-approaching)) rotateY(2deg);
+            transform: translate(-50%, -50%) scale(var(--scale-approaching));
             opacity: 0.5;
             filter: blur(1px) saturate(0.8);
             border-color: rgba(0, 255, 255, 0.15);
@@ -126,7 +126,7 @@
         }
 
         .ultimate-card.focused-state {
-            transform: translate(-50%, -50%) scale(var(--scale-focused)) rotateY(0deg) rotateX(0deg);
+            transform: translate(-50%, -50%) scale(var(--scale-focused)) rotateX(0deg);
             opacity: 1.0;
             filter: blur(0px) saturate(1.0) brightness(1.1);
             border-color: var(--clear-seas-primary);
@@ -138,7 +138,7 @@
         }
 
         .ultimate-card.exiting-state {
-            transform: translate(-50%, -50%) scale(1.2) rotateY(-10deg) rotateX(5deg);
+            transform: translate(-50%, -50%) scale(1.2) rotateX(5deg);
             opacity: 0.1;
             filter: blur(6px) saturate(2) hue-rotate(30deg);
             z-index: 5;
@@ -146,7 +146,7 @@
 
         /* MICRO-INTERACTION ENHANCEMENTS */
         .ultimate-card:hover.background-state {
-            transform: translate(-50%, -50%) scale(calc(var(--scale-background) * var(--scale-hover-boost))) rotateY(3deg);
+            transform: translate(-50%, -50%) scale(calc(var(--scale-background) * var(--scale-hover-boost)));
             opacity: 0.25;
             border-color: rgba(0, 255, 255, 0.15);
         }
@@ -434,11 +434,11 @@
                 filter: brightness(1) saturate(1) blur(0px) hue-rotate(0deg);
             }
             20% {
-                transform: translate(-50%, -50%) scale(0.88) rotateX(5deg) rotateY(3deg);
+                transform: translate(-50%, -50%) scale(0.88) rotateX(5deg);
                 filter: brightness(0.7) saturate(0.8) blur(1px) hue-rotate(-10deg);
             }
             50% {
-                transform: translate(-50%, -50%) scale(1.25) rotateX(-2deg) rotateY(-1deg) rotateZ(1deg);
+                transform: translate(-50%, -50%) scale(1.25) rotateX(-2deg) rotateZ(1deg);
                 filter: brightness(2.2) saturate(3.0) blur(0px) hue-rotate(60deg);
             }
             75% {
@@ -872,5 +872,7 @@
         });
     </script>
 
+
+    <script type="module" src="scripts/global-page-orchestrator.js"></script>
 </body>
 </html>

@@ -183,13 +183,13 @@ export class PolychoraCardGenerator extends CardGeneratorBase {
             }
             
             @keyframes polytope-glow {
-                from { 
+                from {
                     box-shadow: 0 0 15px rgba(255, 150, 0, 0.5);
-                    transform: rotateY(0deg);
+                    transform: rotateX(0deg);
                 }
-                to { 
+                to {
                     box-shadow: 0 0 25px rgba(255, 150, 0, 0.8);
-                    transform: rotateY(5deg);
+                    transform: rotateX(-5deg);
                 }
             }
         `;

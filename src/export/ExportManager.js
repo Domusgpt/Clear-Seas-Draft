@@ -159,7 +159,7 @@ export class ExportManager {
     /* 4D transformation simulation */
     transform: perspective(1000px) 
                rotateX(${params.rot4dXW * 5}deg) 
-               rotateY(${params.rot4dYW * 5}deg) 
+               rotateX(${params.rot4dYW * -5}deg)
                rotateZ(${params.rot4dZW * 5}deg);
     
     /* Layer effects */
@@ -203,7 +203,7 @@ export class ExportManager {
         filter: hue-rotate(0deg) saturate(1) brightness(1);
         transform: perspective(1000px) 
                    rotateX(${params.rot4dXW * 5}deg) 
-                   rotateY(${params.rot4dYW * 5}deg) 
+                  rotateX(${params.rot4dYW * -5}deg)
                    rotateZ(${params.rot4dZW * 5}deg) 
                    scale(1);
     }
@@ -213,7 +213,7 @@ export class ExportManager {
                 brightness(${1.1 + params.morphFactor * 0.3});
         transform: perspective(1000px) 
                    rotateX(${params.rot4dXW * 5 + 2}deg) 
-                   rotateY(${params.rot4dYW * 5 + 2}deg) 
+                  rotateX(${params.rot4dYW * -5 - 2}deg)
                    rotateZ(${params.rot4dZW * 5 + 2}deg) 
                    scale(${1 + params.morphFactor * 0.1});
     }
@@ -221,7 +221,7 @@ export class ExportManager {
         filter: hue-rotate(360deg) saturate(1) brightness(1);
         transform: perspective(1000px) 
                    rotateX(${params.rot4dXW * 5}deg) 
-                   rotateY(${params.rot4dYW * 5}deg) 
+                  rotateX(${params.rot4dYW * -5}deg)
                    rotateZ(${params.rot4dZW * 5}deg) 
                    scale(1);
     }
@@ -241,7 +241,7 @@ export class ExportManager {
 .vib34d-holographic:active {
     transform: perspective(1000px) 
                rotateX(${params.rot4dXW * 5 + 5}deg) 
-               rotateY(${params.rot4dYW * 5 + 5}deg) 
+               rotateX(${params.rot4dYW * -5 - 5}deg)
                rotateZ(${params.rot4dZW * 5 + 3}deg) 
                scale(${0.95 + params.morphFactor * 0.05});
 }
