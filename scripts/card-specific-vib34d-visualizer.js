@@ -5,6 +5,68 @@
  * Based on deep analysis of VIB34D geometric tilt-window system
  */
 
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function parseCssNumber(value, fallback) {
+  if (!value) {
+    return fallback;
+  }
+  const parsed = parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function parseCssHue(value, fallback) {
+  const numeric = parseCssNumber(String(value).replace('deg', ''), fallback);
+  let hue = numeric % 360;
+  if (hue < 0) {
+    hue += 360;
+  }
+  return hue;
+}
+
+function parseCssPercentage(value, fallback) {
+  const numeric = parseCssNumber(String(value).replace('%', ''), fallback * 100);
+  return clamp(numeric / 100, 0, 1);
+}
+
+function hslToRgb(h, s, l) {
+  const chroma = (1 - Math.abs(2 * l - 1)) * s;
+  const huePrime = h * 6;
+  const x = chroma * (1 - Math.abs((huePrime % 2) - 1));
+  let r = 0;
+  let g = 0;
+  let b = 0;
+
+  if (huePrime >= 0 && huePrime < 1) {
+    r = chroma;
+    g = x;
+  } else if (huePrime < 2) {
+    r = x;
+    g = chroma;
+  } else if (huePrime < 3) {
+    g = chroma;
+    b = x;
+  } else if (huePrime < 4) {
+    g = x;
+    b = chroma;
+  } else if (huePrime < 5) {
+    r = x;
+    b = chroma;
+  } else {
+    r = chroma;
+    b = x;
+  }
+
+  const m = l - chroma / 2;
+  return {
+    r: r + m,
+    g: g + m,
+    b: b + m
+  };
+}
+
 class WebGLContextManager {
   static contexts = new Map();
   static contextUsage = new Map(); // Track last used time for LRU cleanup
@@ -85,7 +147,14 @@ class CardSpecificVIB34DVisualizer {
     this.role = role;
     this.active = true;
     this.startTime = Date.now();
-    
+    this.baseHue = 200;
+    this.themeColor = { r: 0.0, g: 1.0, b: 1.0 };
+    this.themeGlow = 0.55;
+    this.lastThemeSample = 0;
+    this.globalScrollMomentum = 0;
+    this.globalSynergy = 0;
+    this.lastRootSample = 0;
+
     if (!this.canvas || !this.canvas.getContext) {
       console.error(`Canvas ${canvasId} not found or WebGL not supported`);
       return;
@@ -120,9 +189,11 @@ class CardSpecificVIB34DVisualizer {
     this.initShaders();
     this.initBuffers();
     this.resize();
+    this.updateThemeFromCSS();
+    this.updateGlobalMotionInfluence();
     this.setupCardAnimations();
     this.startRenderLoop();
-    
+
     console.log(`🎨 Card visualizer created: ${canvasId} (${role}) - Seed: ${this.cardSeed.toFixed(3)}`);
   }
   
@@ -512,13 +583,31 @@ class CardSpecificVIB34DVisualizer {
       const rect = this.cardElement.getBoundingClientRect();
       const x = (e.clientX - rect.left) / rect.width;
       const y = (e.clientY - rect.top) / rect.height;
-      
-      this.updateInteraction(x, y, 0.5);
-      
+
+      const tiltX = (0.5 - y) * 2;
+      const tiltY = (x - 0.5) * 2;
+      const pointerMagnitude = Math.min(1.2, Math.hypot(tiltX, tiltY));
+      const bendStrength = Math.min(1, 0.18 + pointerMagnitude * 0.6);
+      const bendTiltX = -tiltX * 12 * bendStrength;
+      const bendTiltY = tiltY * 14 * bendStrength;
+      const bendSkewX = -tiltY * 6 * bendStrength;
+      const bendSkewY = tiltX * 5 * bendStrength;
+      const bendTwist = tiltX * tiltY * 16 * bendStrength;
+      const bendDepth = bendStrength * 28;
+
+      this.updateInteraction(x, y, bendStrength);
+
       // Update CSS custom properties for card transforms
       this.cardElement.style.setProperty('--mouse-x', (x * 100) + '%');
       this.cardElement.style.setProperty('--mouse-y', (y * 100) + '%');
-      this.cardElement.style.setProperty('--bend-intensity', this.mouseIntensity);
+      this.cardElement.style.setProperty('--bend-intensity', bendStrength.toFixed(3));
+      this.cardElement.style.setProperty('--bend-tilt-x-deg', `${bendTiltX.toFixed(3)}deg`);
+      this.cardElement.style.setProperty('--bend-tilt-y-deg', `${bendTiltY.toFixed(3)}deg`);
+      this.cardElement.style.setProperty('--bend-skew-x-deg', `${bendSkewX.toFixed(3)}deg`);
+      this.cardElement.style.setProperty('--bend-skew-y-deg', `${bendSkewY.toFixed(3)}deg`);
+      this.cardElement.style.setProperty('--bend-twist-deg', `${bendTwist.toFixed(3)}deg`);
+      this.cardElement.style.setProperty('--bend-depth', `${bendDepth.toFixed(3)}px`);
+      this.cardElement.style.setProperty('--visualizer-bend-depth', `${(bendDepth * 0.6).toFixed(3)}px`);
     });
     
     // Click interactions
@@ -540,11 +629,18 @@ class CardSpecificVIB34DVisualizer {
       this.cardElement.classList.remove('visualizer-active');
       this.reactivity = 1.0;
       this.mouseIntensity *= 0.8; // Gradual fade
-      
+
       // Reset CSS transforms
       this.cardElement.style.setProperty('--mouse-x', '50%');
       this.cardElement.style.setProperty('--mouse-y', '50%');
       this.cardElement.style.setProperty('--bend-intensity', '0');
+      this.cardElement.style.setProperty('--bend-tilt-x-deg', '0deg');
+      this.cardElement.style.setProperty('--bend-tilt-y-deg', '0deg');
+      this.cardElement.style.setProperty('--bend-skew-x-deg', '0deg');
+      this.cardElement.style.setProperty('--bend-skew-y-deg', '0deg');
+      this.cardElement.style.setProperty('--bend-twist-deg', '0deg');
+      this.cardElement.style.setProperty('--bend-depth', '0px');
+      this.cardElement.style.setProperty('--visualizer-bend-depth', '0px');
     });
   }
   
@@ -572,48 +668,84 @@ class CardSpecificVIB34DVisualizer {
   
   resize() {
     if (!this.canvas) return;
-    
+
     const rect = this.canvas.getBoundingClientRect();
     this.canvas.width = rect.width * window.devicePixelRatio;
     this.canvas.height = rect.height * window.devicePixelRatio;
     this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
   }
+
+  updateThemeFromCSS() {
+    if (!this.cardElement) {
+      return;
+    }
+    const styles = getComputedStyle(this.cardElement);
+    const hue = parseCssHue(styles.getPropertyValue('--card-accent-hue'), this.baseHue);
+    const saturation = parseCssPercentage(styles.getPropertyValue('--card-accent-saturation'), 0.78);
+    const lightness = parseCssPercentage(styles.getPropertyValue('--card-accent-lightness'), 0.6);
+    const glow = clamp(parseCssNumber(styles.getPropertyValue('--card-accent-glow'), this.themeGlow), 0.2, 1.0);
+    this.baseHue = hue;
+    this.themeGlow = glow;
+    const rgb = hslToRgb(hue / 360, saturation, lightness);
+    this.themeColor = rgb;
+    this.lastThemeSample = performance.now();
+  }
+
+  updateGlobalMotionInfluence() {
+    const rootStyles = getComputedStyle(document.documentElement);
+    const scroll = parseCssNumber(rootStyles.getPropertyValue('--global-scroll-momentum'), this.globalScrollMomentum);
+    const synergy = parseCssNumber(rootStyles.getPropertyValue('--global-synergy-glow'), this.globalSynergy);
+    this.globalScrollMomentum = clamp(scroll, -4, 4);
+    this.globalSynergy = clamp(synergy, 0, 2);
+    this.lastRootSample = performance.now();
+  }
   
   render() {
     if (!this.active || !this.gl || !this.program) return;
-    
+
     // Update context usage for LRU management
     WebGLContextManager.updateUsage(this.canvas);
-    
+
     const time = Date.now() - this.startTime;
     const morphTime = time * this.behaviorProfile.geometryMorphSpeed;
     const colorTime = time * this.behaviorProfile.colorCycleRate;
-    
+
+    if (performance.now() - this.lastThemeSample > 240) {
+      this.updateThemeFromCSS();
+    }
+    if (performance.now() - this.lastRootSample > 160) {
+      this.updateGlobalMotionInfluence();
+    }
+
     // Dynamic geometry morphing
-    const geometryFloat = Math.sin(morphTime * 0.001) * 3.5 + 3.5; // 0-7 range
-    
+    const scrollInfluence = this.globalScrollMomentum;
+    const geometryFloat = Math.sin(morphTime * 0.001 + scrollInfluence * 0.35) * 3.5 + 3.5; // 0-7 range
+
     // Per-card color variations
-    const hueShift = (Math.sin(colorTime * 0.0008) * 180) + 
-                    this.instanceParams.colorShift;
-    
+    const hueShift = this.baseHue + (Math.sin(colorTime * 0.0008 + scrollInfluence * 0.5) * 90) +
+                    this.instanceParams.colorShift * 0.35;
+
     // Apply unique density fluctuations
-    const densityVariation = Math.sin(morphTime * 0.0012) * 
-                           this.behaviorProfile.densityFluctuation;
-    
+    const densityVariation = Math.sin(morphTime * 0.0012) *
+                           this.behaviorProfile.densityFluctuation * (1 + Math.abs(scrollInfluence) * 0.35);
+
     // 4D rotations with time and mouse influence
-    const rot4dXW = time * 0.0003 + this.cardSeed * 6.28;
-    const rot4dYW = time * 0.0002 + this.cardSeed * 3.14;
-    const rot4dZW = time * 0.0005 + this.mouseIntensity * 3.14159;
-    
+    const rot4dXW = time * 0.0003 + this.cardSeed * 6.28 + scrollInfluence * 1.2;
+    const rot4dYW = time * 0.0002 + this.cardSeed * 3.14 - scrollInfluence * 0.8;
+    const rot4dZW = time * 0.0005 + this.mouseIntensity * 3.14159 + scrollInfluence * 1.6;
+
+    const synergyBoost = 1 + this.globalSynergy * 0.35;
+    const themeIntensityBoost = 0.85 + this.themeGlow * 0.4 + Math.abs(scrollInfluence) * 0.25;
+
     // Set uniforms
     this.gl.uniform2f(this.uniforms.resolution, this.canvas.width, this.canvas.height);
     this.gl.uniform1f(this.uniforms.time, time);
     this.gl.uniform2f(this.uniforms.mouse, this.mouseX, this.mouseY);
     this.gl.uniform1f(this.uniforms.geometry, geometryFloat);
     this.gl.uniform1f(this.uniforms.density, 8.0);
-    this.gl.uniform1f(this.uniforms.speed, this.roleParams.speedMult);
-    this.gl.uniform3f(this.uniforms.color, 0.0, 1.0, 1.0); // Cyan base
-    this.gl.uniform1f(this.uniforms.intensity, this.roleParams.intensity * this.instanceParams.intensity);
+    this.gl.uniform1f(this.uniforms.speed, this.roleParams.speedMult * (1 + Math.abs(scrollInfluence) * 0.3));
+    this.gl.uniform3f(this.uniforms.color, this.themeColor.r, this.themeColor.g, this.themeColor.b);
+    this.gl.uniform1f(this.uniforms.intensity, this.roleParams.intensity * this.instanceParams.intensity * themeIntensityBoost * synergyBoost);
     this.gl.uniform1f(this.uniforms.instanceDensity, this.roleParams.densityMult * this.instanceParams.densityMult);
     this.gl.uniform1f(this.uniforms.instanceSpeed, this.instanceParams.speedMult);
     this.gl.uniform1f(this.uniforms.colorShift, hueShift);
