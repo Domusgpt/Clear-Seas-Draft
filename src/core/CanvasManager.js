@@ -115,31 +115,38 @@ export class CanvasManager {
     const canvasIds = this.getCanvasIdsForSystem(systemName);
     
     // Create 5 fresh canvases
+    const bleedScale = 1.3;
     canvasIds.forEach((canvasId, index) => {
       const canvas = document.createElement('canvas');
       canvas.id = canvasId;
       canvas.className = 'visualization-canvas';
       canvas.style.position = 'absolute';
-      canvas.style.top = '0';
-      canvas.style.left = '0';
-      canvas.style.width = '100%';
-      canvas.style.height = '100%';
+      canvas.style.top = '50%';
+      canvas.style.left = '50%';
+      canvas.style.width = `${bleedScale * 100}%`;
+      canvas.style.height = `${bleedScale * 100}%`;
+      canvas.style.transform = 'translate(-50%, -50%) scale(1)';
+      canvas.style.transformOrigin = 'center';
+      canvas.style.pointerEvents = 'none';
+      canvas.style.willChange = 'transform, filter';
       canvas.style.zIndex = index + 1;
-      
-      // Set canvas dimensions
+
+      // Set canvas dimensions with bleed so resolution matches the visual expansion
       const viewWidth = window.innerWidth;
       const viewHeight = window.innerHeight;
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = viewWidth * dpr;
-      canvas.height = viewHeight * dpr;
-      
+      canvas.width = viewWidth * dpr * bleedScale;
+      canvas.height = viewHeight * dpr * bleedScale;
+
       targetContainer.appendChild(canvas);
     });
-    
+
     // Show the target container
     targetContainer.style.display = 'block';
     targetContainer.style.visibility = 'visible';
     targetContainer.style.opacity = '1';
+    targetContainer.style.overflow = 'visible';
+    targetContainer.style.transformStyle = 'preserve-3d';
     
     console.log(`✅ Created 5 fresh canvases for ${systemName}: ${canvasIds.join(', ')}`);
   }
