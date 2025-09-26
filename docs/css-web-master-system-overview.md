@@ -8,7 +8,7 @@ can reuse without rewriting motion logic or asset loading rules.
 
 1. **Unify shared infrastructure.** Global scripts (`global-page-orchestrator`, `page-profile-registry`) centralize brand
    palettes, asset rotation, and CSS variable broadcasting so each site inherits the same reactive scaffolding.
-2. **Scale across properties.** paraerator.com, vib3code.com, and other CSS launches can point at the same orchestrator and
+2. **Scale across properties.** parserator.com, vib3code.com, and other CSS launches can point at the same orchestrator and
    stylesheet bundle, then layer site-specific copy or modules on top.
 3. **Preserve creative experimentation.** Every HTML build remains available as a reference implementation, letting teams remix
    existing choreography patterns instead of starting from scratch.
@@ -28,7 +28,8 @@ can reuse without rewriting motion logic or asset loading rules.
 1. **Choose a baseline template** from the Master Index based on the desired experience (e.g., Immersive AI deck, Blueprint lab,
    Totalistic showcase).
 2. **Set the page profile** using `data-page-collection` or filename conventions so the orchestrator loads the correct palette
-   and asset set.
+   and asset set. Provide `data-site-code="<site>`" (or configure an explicit registry override) to target the right site family
+   when launching new properties.
 3. **Register brand assets** through the shared brand override registry or by dropping new media into `assets/` and referencing
    them within the profile metadata.
 4. **Customize copy and modules** while leaving the orchestrator hooks in place so focus, pointer, and scroll telemetry continue
@@ -45,10 +46,20 @@ can reuse without rewriting motion logic or asset loading rules.
 - **Overscan defaults**: Canvas overscan is now managed globally, ensuring holographic visuals always bleed past card edges while
   respecting tilt and bend cues supplied by motion telemetry.
 
+## Site codes & design tokens
+
+- **Namespace bridge:** Runtime globals now publish both `__CSS_WEB_MASTER_*` and legacy `__CLEAR_SEAS_*` properties. New builds
+  should subscribe to `css-web-master:motion-updated` (via `window.__CSS_WEB_MASTER_GLOBAL_MOTION_EVENT`) while maintaining
+  legacy listeners.
+- **Profile palette library:** Palette metadata is defined once and shared across profiles. The new `parserator` entry reuses the
+  foundation palette while layering property-specific scripts and copy.
+- **Token overrides:** `styles/css-web-master-tokens.css` centralises typography, color, and motion variables. Override
+  `--csswm-*` tokens per site to re-skin experiences without duplicating the choreography stylesheets.
+
 ## Extending to New Sites
 
-- **paraerator.com**: Start from a PR-series immersive deck to reuse mission-axis navigation. Update the profile registry with a
-  `paraerator` family that swaps in the new logos/videos and adjust copy modules accordingly.
+- **parserator.com**: Start from a PR-series immersive deck to reuse mission-axis navigation. Update the profile registry with a
+  `parserator` family that swaps in the new logos/videos and adjust copy modules accordingly.
 - **vib3code.com**: Leverage the VIB34D-integrated builds for continuity with the existing visualizer engines. Register
   additional shader parameters if new interaction types are required.
 - **Future CSS properties**: Define new families within `page-profile-registry`, point them at shared synergy styles, and create
