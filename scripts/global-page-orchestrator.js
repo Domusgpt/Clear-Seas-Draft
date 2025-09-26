@@ -642,7 +642,13 @@ const globalState = {
     targetY: 0
   },
   bend: { current: 0, target: 0 },
-  warp: { current: 0, target: 0 }
+  warp: { current: 0, target: 0 },
+  viewport: {
+    currentX: 0.5,
+    currentY: 0.5,
+    targetX: 0.5,
+    targetY: 0.5
+  }
 };
 
 const sharedMotion = window.__CLEAR_SEAS_GLOBAL_MOTION || (window.__CLEAR_SEAS_GLOBAL_MOTION = {
@@ -660,9 +666,17 @@ const sharedMotion = window.__CLEAR_SEAS_GLOBAL_MOTION || (window.__CLEAR_SEAS_G
   collection: null,
   family: null,
   layout: null,
+  viewport: { x: 0.5, y: 0.5 },
+  pointerPresence: 0,
   updatedAt: performance.now(),
   eventName: GLOBAL_MOTION_EVENT
 });
+if (!sharedMotion.viewport) {
+  sharedMotion.viewport = { x: 0.5, y: 0.5 };
+}
+if (typeof sharedMotion.pointerPresence !== 'number') {
+  sharedMotion.pointerPresence = 0;
+}
 
 const motionEventState = {
   lastDispatch: 0,
@@ -688,7 +702,10 @@ function shouldDispatchMotionEvent(previous, next) {
     scrollMomentum: 0.001,
     scrollSpeed: 0.001,
     scrollDirection: 0.51,
-    synergy: 0.001
+    synergy: 0.001,
+    pointerPresence: 0.001,
+    viewportX: 0.001,
+    viewportY: 0.001
   };
 
   return Object.keys(thresholds).some((key) => {
@@ -713,6 +730,9 @@ function maybeDispatchGlobalMotionEvent() {
     scrollSpeed: sharedMotion.scrollSpeed,
     scrollDirection: sharedMotion.scrollDirection,
     synergy: sharedMotion.synergy,
+    pointerPresence: sharedMotion.pointerPresence,
+    viewportX: sharedMotion.viewport.x,
+    viewportY: sharedMotion.viewport.y,
     palette: sharedMotion.palette,
     collection: sharedMotion.collection,
     timestamp: sharedMotion.updatedAt
@@ -1171,6 +1191,13 @@ function createState(element, index) {
     overlay: null,
     brandVideo: null,
     group: null,
+    layout: {
+      centerX: 0.5,
+      centerY: 0.5,
+      width: 0,
+      height: 0,
+      updatedAt: 0
+    },
     isVisible: true,
     visibilityRatio: 1,
     cleanupCallbacks: []
@@ -1198,6 +1225,32 @@ function createState(element, index) {
   };
   cardStates.set(element, state);
   return state;
+}
+
+function updateLayoutSnapshot(state, timestamp) {
+  const layout = state.layout || (state.layout = {
+    centerX: 0.5,
+    centerY: 0.5,
+    width: 0,
+    height: 0,
+    updatedAt: 0
+  });
+  const now = typeof timestamp === 'number' ? timestamp : performance.now();
+  const refreshInterval = state.isVisible ? 80 : 240;
+  if (now - layout.updatedAt < refreshInterval) {
+    return layout;
+  }
+  const rect = state.element.getBoundingClientRect();
+  const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 1;
+  const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 1;
+  const centerX = rect.width ? (rect.left + rect.width / 2) / viewportWidth : 0.5;
+  const centerY = rect.height ? (rect.top + rect.height / 2) / viewportHeight : 0.5;
+  layout.centerX = Math.min(1, Math.max(0, centerX));
+  layout.centerY = Math.min(1, Math.max(0, centerY));
+  layout.width = rect.width / viewportWidth;
+  layout.height = rect.height / viewportHeight;
+  layout.updatedAt = now;
+  return layout;
 }
 
 function updateSupportTargets(activeState) {
@@ -1509,6 +1562,10 @@ function step() {
   let weightedX = 0;
   let weightedY = 0;
   let totalFocus = 0;
+  const now = performance.now();
+  let viewportWeightedX = 0;
+  let viewportWeightedY = 0;
+  let viewportWeight = 0;
   const toRemove = [];
 
   cardStates.forEach((state, element) => {
@@ -1556,6 +1613,19 @@ function step() {
     const twistDeg = state.twist.current;
     const pulse = Math.max(0, state.pulse.current);
 
+    if (state.isVisible) {
+      const layout = updateLayoutSnapshot(state, now);
+      const layoutWeight =
+        focusStrength * 0.6 +
+        visibilityFactor * 0.3 +
+        Math.max(0, supportStrength) * 0.2;
+      if (layoutWeight > 0.0001) {
+        viewportWeightedX += layout.centerX * layoutWeight;
+        viewportWeightedY += layout.centerY * layoutWeight;
+        viewportWeight += layoutWeight;
+      }
+    }
+
     element.style.setProperty('--card-focus-x', state.pointer.smoothX.toFixed(4));
     element.style.setProperty('--card-focus-y', state.pointer.smoothY.toFixed(4));
     element.style.setProperty('--card-focus-strength', focusStrength.toFixed(4));
@@ -1566,10 +1636,11 @@ function step() {
     const rotationPhase =
       ((state.pointer.smoothX - 0.5) * 0.6) -
       ((state.pointer.smoothY - 0.5) * 0.5) +
-      state.scroll * 0.28 +
       supportStrength * 0.16 +
       globalState.tilt.currentX * 0.2 -
-      globalState.tilt.currentY * 0.18;
+      globalState.tilt.currentY * 0.18 +
+      (globalState.viewport.currentX - 0.5) * 0.32 -
+      (globalState.viewport.currentY - 0.5) * 0.28;
     element.style.setProperty('--card-rotation-phase', rotationPhase.toFixed(4));
     if (!supportsVisibilityObserver) {
       element.style.setProperty('--card-visibility', state.isVisible ? '1' : '0');
@@ -1640,6 +1711,12 @@ function step() {
 
   toRemove.forEach((element) => cardStates.delete(element));
 
+  const viewportDenominator = viewportWeight > 0 ? viewportWeight : 0;
+  const targetViewportX = viewportDenominator > 0 ? viewportWeightedX / viewportDenominator : 0.5;
+  const targetViewportY = viewportDenominator > 0 ? viewportWeightedY / viewportDenominator : 0.5;
+  globalState.viewport.targetX = Math.min(1, Math.max(0, targetViewportX));
+  globalState.viewport.targetY = Math.min(1, Math.max(0, targetViewportY));
+
   globalState.scroll.current += (globalState.scroll.target - globalState.scroll.current) * 0.12;
   globalState.scroll.target *= 0.9;
   if (Math.abs(globalState.scroll.current) > 0.0001 || Math.abs(globalState.scroll.target) > 0.0001) {
@@ -1658,23 +1735,27 @@ function step() {
   globalState.focus.targetY = focusY;
   globalState.focus.targetAmount = focusAmount;
 
-  const focusInfluence = focusAmount * 0.5 + globalState.synergy.current * 0.35;
-  const pointerWeight = 0.55 + focusInfluence * 0.45;
-  const scrollInfluence = globalState.scroll.current * (0.12 + globalState.synergy.current * 0.08);
-  const alignmentDriftX = (globalState.focus.currentX - 0.5) * 0.25;
-  const alignmentDriftY = (0.5 - globalState.focus.currentY) * 0.25;
-
-  globalState.tilt.targetX = ((focusX - 0.5) * pointerWeight) + scrollInfluence + alignmentDriftX;
-  globalState.tilt.targetY = ((0.5 - focusY) * pointerWeight) - scrollInfluence * 0.65 + alignmentDriftY;
-
-  const synergyWeight = globalState.synergy.current * 0.45 + focusAmount * 0.2;
-  const momentumWeight = Math.min(0.5, Math.abs(globalState.scroll.current) * 0.7);
-  globalState.bend.target = Math.min(1, synergyWeight + momentumWeight);
-  globalState.warp.target = Math.max(-1, Math.min(1, (globalState.tilt.targetX - globalState.tilt.targetY) * 0.4));
-
   globalState.focus.currentX += (globalState.focus.targetX - globalState.focus.currentX) * 0.12;
   globalState.focus.currentY += (globalState.focus.targetY - globalState.focus.currentY) * 0.12;
   globalState.focus.currentAmount += (globalState.focus.targetAmount - globalState.focus.currentAmount) * 0.12;
+  globalState.viewport.currentX += (globalState.viewport.targetX - globalState.viewport.currentX) * 0.12;
+  globalState.viewport.currentY += (globalState.viewport.targetY - globalState.viewport.currentY) * 0.12;
+
+  const pointerOrientationX = globalState.focus.currentX - 0.5;
+  const pointerOrientationY = 0.5 - globalState.focus.currentY;
+  const viewportOrientationX = globalState.viewport.currentX - 0.5;
+  const viewportOrientationY = 0.5 - globalState.viewport.currentY;
+  const pointerInfluence = Math.min(0.9, 0.25 + globalState.focus.currentAmount * 0.6 + globalState.synergy.current * 0.15);
+  const viewportInfluence = 1 - pointerInfluence;
+
+  globalState.tilt.targetX = pointerOrientationX * pointerInfluence + viewportOrientationX * viewportInfluence;
+  globalState.tilt.targetY = pointerOrientationY * pointerInfluence + viewportOrientationY * viewportInfluence;
+
+  const synergyWeight = globalState.synergy.current * 0.45 + globalState.focus.currentAmount * 0.2;
+  const momentumWeight = Math.min(0.3, Math.abs(globalState.scroll.current) * 0.35);
+  globalState.bend.target = Math.min(1, synergyWeight + momentumWeight);
+  globalState.warp.target = Math.max(-1, Math.min(1, (globalState.tilt.targetX - globalState.tilt.targetY) * 0.4));
+
   globalState.tilt.currentX += (globalState.tilt.targetX - globalState.tilt.currentX) * 0.14;
   globalState.tilt.currentY += (globalState.tilt.targetY - globalState.tilt.currentY) * 0.14;
   globalState.bend.current += (globalState.bend.target - globalState.bend.current) * 0.13;
@@ -1692,6 +1773,7 @@ function step() {
   const scrollSpeed = Math.min(1, Math.max(0, globalState.scroll.speed));
   const focusTrend = globalState.focus.trend;
   const tiltSkew = globalState.tilt.currentX - globalState.tilt.currentY;
+  const pointerPresence = Math.min(1, Math.max(0, globalState.focus.currentAmount * 0.95));
 
   if (
     Math.abs(globalState.focus.currentX - globalState.focus.targetX) > 0.0008 ||
@@ -1721,6 +1803,9 @@ function step() {
   root.style.setProperty('--global-focus-trend', focusTrend.toFixed(4));
   root.style.setProperty('--global-scroll-speed', scrollSpeed.toFixed(4));
   root.style.setProperty('--global-scroll-direction', scrollDirection.toFixed(0));
+  root.style.setProperty('--global-viewport-x', globalState.viewport.currentX.toFixed(4));
+  root.style.setProperty('--global-viewport-y', globalState.viewport.currentY.toFixed(4));
+  root.style.setProperty('--global-pointer-presence', pointerPresence.toFixed(4));
 
   sharedMotion.focus.x = globalState.focus.currentX;
   sharedMotion.focus.y = globalState.focus.currentY;
@@ -1736,6 +1821,9 @@ function step() {
   sharedMotion.synergy = globalState.synergy.current;
   sharedMotion.focusTrend = focusTrend;
   sharedMotion.tiltSkew = tiltSkew;
+  sharedMotion.viewport.x = globalState.viewport.currentX;
+  sharedMotion.viewport.y = globalState.viewport.currentY;
+  sharedMotion.pointerPresence = pointerPresence;
   sharedMotion.updatedAt = performance.now();
 
   maybeDispatchGlobalMotionEvent();
@@ -1752,7 +1840,7 @@ function handleScroll() {
   globalState.scroll.lastY = window.scrollY;
   globalState.scroll.lastTime = now;
   const velocity = deltaY / deltaTime;
-  globalState.scroll.target = Math.max(-3, Math.min(3, velocity * 12));
+  globalState.scroll.target = Math.max(-2, Math.min(2, velocity * 7));
   if (Math.abs(globalState.scroll.target) > 0.0001) {
     globalState.scroll.direction = globalState.scroll.target > 0 ? 1 : -1;
   }
@@ -1806,7 +1894,10 @@ function applyStaticMotionSnapshot() {
     '--global-warp': '0',
     '--global-focus-trend': '0',
     '--global-scroll-speed': '0',
-    '--global-scroll-direction': '0'
+    '--global-scroll-direction': '0',
+    '--global-viewport-x': '0.5',
+    '--global-viewport-y': '0.5',
+    '--global-pointer-presence': '0'
   };
 
   Object.entries(defaults).forEach(([key, value]) => {
@@ -1827,6 +1918,14 @@ function applyStaticMotionSnapshot() {
   sharedMotion.scrollSpeed = 0;
   sharedMotion.scrollDirection = 0;
   sharedMotion.synergy = 0;
+  sharedMotion.viewport.x = 0.5;
+  sharedMotion.viewport.y = 0.5;
+  sharedMotion.pointerPresence = 0;
+
+  globalState.viewport.currentX = 0.5;
+  globalState.viewport.currentY = 0.5;
+  globalState.viewport.targetX = 0.5;
+  globalState.viewport.targetY = 0.5;
 
   if (activePageProfile) {
     sharedMotion.palette = activePageProfile.palette || null;
