@@ -1045,15 +1045,7 @@ const BRAND_LIBRARY_DEFAULTS = {
         'assets/file_00000000fc08623085668cf8b5e0a1e5.png',
         'assets/image_8 (1).png'
     ],
-    videos: [
-        '20250505_1321_Neon Blossom Transformation_simple_compose_01jtgqf5vjevn8nbrnsx8yd5fs.mp4',
-        '20250505_1726_Noir Filament Mystery_simple_compose_01jth5f1kwe9r9zxqet54bz3q0.mp4',
-        '20250506_0014_Gemstone Coral Transformation_remix_01jthwv071e06vmjd0mn60zm3s.mp4',
-        '20250506_0014_Gemstone Coral Transformation_remix_01jthwv0c4fxk8m0e79ry2t4ke.mp4',
-        '1746496560073.mp4',
-        '1746500614769.mp4',
-        '1746576068221.mp4'
-    ],
+    videos: [],
     logos: [
         'assets/clear-seas-logo-aurora.svg',
         'assets/clear-seas-monogram.svg'

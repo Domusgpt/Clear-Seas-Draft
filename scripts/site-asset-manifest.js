@@ -57,50 +57,7 @@ const sharedImageRotation = [
   }
 ];
 
-const sharedVideoRotation = [
-  {
-    src: '20250505_1321_Neon Blossom Transformation_simple_compose_01jtgqf5vjevn8nbrnsx8yd5fs.mp4',
-    tags: ['hero', 'glow'],
-    siteCodes: ['clear-seas', 'parserator', 'css-web-master'],
-    label: 'Neon Blossom Transformation'
-  },
-  {
-    src: '20250505_1726_Noir Filament Mystery_simple_compose_01jth5f1kwe9r9zxqet54bz3q0.mp4',
-    tags: ['ambient', 'noir'],
-    siteCodes: ['clear-seas', 'css-web-master'],
-    label: 'Noir Filament Mystery'
-  },
-  {
-    src: '20250506_0014_Gemstone Coral Transformation_remix_01jthwv071e06vmjd0mn60zm3s.mp4',
-    tags: ['ambient', 'gemstone'],
-    siteCodes: ['clear-seas', 'vib3code', 'css-web-master'],
-    label: 'Gemstone Coral Transformation – Remix A'
-  },
-  {
-    src: '20250506_0014_Gemstone Coral Transformation_remix_01jthwv0c4fxk8m0e79ry2t4ke.mp4',
-    tags: ['ambient', 'gemstone'],
-    siteCodes: ['clear-seas', 'vib3code', 'css-web-master'],
-    label: 'Gemstone Coral Transformation – Remix B'
-  },
-  {
-    src: '1746496560073.mp4',
-    tags: ['ambient', 'signal'],
-    siteCodes: ['clear-seas', 'css-web-master'],
-    label: 'Signal lattice burst'
-  },
-  {
-    src: '1746500614769.mp4',
-    tags: ['ambient', 'signal'],
-    siteCodes: ['clear-seas', 'css-web-master'],
-    label: 'Spectral corridor drift'
-  },
-  {
-    src: '1746576068221.mp4',
-    tags: ['ambient', 'signal'],
-    siteCodes: ['clear-seas', 'css-web-master'],
-    label: 'Telemetry bloom pulse'
-  }
-];
+const sharedVideoRotation = [];
 
 const baseManifest = {
   [DEFAULT_MANIFEST_KEY]: {
@@ -120,7 +77,7 @@ const baseManifest = {
       sharedImageRotation[5],
       sharedImageRotation[6]
     ],
-    videos: [sharedVideoRotation[0]]
+    videos: []
   },
   vib3code: {
     extends: 'default',
@@ -129,10 +86,7 @@ const baseManifest = {
       sharedImageRotation[7],
       sharedImageRotation[8]
     ],
-    videos: [
-      sharedVideoRotation[2],
-      sharedVideoRotation[3]
-    ]
+    videos: []
   }
 };
 
