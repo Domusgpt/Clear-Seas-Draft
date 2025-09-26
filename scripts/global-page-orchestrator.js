@@ -71,6 +71,220 @@ const updateManifestSnapshot = () => {
 
 updateManifestSnapshot();
 
+const vib34dIntegration = (() => {
+  const pendingObservations = new Map();
+  const resizeObservers = new Map();
+  const heuristics = [
+    { type: 'quantum', patterns: ['quantum', 'qbit', 'ion', 'tachyon', 'ai', 'neutrino'] },
+    { type: 'holographic', patterns: ['holographic', 'neural', 'spectral', 'prism', 'noir', 'aurora'] },
+    { type: 'polychora', patterns: ['polychora', 'polytopal', 'tetra', 'hyper', 'orbital', 'lattice'] },
+    { type: 'faceted', patterns: ['faceted', 'portfolio', 'gallery', 'research', 'story', 'foundation'] }
+  ];
+
+  let controller = window.vib34dCardSystem || null;
+
+  const elementTokenString = (element) => {
+    if (!(element instanceof HTMLElement)) {
+      return '';
+    }
+    const tokens = [];
+    if (element.id) {
+      tokens.push(element.id);
+    }
+    element.classList.forEach((value) => tokens.push(value));
+    Object.keys(element.dataset || {}).forEach((key) => {
+      const raw = element.dataset[key];
+      if (raw) {
+        tokens.push(String(raw));
+      }
+    });
+    const label = element.getAttribute('aria-label');
+    if (label) {
+      tokens.push(label);
+    }
+    return tokens
+      .join(' ')
+      .toLowerCase();
+  };
+
+  const elementIsInViewport = (element, margin = 96) => {
+    if (!(element instanceof HTMLElement)) {
+      return false;
+    }
+    const rect = element.getBoundingClientRect();
+    const width = window.innerWidth || document.documentElement.clientWidth || 0;
+    const height = window.innerHeight || document.documentElement.clientHeight || 0;
+    return (
+      rect.bottom >= -margin &&
+      rect.top <= height + margin &&
+      rect.right >= -margin &&
+      rect.left <= width + margin
+    );
+  };
+
+  const computeWeight = (element) => {
+    if (!(element instanceof HTMLElement)) {
+      return null;
+    }
+    const rect = element.getBoundingClientRect();
+    if (!rect.width || !rect.height) {
+      return null;
+    }
+    const baseArea = 320 * 220;
+    const area = rect.width * rect.height;
+    const scale = Math.sqrt(area / baseArea);
+    const weight = Math.min(1.9, Math.max(1.05, scale));
+    return Number(weight.toFixed(3));
+  };
+
+  const resolveConfig = (element, overrides = {}) => {
+    const baseType = (overrides.systemType || element.dataset.vib34d || element.dataset.system || '').toLowerCase();
+    const tokenString = elementTokenString(element);
+    let systemType = baseType;
+    if (!systemType) {
+      for (const entry of heuristics) {
+        if (entry.patterns.some((pattern) => tokenString.includes(pattern))) {
+          systemType = entry.type;
+          break;
+        }
+      }
+    }
+    if (!systemType) {
+      systemType = tokenString.includes('polychora') ? 'polychora' : 'faceted';
+    }
+    const assetPreference = overrides.assetPreference || element.dataset.visualizerAsset || systemType;
+    const weight = overrides.weight ?? computeWeight(element);
+    const immediate = overrides.immediate ?? elementIsInViewport(element);
+    return { systemType, assetPreference, weight, immediate };
+  };
+
+  const updateDimensions = (element, config) => {
+    if (!(element instanceof HTMLElement)) {
+      return;
+    }
+    const weight = typeof config?.weight === 'number' ? config.weight : computeWeight(element);
+    if (typeof weight !== 'number' || Number.isNaN(weight)) {
+      return;
+    }
+    element.dataset.visualizerWeight = weight.toFixed(3);
+    const bleed = Math.max(1.22, weight + 0.18);
+    element.style.setProperty('--visualizer-bleed', bleed.toFixed(3));
+    element.style.setProperty('--visualizer-scale', (bleed + 0.14).toFixed(3));
+    if (controller && typeof controller.refreshCard === 'function') {
+      controller.refreshCard(element, { systemType: element.dataset.vib34d });
+    }
+  };
+
+  const ensureResizeObserver = (element) => {
+    if (typeof ResizeObserver === 'undefined' || !(element instanceof HTMLElement)) {
+      return;
+    }
+    if (resizeObservers.has(element)) {
+      return;
+    }
+    const observer = new ResizeObserver(() => {
+      updateDimensions(element, { systemType: element.dataset.vib34d });
+    });
+    observer.observe(element);
+    resizeObservers.set(element, observer);
+  };
+
+  const flushPending = () => {
+    if (!controller) {
+      return;
+    }
+    if (typeof controller.scanForCards === 'function') {
+      controller.scanForCards();
+    }
+    if (!pendingObservations.size) {
+      return;
+    }
+    const entries = Array.from(pendingObservations.entries());
+    pendingObservations.clear();
+    entries.forEach(([element, options]) => {
+      if (!element || !element.isConnected) {
+        return;
+      }
+      controller.observeCard(element, { ...options, immediate: true });
+      controller.refreshCard(element, { systemType: element.dataset.vib34d });
+    });
+  };
+
+  const apply = (element, overrides = {}) => {
+    if (!(element instanceof HTMLElement)) {
+      return null;
+    }
+    const config = resolveConfig(element, overrides);
+    if (config.systemType) {
+      element.dataset.vib34d = config.systemType;
+    }
+    element.dataset.visualizerCard = 'true';
+    element.setAttribute('data-visualizer-card', 'true');
+    if (config.assetPreference) {
+      element.dataset.visualizerAsset = config.assetPreference;
+    }
+    updateDimensions(element, config);
+    ensureResizeObserver(element);
+
+    const observeOptions = { systemType: config.systemType, immediate: config.immediate };
+    if (controller && typeof controller.observeCard === 'function') {
+      controller.observeCard(element, observeOptions);
+    } else {
+      pendingObservations.set(element, observeOptions);
+    }
+
+    return config;
+  };
+
+  const release = (element) => {
+    if (!(element instanceof HTMLElement)) {
+      return;
+    }
+    pendingObservations.delete(element);
+    const observer = resizeObservers.get(element);
+    if (observer) {
+      observer.disconnect();
+      resizeObservers.delete(element);
+    }
+    if (controller && typeof controller.unobserveCard === 'function') {
+      controller.unobserveCard(element);
+    }
+  };
+
+  const connect = (instance) => {
+    if (!instance || controller === instance) {
+      if (!controller && instance) {
+        controller = instance;
+        flushPending();
+      }
+      return;
+    }
+    controller = instance;
+    flushPending();
+  };
+
+  window.addEventListener('vib34d-card-system:ready', (event) => {
+    const instance = event?.detail?.controller || window.vib34dCardSystem || null;
+    connect(instance);
+  });
+
+  if (controller) {
+    flushPending();
+  }
+
+  return {
+    apply,
+    release,
+    resolveConfig,
+    computeWeight,
+    connect,
+    elementIsInViewport
+  };
+})();
+
+cssWebMasterGlobals.vib34dIntegration = vib34dIntegration;
+window.__CSS_WEB_MASTER_VIB34D_INTEGRATION__ = vib34dIntegration;
+
 const syncBrandAssets = (siteCode) => {
   const resolved = resolveBrandAssets(siteCode);
   const meta =
@@ -1331,6 +1545,16 @@ function createState(element, index) {
   state.element.dataset.supportDistance = 'far';
   state.element.dataset.globalCardVisible = 'true';
   state.element.style.setProperty('--card-visibility', '1');
+
+  if (vib34dIntegration && typeof vib34dIntegration.apply === 'function') {
+    try {
+      vib34dIntegration.apply(element);
+      state.cleanupCallbacks.push(() => vib34dIntegration.release(element));
+    } catch (error) {
+      console.warn('⚠️ Failed to attach VIB34D integration to card', error);
+    }
+  }
+
   state.group = attachToGroup(state);
   const observer = ensureVisibilityObserver();
   if (observer) {
@@ -1933,6 +2157,56 @@ function observeMutations() {
   observer.observe(document.body, { childList: true, subtree: true });
 }
 
+const GLOBAL_CARD_MOTION_ENABLE_ATTRIBUTE = 'data-enable-global-card-motion';
+const GLOBAL_CARD_MOTION_DISABLE_ATTRIBUTE = 'data-disable-global-card-motion';
+let hasLoggedGlobalMotionDisabled = false;
+
+function elementHasTruthyDataAttribute(element, attribute) {
+  if (!element || !element.hasAttribute(attribute)) {
+    return false;
+  }
+  const rawValue = element.getAttribute(attribute);
+  if (rawValue === null) {
+    return false;
+  }
+  const value = rawValue.trim().toLowerCase();
+  return value === '' || value === 'true' || value === '1' || value === attribute;
+}
+
+function resolveCardMotionGateElements() {
+  const elements = [document.documentElement];
+  if (document.body) {
+    elements.push(document.body);
+  }
+  return elements.filter(Boolean);
+}
+
+function isGlobalCardMotionOptedIn() {
+  const gateElements = resolveCardMotionGateElements();
+  const hasOptOut = gateElements.some((element) =>
+    elementHasTruthyDataAttribute(element, GLOBAL_CARD_MOTION_DISABLE_ATTRIBUTE)
+  );
+  if (hasOptOut) {
+    return false;
+  }
+  return gateElements.some((element) =>
+    elementHasTruthyDataAttribute(element, GLOBAL_CARD_MOTION_ENABLE_ATTRIBUTE)
+  );
+}
+
+function logGlobalMotionDisabled(reason) {
+  if (hasLoggedGlobalMotionDisabled) {
+    return;
+  }
+  hasLoggedGlobalMotionDisabled = true;
+  try {
+    console.info(`⏸️ Global card orchestrator disabled: ${reason}`);
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.log('Global card orchestrator disabled.');
+  }
+}
+
 async function initialise() {
   preparePageProfile(activePageProfile);
   ensureStylesheet('styles/global-card-synergy.css', 'global-card-synergy');
@@ -1951,8 +2225,18 @@ async function initialise() {
   await ensureCardSystem();
 }
 
+const maybeInitialise = () => {
+  if (isGlobalCardMotionOptedIn()) {
+    initialise();
+  } else {
+    logGlobalMotionDisabled(
+      `add ${GLOBAL_CARD_MOTION_ENABLE_ATTRIBUTE} to <html> or <body> to opt in.`
+    );
+  }
+};
+
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initialise, { once: true });
+  document.addEventListener('DOMContentLoaded', maybeInitialise, { once: true });
 } else {
-  initialise();
+  maybeInitialise();
 }

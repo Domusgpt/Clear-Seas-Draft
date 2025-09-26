@@ -210,15 +210,7 @@ class CardSystemController {
         'assets/file_0000000006fc6230a8336bfa1fcebd89.png',
         'assets/image_8 (1).png'
       ],
-      videos: [
-        '20250505_1321_Neon Blossom Transformation_simple_compose_01jtgqf5vjevn8nbrnsx8yd5fs.mp4',
-        '20250505_1726_Noir Filament Mystery_simple_compose_01jth5f1kwe9r9zxqet54bz3q0.mp4',
-        '20250506_0014_Gemstone Coral Transformation_remix_01jthwv071e06vmjd0mn60zm3s.mp4',
-        '20250506_0014_Gemstone Coral Transformation_remix_01jthwv0c4fxk8m0e79ry2t4ke.mp4',
-        '1746496560073.mp4',
-        '1746500614769.mp4',
-        '1746576068221.mp4'
-      ],
+      videos: [],
       meta: {
         images: {},
         videos: {}
@@ -348,6 +340,7 @@ class CardSystemController {
     this.setupCardInteractions(cardElement, cardData);
     this.decorateCard(cardElement, cardData);
     this.registerReactiveElements(cardData);
+    this.ensureContainedVisualizer(cardElement, cardData);
     this.startCardSynergyLoop(cardData);
 
     this.cards.set(cardId, cardData);
@@ -699,6 +692,101 @@ class CardSystemController {
     });
 
     cardData.reactiveElements = reactiveElements;
+  }
+
+  ensureContainedVisualizer(cardElement, cardData) {
+    if (!cardElement) return;
+
+    const integration = window.__CSS_WEB_MASTER_VIB34D_INTEGRATION__;
+
+    const appendCleanup = (handler) => {
+      const previous = cardData.cleanup;
+      cardData.cleanup = () => {
+        if (typeof previous === 'function') {
+          previous();
+        }
+        try {
+          handler();
+        } catch (error) {
+          console.warn('⚠️ VIB34D cleanup handler failed', error);
+        }
+      };
+    };
+
+    if (integration && typeof integration.apply === 'function') {
+      try {
+        integration.apply(cardElement, { immediate: true });
+      } catch (error) {
+        console.warn('⚠️ Failed to apply shared VIB34D integration for card', error);
+      }
+      appendCleanup(() => {
+        if (integration && typeof integration.release === 'function') {
+          integration.release(cardElement);
+        }
+      });
+      return;
+    }
+
+    const systemType = this.resolveContainedSystemType(cardElement);
+    if (systemType && !cardElement.dataset.vib34d) {
+      cardElement.dataset.vib34d = systemType;
+    }
+    cardElement.dataset.visualizerCard = 'true';
+    cardElement.setAttribute('data-visualizer-card', 'true');
+
+    const weight = this.calculateVisualizerWeight(cardElement);
+    if (typeof weight === 'number') {
+      cardElement.dataset.visualizerWeight = weight.toFixed(3);
+      const bleed = Math.max(1.22, weight + 0.18);
+      cardElement.style.setProperty('--visualizer-bleed', bleed.toFixed(3));
+      cardElement.style.setProperty('--visualizer-scale', (bleed + 0.14).toFixed(3));
+    }
+
+    if (window.vib34dCardSystem && typeof window.vib34dCardSystem.observeCard === 'function') {
+      window.vib34dCardSystem.observeCard(cardElement, { systemType, immediate: true });
+      appendCleanup(() => {
+        if (window.vib34dCardSystem && typeof window.vib34dCardSystem.unobserveCard === 'function') {
+          window.vib34dCardSystem.unobserveCard(cardElement);
+        }
+      });
+    }
+  }
+
+  resolveContainedSystemType(cardElement) {
+    const datasetType = (cardElement.dataset.vib34d || cardElement.dataset.system || '').toLowerCase();
+    if (datasetType) {
+      return datasetType;
+    }
+    const tokenString = [
+      cardElement.id || '',
+      ...Array.from(cardElement.classList || [])
+    ]
+      .join(' ')
+      .toLowerCase();
+    if (tokenString.includes('quantum') || tokenString.includes('qbit') || tokenString.includes('ion')) {
+      return 'quantum';
+    }
+    if (tokenString.includes('holographic') || tokenString.includes('neural') || tokenString.includes('spectral')) {
+      return 'holographic';
+    }
+    if (tokenString.includes('polychora') || tokenString.includes('polytopal') || tokenString.includes('tetra')) {
+      return 'polychora';
+    }
+    return 'faceted';
+  }
+
+  calculateVisualizerWeight(cardElement) {
+    if (!(cardElement instanceof HTMLElement)) {
+      return null;
+    }
+    const rect = cardElement.getBoundingClientRect();
+    if (!rect.width || !rect.height) {
+      return null;
+    }
+    const baseArea = 320 * 220;
+    const area = rect.width * rect.height;
+    const weight = Math.min(1.9, Math.max(1.05, Math.sqrt(area / baseArea)));
+    return Number(weight.toFixed(3));
   }
 
   startCardSynergyLoop(cardData) {
