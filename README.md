@@ -7,6 +7,8 @@ duplication.
 
 Runtime globals now expose both `__CSS_WEB_MASTER_*` and legacy `__CLEAR_SEAS_*` namespaces, and shared typography/color tokens
 live in `styles/css-web-master-tokens.css` so each property can reskin the choreography without forking the master styles.
+Brand asset rotations are sourced from `scripts/site-asset-manifest.js`, and teams can call
+`window.__CSS_WEB_MASTER_REGISTER_ASSET_MANIFEST` to swap media packs per property without touching the orchestrator core.
 
 ### ✅ Deployment Snapshot
 - **6 Main HTML Versions**: Baseline production-ready experiences.

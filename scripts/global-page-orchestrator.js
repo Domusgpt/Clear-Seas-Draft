@@ -1,4 +1,5 @@
 import { resolvePageProfile, applyProfileMetadata } from './page-profile-registry.js';
+import { mergeAssetManifest, resolveBrandAssets, getAssetManifestSnapshot } from './site-asset-manifest.js';
 
 const cssWebMasterGlobals = window.__CSS_WEB_MASTER_GLOBALS || (window.__CSS_WEB_MASTER_GLOBALS = {});
 
@@ -30,47 +31,59 @@ window.__CLEAR_SEAS_GLOBAL_MOTION_EVENT = resolvedClearSeasMotionEvent;
 cssWebMasterGlobals.motionEvent = resolvedCssMotionEvent;
 cssWebMasterGlobals.motionEvents = GLOBAL_MOTION_EVENTS;
 
-const DEFAULT_BRAND_ASSETS = {
-  images: [
-    'assets/Screenshot_20250430-141821.png',
-    'assets/Screenshot_20241012-073718.png',
-    'assets/Screenshot_20250430-142024~2.png',
-    'assets/Screenshot_20250430-142002~2.png',
-    'assets/Screenshot_20250430-142032~2.png',
-    'assets/file_00000000fc08623085668cf8b5e0a1e5.png',
-    'assets/file_0000000054a06230817873012865d150.png',
-    'assets/file_0000000006fc6230a8336bfa1fcebd89.png',
-    'assets/image_8 (1).png'
-  ],
-  videos: [
-    '20250505_1321_Neon Blossom Transformation_simple_compose_01jtgqf5vjevn8nbrnsx8yd5fs.mp4',
-    '20250505_1726_Noir Filament Mystery_simple_compose_01jth5f1kwe9r9zxqet54bz3q0.mp4',
-    '20250506_0014_Gemstone Coral Transformation_remix_01jthwv071e06vmjd0mn60zm3s.mp4',
-    '20250506_0014_Gemstone Coral Transformation_remix_01jthwv0c4fxk8m0e79ry2t4ke.mp4',
-    '1746496560073.mp4',
-    '1746500614769.mp4',
-    '1746576068221.mp4'
-  ]
+const existingBrandAssets = window.__CSS_WEB_MASTER_BRAND_ASSETS || window.__CLEAR_SEAS_BRAND_ASSETS;
+
+if (existingBrandAssets && typeof existingBrandAssets === 'object') {
+  try {
+    mergeAssetManifest({
+      key: 'default',
+      images: existingBrandAssets.images,
+      videos: existingBrandAssets.videos
+    });
+  } catch (error) {
+    console.warn('⚠️ Failed to merge legacy brand asset globals into manifest', error);
+  }
+}
+
+const runtimeAssetManifests = [
+  window.__CSS_WEB_MASTER_ASSET_MANIFEST,
+  window.__CLEAR_SEAS_ASSET_MANIFEST
+].filter((value) => value && typeof value === 'object');
+runtimeAssetManifests.forEach((manifest) => {
+  try {
+    mergeAssetManifest(manifest);
+  } catch (error) {
+    console.warn('⚠️ Failed to merge runtime asset manifest', error);
+  }
+});
+
+let brandAssets = { images: [], videos: [] };
+let brandAssetKey = null;
+let activePageProfile = null;
+
+const updateManifestSnapshot = () => {
+  const snapshot = getAssetManifestSnapshot();
+  cssWebMasterGlobals.assetManifest = snapshot;
+  window.__CSS_WEB_MASTER_ASSET_MANIFEST = snapshot;
+  window.__CLEAR_SEAS_ASSET_MANIFEST = snapshot;
+  return snapshot;
 };
 
-const existingBrandAssets = window.__CSS_WEB_MASTER_BRAND_ASSETS || window.__CLEAR_SEAS_BRAND_ASSETS;
-const brandAssets = (() => {
-  const source = existingBrandAssets && typeof existingBrandAssets === 'object' ? existingBrandAssets : DEFAULT_BRAND_ASSETS;
-  const ensureArray = (input, fallback) => {
-    if (Array.isArray(input) && input.length) {
-      return [...input];
-    }
-    return [...fallback];
+updateManifestSnapshot();
+
+const syncBrandAssets = (siteCode) => {
+  const resolved = resolveBrandAssets(siteCode);
+  brandAssets = {
+    images: Array.isArray(resolved.images) ? [...resolved.images] : [],
+    videos: Array.isArray(resolved.videos) ? [...resolved.videos] : []
   };
-  const prepared = {
-    images: ensureArray(source.images, DEFAULT_BRAND_ASSETS.images),
-    videos: ensureArray(source.videos, DEFAULT_BRAND_ASSETS.videos)
-  };
-  window.__CSS_WEB_MASTER_BRAND_ASSETS = prepared;
-  window.__CLEAR_SEAS_BRAND_ASSETS = prepared;
-  cssWebMasterGlobals.brandAssets = prepared;
-  return prepared;
-})();
+  brandAssetKey = resolved.key || null;
+  window.__CSS_WEB_MASTER_BRAND_ASSETS = brandAssets;
+  window.__CLEAR_SEAS_BRAND_ASSETS = brandAssets;
+  cssWebMasterGlobals.brandAssets = brandAssets;
+  cssWebMasterGlobals.brandAssetKey = brandAssetKey;
+  return resolved;
+};
 
 const brandOverrideApi = (() => {
   if (window.__CSS_WEB_MASTER_BRAND_OVERRIDE_API) {
@@ -575,6 +588,8 @@ const brandOverrideApi = (() => {
 
 function detectActivePageProfile() {
   const resolved = resolvePageProfile();
+  const brandPackage = syncBrandAssets(resolved?.siteCode || resolved?.requestedSiteCode || null);
+
   const profile = {
     key: resolved?.key || 'core-foundation',
     palette: resolved?.palette || 'foundation',
@@ -590,11 +605,13 @@ function detectActivePageProfile() {
     scripts: Array.isArray(resolved?.scripts) ? [...resolved.scripts] : [],
     signature: resolved?.signature || '',
     seed: resolved?.seed || 0,
-    siteCode: resolved?.siteCode || null
+    siteCode: resolved?.siteCode || null,
+    requestedSiteCode: resolved?.requestedSiteCode || null,
+    brandAssetKey: brandAssetKey
   };
 
-  profile.imageSeed = brandAssets.images.length ? profile.seed % brandAssets.images.length : 0;
-  profile.videoSeed = brandAssets.videos.length ? Math.floor(profile.seed / 7) % brandAssets.videos.length : 0;
+  profile.imageSeed = brandPackage.images.length ? profile.seed % brandPackage.images.length : 0;
+  profile.videoSeed = brandPackage.videos.length ? Math.floor(profile.seed / 7) % brandPackage.videos.length : 0;
 
   if (resolved?.metaName === 'ultimate-clear-seas-holistic-system.html') {
     profile.scripts.push('scripts/ultimate-holistic-vib34d-system.js');
@@ -609,7 +626,54 @@ function detectActivePageProfile() {
   return profile;
 }
 
-const activePageProfile = detectActivePageProfile();
+activePageProfile = detectActivePageProfile();
+
+const registerAssetManifest = (input, detail = {}) => {
+  if (!input || typeof input !== 'object') {
+    return updateManifestSnapshot();
+  }
+
+  mergeAssetManifest(input);
+  const snapshot = updateManifestSnapshot();
+
+  const detailPayload = {
+    reason: (detail && typeof detail === 'object' && detail.reason) || 'asset-manifest-update',
+    timestamp: Date.now()
+  };
+  if (detail && typeof detail === 'object') {
+    Object.keys(detail).forEach((key) => {
+      if (key === 'reason') {
+        return;
+      }
+      detailPayload[key] = detail[key];
+    });
+  }
+
+  const currentSiteCode =
+    (activePageProfile && (activePageProfile.siteCode || activePageProfile.requestedSiteCode)) || null;
+  syncBrandAssets(currentSiteCode);
+
+  if (activePageProfile) {
+    activePageProfile.brandAssetKey = brandAssetKey;
+    activePageProfile.imageSeed = brandAssets.images.length
+      ? activePageProfile.seed % brandAssets.images.length
+      : 0;
+    activePageProfile.videoSeed = brandAssets.videos.length
+      ? Math.floor(activePageProfile.seed / 7) % brandAssets.videos.length
+      : 0;
+    cssWebMasterGlobals.pageProfile = activePageProfile;
+  }
+
+  BRAND_OVERRIDE_EVENTS.forEach((eventName) => {
+    window.dispatchEvent(new CustomEvent(eventName, { detail: detailPayload }));
+  });
+
+  return snapshot;
+};
+
+cssWebMasterGlobals.registerAssetManifest = registerAssetManifest;
+window.__CSS_WEB_MASTER_REGISTER_ASSET_MANIFEST = registerAssetManifest;
+window.__CLEAR_SEAS_REGISTER_ASSET_MANIFEST = registerAssetManifest;
 
 function preparePageProfile(profile) {
   if (!profile) {

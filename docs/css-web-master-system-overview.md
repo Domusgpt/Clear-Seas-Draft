@@ -30,8 +30,9 @@ can reuse without rewriting motion logic or asset loading rules.
 2. **Set the page profile** using `data-page-collection` or filename conventions so the orchestrator loads the correct palette
    and asset set. Provide `data-site-code="<site>`" (or configure an explicit registry override) to target the right site family
    when launching new properties.
-3. **Register brand assets** through the shared brand override registry or by dropping new media into `assets/` and referencing
-   them within the profile metadata.
+3. **Register brand assets** through the shared brand override registry or by updating the site asset manifest (either editing
+   `scripts/site-asset-manifest.js` or calling `window.__CSS_WEB_MASTER_REGISTER_ASSET_MANIFEST` with a runtime manifest) so the
+   orchestrator rotates the correct media package.
 4. **Customize copy and modules** while leaving the orchestrator hooks in place so focus, pointer, and scroll telemetry continue
    to propagate to canvases, overlays, and videos.
 5. **Document site-specific adjustments** in the `/docs` folder to keep the control surface accurate for each deployment.
@@ -40,6 +41,9 @@ can reuse without rewriting motion logic or asset loading rules.
 
 - **Brand overrides**: Use `docs/brand-asset-overrides.md` as the canonical guide. New logo treatments, translucent overlays, or
   short-form mp4 loops can be registered once and consumed across every card system.
+- **Site asset manifest**: `scripts/site-asset-manifest.js` hosts per-site image/video rotations. Update it (or call
+  `window.__CSS_WEB_MASTER_REGISTER_ASSET_MANIFEST`) to point a property at the correct media pack without editing the
+  orchestrator.
 - **Uploaded media**: Recent additions (e.g., `20250505_1321_Neon Blossom Transformation_simple_compose_01jtgqf5vjevn8nbrnsx8yd5fs.mp4`,
   `20250506_0014_Gemstone Coral Transformation_remix_01jthwv0c4fxk8m0e79ry2t4ke.mp4`) are ready for rotation within the
   orchestrator-managed palettes.

@@ -23,8 +23,9 @@ CSS-Web-Master platform production-ready for parserator.com, vib3code.com, and f
 ## Asset Management
 
 - The brand override registry expects assets in `/assets/` with Clear Seas naming conventions.
-  - *Action:* Add configuration hooks (JSON or module exports) so each site can define its own asset manifest without editing the
-    orchestrator.
+  - ✅ **Completed:** Introduced `scripts/site-asset-manifest.js` and a runtime registration helper so each site can publish its
+    own asset package while the orchestrator resolves the correct image/video rotation automatically.
+  - ⏭️ *Follow-on:* Provide tooling to lint manifests against actual files and surface missing asset warnings during local builds.
 - Uploaded mp4 overlays are catalogued but not yet grouped by campaign/site.
   - *Action:* Tag assets by site or theme within the registry for deterministic rotation.
 
