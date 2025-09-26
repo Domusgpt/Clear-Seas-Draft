@@ -207,10 +207,19 @@ class CardSystemController {
         '1746496560073.mp4',
         '1746500614769.mp4',
         '1746576068221.mp4'
-      ]
+      ],
+      meta: {
+        images: {},
+        videos: {}
+      }
     };
 
     const sharedBrandAssets = window.__CSS_WEB_MASTER_BRAND_ASSETS || window.__CLEAR_SEAS_BRAND_ASSETS;
+    const sharedBrandAssetMeta =
+      (sharedBrandAssets && sharedBrandAssets.meta) ||
+      window.__CSS_WEB_MASTER_BRAND_ASSET_META ||
+      window.__CLEAR_SEAS_BRAND_ASSET_META ||
+      { images: {}, videos: {} };
     const sharedImages = Array.isArray(sharedBrandAssets?.images) && sharedBrandAssets.images.length
       ? sharedBrandAssets.images
       : fallbackBrandAssets.images;
@@ -220,7 +229,11 @@ class CardSystemController {
 
     this.brandAssets = {
       images: [...sharedImages],
-      videos: [...sharedVideos]
+      videos: [...sharedVideos],
+      meta: {
+        images: { ...(sharedBrandAssetMeta.images || fallbackBrandAssets.meta.images) },
+        videos: { ...(sharedBrandAssetMeta.videos || fallbackBrandAssets.meta.videos) }
+      }
     };
 
     this.brandAssignmentIndex = 0;

@@ -59,12 +59,23 @@ live in `scripts/site-asset-manifest.js`, and the orchestrator exposes a helper 
   window.__CSS_WEB_MASTER_REGISTER_ASSET_MANIFEST?.({
     parserator: {
       images: [
-        // Replace with parserator-specific assets once they are uploaded
-        'assets/parserator/logo.png',
-        'assets/parserator/hangar.png'
+        {
+          src: 'assets/parserator/logo.png',
+          siteCodes: ['parserator'],
+          tags: ['hero', 'logo']
+        },
+        {
+          src: 'assets/parserator/hangar.png',
+          siteCodes: ['parserator'],
+          tags: ['diagnostic']
+        }
       ],
       videos: [
-        'assets/parserator/atmos-loop.mp4'
+        {
+          src: 'assets/parserator/atmos-loop.mp4',
+          siteCodes: ['parserator'],
+          tags: ['ambient']
+        }
       ]
     }
   }, { reason: 'parserator-brand-pack' });
@@ -74,6 +85,32 @@ live in `scripts/site-asset-manifest.js`, and the orchestrator exposes a helper 
 The helper merges the manifest, refreshes the current page profile's media selection, and dispatches the same
 `css-web-master:brand-overrides-changed` / `clear-seas:brand-overrides-changed` events that card systems already listen for.
 If no runtime manifest is provided the default Clear Seas pack remains in rotation.
+
+### Manifest metadata
+
+Entries can either be bare strings (for backwards compatibility) or objects with additional metadata. The orchestrator now
+tracks the following fields for every asset:
+
+- `src` – required path to the image or video.
+- `siteCodes` – optional list of site tokens. When a page resolves to one of these tokens the manifest will prefer the tagged
+  assets. If no tagged assets exist the orchestrator falls back to the inherited pack.
+- `tags` – free-form descriptors (`hero`, `diagnostic`, `ambient`, etc.) used for reporting and future tooling.
+- `label` – human-readable description that surfaces in debugging overlays.
+- `weight` – optional numeric hint for future weighted rotations.
+
+The resolved brand bundle (available via `window.__CSS_WEB_MASTER_BRAND_ASSETS`) now includes a `meta` map so downstream systems
+can inspect tags or site codes without re-parsing the manifest.
+
+### Validating manifest entries
+
+Run the repository's validator to confirm every manifest path exists and that site-specific manifests include tagged assets:
+
+```bash
+node tools/validate-asset-manifest.mjs
+```
+
+The script fails when files are missing and warns when site manifests do not tag at least one asset with their site code. This
+keeps rotations deterministic as new CSS family properties come online.
 
 ## Updating overrides at runtime
 

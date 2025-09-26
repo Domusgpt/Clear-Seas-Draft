@@ -73,15 +73,26 @@ updateManifestSnapshot();
 
 const syncBrandAssets = (siteCode) => {
   const resolved = resolveBrandAssets(siteCode);
+  const meta =
+    resolved && resolved.meta
+      ? {
+          images: { ...(resolved.meta.images || {}) },
+          videos: { ...(resolved.meta.videos || {}) }
+        }
+      : { images: {}, videos: {} };
   brandAssets = {
     images: Array.isArray(resolved.images) ? [...resolved.images] : [],
-    videos: Array.isArray(resolved.videos) ? [...resolved.videos] : []
+    videos: Array.isArray(resolved.videos) ? [...resolved.videos] : [],
+    meta
   };
   brandAssetKey = resolved.key || null;
   window.__CSS_WEB_MASTER_BRAND_ASSETS = brandAssets;
   window.__CLEAR_SEAS_BRAND_ASSETS = brandAssets;
+  window.__CSS_WEB_MASTER_BRAND_ASSET_META = meta;
+  window.__CLEAR_SEAS_BRAND_ASSET_META = meta;
   cssWebMasterGlobals.brandAssets = brandAssets;
   cssWebMasterGlobals.brandAssetKey = brandAssetKey;
+  cssWebMasterGlobals.brandAssetMeta = meta;
   return resolved;
 };
 

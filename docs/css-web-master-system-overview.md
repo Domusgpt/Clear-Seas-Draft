@@ -43,12 +43,16 @@ can reuse without rewriting motion logic or asset loading rules.
   short-form mp4 loops can be registered once and consumed across every card system.
 - **Site asset manifest**: `scripts/site-asset-manifest.js` hosts per-site image/video rotations. Update it (or call
   `window.__CSS_WEB_MASTER_REGISTER_ASSET_MANIFEST`) to point a property at the correct media pack without editing the
-  orchestrator.
+  orchestrator. Assets can include metadata (`siteCodes`, `tags`, `label`, `weight`) so rotations stay deterministic per site
+  and downstream tooling can reason about usage.
 - **Uploaded media**: Recent additions (e.g., `20250505_1321_Neon Blossom Transformation_simple_compose_01jtgqf5vjevn8nbrnsx8yd5fs.mp4`,
   `20250506_0014_Gemstone Coral Transformation_remix_01jthwv0c4fxk8m0e79ry2t4ke.mp4`) are ready for rotation within the
   orchestrator-managed palettes.
 - **Overscan defaults**: Canvas overscan is now managed globally, ensuring holographic visuals always bleed past card edges while
   respecting tilt and bend cues supplied by motion telemetry.
+
+Run `node tools/validate-asset-manifest.mjs` whenever new media is added to ensure manifests reference existing files and include
+site tags for property-specific rotations.
 
 ## Site codes & design tokens
 

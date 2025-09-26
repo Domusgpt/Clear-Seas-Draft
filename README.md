@@ -67,6 +67,8 @@ Additional CSS-Web-Master documentation is tracked in:
   stylesheets for per-site overrides.
 - [`docs/html-version-test-report.md`](docs/html-version-test-report.md) – latest smoke-test results for every HTML build and the
   outstanding defects to close before CSS-Web-Master goes live.
+- `node [tools/validate-asset-manifest.mjs](tools/validate-asset-manifest.mjs)` – verifies manifest paths exist and that site
+  manifests include tagged assets before deployment.
 
 ---
 © 2025 Paul Phillips - Clear Seas Solutions LLC
