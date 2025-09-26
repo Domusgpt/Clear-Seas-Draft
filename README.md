@@ -1,15 +1,23 @@
-🌊 Clear Seas Solutions - Multi-Version Deployment Complete
+🌐 **CSS-Web-Master System** _(formerly the Clear Seas Draft showcase)_
 
-✅ **DEPLOYMENT SUMMARY:**
-- **6 Main HTML Versions**: Complete website variations
-- **13 PR Branch Versions**: Latest meaningful iterations (PRs 1, 12-24)
-- **Total**: 19+ unique versions for comparison
-- **Supporting Assets**: All styles, scripts, and resources included
+The repository now serves as the **CSS-Web-Master** control surface for the Clear Seas family of properties. It retains every
+historical Clear Seas Draft experience while layering documentation, orchestration guides, and asset registries so new landing
+pages—like **paraerator.com**, **vib3code.com**, and future CSS destinations—can inherit the same choreography with minimal
+duplication.
 
-## 🎯 **ACCESS ALL VERSIONS:**
-Visit the **[Master Index](https://domusgpt.github.io/Clear-Seas-Draft/)** to explore all versions.
+### ✅ Deployment Snapshot
+- **6 Main HTML Versions**: Baseline production-ready experiences.
+- **13 PR Branch Versions**: Themed explorations sourced from the showcase (PRs #1, #4–#24).
+- **Total**: 19+ HTML builds ready to be remixed into site-specific stacks.
+- **Supporting Assets**: Shared scripts, orchestrators, style systems, and uploaded video/logo packs.
 
-## 📋 **VERSION CATEGORIES:**
+### 🎯 Access Everything
+Use the **[Master Index](https://domusgpt.github.io/Clear-Seas-Draft/)** to browse every build. The index now highlights where
+modules overlap so you can pick the correct starting point for each CSS family site.
+
+---
+
+## 📋 Version Collections
 
 ### Core HTML Versions (1-6):
 1. **Production** - Main website (index.html)
@@ -41,6 +49,15 @@ Visit the **[Master Index](https://domusgpt.github.io/Clear-Seas-Draft/)** to ex
 
 The shared motion bus, CSS variables, and integration guidance are documented in
 [`docs/global-motion-reference.md`](docs/global-motion-reference.md).
+
+Additional CSS-Web-Master documentation is tracked in:
+
+- [`docs/css-web-master-system-overview.md`](docs/css-web-master-system-overview.md) – explains the multi-site orchestration
+  model, shared registries, and how to extend the system for new CSS properties.
+- [`docs/css-web-master-gap-analysis.md`](docs/css-web-master-gap-analysis.md) – outlines Clear Seas-specific assumptions to
+  generalize before production rollouts on paraerator.com or vib3code.com.
+- [`docs/dev-updates/2025-05-07-css-web-master-transition.md`](docs/dev-updates/2025-05-07-css-web-master-transition.md) –
+  developer log detailing the latest transition steps and recommended next moves.
 
 ---
 © 2025 Paul Phillips - Clear Seas Solutions LLC
