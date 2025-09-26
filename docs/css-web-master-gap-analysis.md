@@ -1,7 +1,7 @@
 # CSS-Web-Master Gap Analysis
 
 This checklist captures the Clear Seas-specific assumptions that still live in the codebase. Addressing each item will make the
-CSS-Web-Master platform production-ready for paraerator.com, vib3code.com, and future CSS family properties.
+CSS-Web-Master platform production-ready for parserator.com, vib3code.com, and future CSS family properties.
 
 ## Naming & Branding
 
@@ -15,7 +15,7 @@ CSS-Web-Master platform production-ready for paraerator.com, vib3code.com, and f
 ## Page Profile Registry
 
 - Profiles currently reference Clear Seas-specific copy and brand asset packages.
-  - ✅ **Completed:** Palette definitions now live in a shared library, and a `paraerator` site profile demonstrates how new
+  - ✅ **Completed:** Palette definitions now live in a shared library, and a `parserator` site profile demonstrates how new
     properties reuse the foundation palette while swapping copy/modules.
 - Filename heuristics prioritize `index`/`pr` naming. Define detection patterns for future site URLs or configure explicit
   overrides.
@@ -40,7 +40,7 @@ CSS-Web-Master platform production-ready for paraerator.com, vib3code.com, and f
 
 - The Master Index references Clear Seas experiences throughout.
   - *Action:* Update hero copy per site launch, or create property-specific indexes that reuse the same component grid.
-- Add runbooks for deploying to each production host (paraerator.com, vib3code.com) once the orchestration pattern is finalized.
+- Add runbooks for deploying to each production host (parserator.com, vib3code.com) once the orchestration pattern is finalized.
 
 ## Tooling Wishlist
 
