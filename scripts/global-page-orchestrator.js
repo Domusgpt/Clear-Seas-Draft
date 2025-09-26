@@ -765,7 +765,14 @@ let activeCardState = null;
 let rafId = null;
 
 const globalState = {
-  scroll: { current: 0, target: 0, lastY: window.scrollY || 0, lastTime: performance.now() },
+  scroll: {
+    current: 0,
+    target: 0,
+    lastY: window.scrollY || 0,
+    lastTime: performance.now(),
+    direction: 0,
+    speed: 0
+  },
   synergy: { current: 0, target: 0 },
   focus: {
     currentX: 0.5,
@@ -773,7 +780,9 @@ const globalState = {
     currentAmount: 0,
     targetX: 0.5,
     targetY: 0.5,
-    targetAmount: 0
+    targetAmount: 0,
+    trend: 0,
+    lastAmount: 0
   },
   tilt: {
     currentX: 0,
@@ -791,6 +800,10 @@ const sharedMotion = window.__CLEAR_SEAS_GLOBAL_MOTION || (window.__CLEAR_SEAS_G
   bend: 0,
   warp: 0,
   scroll: 0,
+  scrollDirection: 0,
+  scrollSpeed: 0,
+  focusTrend: 0,
+  tiltSkew: 0,
   synergy: 0,
   palette: null,
   collection: null,
@@ -812,12 +825,16 @@ function shouldDispatchMotionEvent(previous, next) {
     focusX: 0.0012,
     focusY: 0.0012,
     focusAmount: 0.0012,
+    focusTrend: 0.0006,
     tiltX: 0.001,
     tiltY: 0.001,
     tiltStrength: 0.001,
+    tiltSkew: 0.001,
     bend: 0.001,
     warp: 0.001,
     scrollMomentum: 0.001,
+    scrollSpeed: 0.001,
+    scrollDirection: 0.51,
     synergy: 0.001
   };
 
@@ -832,13 +849,19 @@ function maybeDispatchGlobalMotionEvent() {
     focusX: sharedMotion.focus.x,
     focusY: sharedMotion.focus.y,
     focusAmount: sharedMotion.focus.amount,
+    focusTrend: sharedMotion.focusTrend,
     tiltX: sharedMotion.tilt.x,
     tiltY: sharedMotion.tilt.y,
     tiltStrength: sharedMotion.tilt.strength,
+    tiltSkew: sharedMotion.tiltSkew,
     bend: sharedMotion.bend,
     warp: sharedMotion.warp,
     scrollMomentum: sharedMotion.scroll,
+    scrollSpeed: sharedMotion.scrollSpeed,
+    scrollDirection: sharedMotion.scrollDirection,
     synergy: sharedMotion.synergy,
+    palette: sharedMotion.palette,
+    collection: sharedMotion.collection,
     timestamp: sharedMotion.updatedAt
   };
 
@@ -1796,6 +1819,17 @@ function step() {
 
   const tiltStrength = Math.min(1, Math.sqrt((globalState.tilt.currentX ** 2) + (globalState.tilt.currentY ** 2)) * 1.2 + globalState.bend.current * 0.5);
 
+  const focusDelta = globalState.focus.currentAmount - globalState.focus.lastAmount;
+  globalState.focus.trend += (focusDelta - globalState.focus.trend) * 0.28;
+  globalState.focus.lastAmount = globalState.focus.currentAmount;
+
+  globalState.scroll.speed += (Math.abs(globalState.scroll.current) - globalState.scroll.speed) * 0.25;
+  globalState.scroll.direction = Math.abs(globalState.scroll.current) < 0.0001 ? 0 : (globalState.scroll.current > 0 ? 1 : -1);
+  const scrollDirection = globalState.scroll.direction;
+  const scrollSpeed = Math.min(1, Math.max(0, globalState.scroll.speed));
+  const focusTrend = globalState.focus.trend;
+  const tiltSkew = globalState.tilt.currentX - globalState.tilt.currentY;
+
   if (
     Math.abs(globalState.focus.currentX - globalState.focus.targetX) > 0.0008 ||
     Math.abs(globalState.focus.currentY - globalState.focus.targetY) > 0.0008 ||
@@ -1819,7 +1853,11 @@ function step() {
   root.style.setProperty('--global-tilt-x', globalState.tilt.currentX.toFixed(4));
   root.style.setProperty('--global-tilt-y', globalState.tilt.currentY.toFixed(4));
   root.style.setProperty('--global-tilt-strength', tiltStrength.toFixed(4));
+  root.style.setProperty('--global-tilt-skew', tiltSkew.toFixed(4));
   root.style.setProperty('--global-warp', globalState.warp.current.toFixed(4));
+  root.style.setProperty('--global-focus-trend', focusTrend.toFixed(4));
+  root.style.setProperty('--global-scroll-speed', scrollSpeed.toFixed(4));
+  root.style.setProperty('--global-scroll-direction', scrollDirection.toFixed(0));
 
   sharedMotion.focus.x = globalState.focus.currentX;
   sharedMotion.focus.y = globalState.focus.currentY;
@@ -1830,7 +1868,11 @@ function step() {
   sharedMotion.bend = globalState.bend.current;
   sharedMotion.warp = globalState.warp.current;
   sharedMotion.scroll = globalState.scroll.current;
+  sharedMotion.scrollDirection = scrollDirection;
+  sharedMotion.scrollSpeed = scrollSpeed;
   sharedMotion.synergy = globalState.synergy.current;
+  sharedMotion.focusTrend = focusTrend;
+  sharedMotion.tiltSkew = tiltSkew;
   sharedMotion.updatedAt = performance.now();
 
   maybeDispatchGlobalMotionEvent();
@@ -1848,6 +1890,9 @@ function handleScroll() {
   globalState.scroll.lastTime = now;
   const velocity = deltaY / deltaTime;
   globalState.scroll.target = Math.max(-3, Math.min(3, velocity * 12));
+  if (Math.abs(globalState.scroll.target) > 0.0001) {
+    globalState.scroll.direction = globalState.scroll.target > 0 ? 1 : -1;
+  }
   cardStates.forEach((state) => {
     state.scroll += (globalState.scroll.target - state.scroll) * 0.25;
   });

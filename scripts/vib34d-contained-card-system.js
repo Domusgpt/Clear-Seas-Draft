@@ -149,6 +149,10 @@ class VIB34DContainedCardSystem {
       bend: 0,
       warp: 0,
       scrollMomentum: 0,
+      scrollDirection: 0,
+      scrollSpeed: 0,
+      focusTrend: 0,
+      tiltSkew: 0,
       timestamp: performance.now()
     };
     this.handleBrandOverridesChanged = () => {
@@ -171,6 +175,10 @@ class VIB34DContainedCardSystem {
         bend: Number(detail.bend) || 0,
         warp: Number(detail.warp) || 0,
         scrollMomentum: Number(detail.scrollMomentum) || 0,
+        scrollDirection: Number(detail.scrollDirection) || 0,
+        scrollSpeed: Number(detail.scrollSpeed) || 0,
+        focusTrend: Number(detail.focusTrend) || 0,
+        tiltSkew: Number(detail.tiltSkew) || 0,
         timestamp: typeof detail.timestamp === 'number' ? detail.timestamp : performance.now()
       };
 
@@ -345,6 +353,10 @@ class VIB34DContainedVisualizer {
       bend: Math.max(0, Number(motion.bend) || 0),
       warp: Number(motion.warp) || 0,
       scrollMomentum: Number(motion.scrollMomentum) || 0,
+      scrollDirection: Math.max(-1, Math.min(1, Number(motion.scrollDirection) || 0)),
+      scrollSpeed: Math.max(0, Math.min(1, Number(motion.scrollSpeed) || 0)),
+      focusTrend: Number.isFinite(motion.focusTrend) ? motion.focusTrend : 0,
+      tiltSkew: Number.isFinite(motion.tiltSkew) ? motion.tiltSkew : 0,
       timestamp: typeof motion.timestamp === 'number' ? motion.timestamp : performance.now()
     };
 
@@ -359,6 +371,10 @@ class VIB34DContainedVisualizer {
       this.card.style.setProperty('--shared-bend', normalized.bend.toFixed(4));
       this.card.style.setProperty('--shared-warp', normalized.warp.toFixed(4));
       this.card.style.setProperty('--shared-scroll', normalized.scrollMomentum.toFixed(4));
+      this.card.style.setProperty('--shared-scroll-direction', normalized.scrollDirection.toFixed(0));
+      this.card.style.setProperty('--shared-scroll-speed', normalized.scrollSpeed.toFixed(4));
+      this.card.style.setProperty('--shared-focus-trend', normalized.focusTrend.toFixed(4));
+      this.card.style.setProperty('--shared-tilt-skew', normalized.tiltSkew.toFixed(4));
     }
   }
 

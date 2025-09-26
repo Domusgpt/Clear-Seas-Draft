@@ -63,6 +63,10 @@ class CardSystemController {
       bend: 0,
       warp: 0,
       scrollMomentum: 0,
+      scrollDirection: 0,
+      scrollSpeed: 0,
+      focusTrend: 0,
+      tiltSkew: 0,
       timestamp: performance.now()
     };
     this.handleBrandOverridesChanged = () => {
@@ -88,6 +92,10 @@ class CardSystemController {
         bend: Number(detail.bend) || 0,
         warp: Number(detail.warp) || 0,
         scrollMomentum: Number(detail.scrollMomentum) || 0,
+        scrollDirection: Number(detail.scrollDirection) || 0,
+        scrollSpeed: Number(detail.scrollSpeed) || 0,
+        focusTrend: Number(detail.focusTrend) || 0,
+        tiltSkew: Number(detail.tiltSkew) || 0,
         timestamp: typeof detail.timestamp === 'number' ? detail.timestamp : performance.now()
       };
 
@@ -103,6 +111,10 @@ class CardSystemController {
         cardData.element.style.setProperty('--shared-bend', this.globalMotionState.bend.toFixed(4));
         cardData.element.style.setProperty('--shared-warp', this.globalMotionState.warp.toFixed(4));
         cardData.element.style.setProperty('--shared-scroll', this.globalMotionState.scrollMomentum.toFixed(4));
+        cardData.element.style.setProperty('--shared-scroll-direction', this.globalMotionState.scrollDirection.toFixed(0));
+        cardData.element.style.setProperty('--shared-scroll-speed', this.globalMotionState.scrollSpeed.toFixed(4));
+        cardData.element.style.setProperty('--shared-focus-trend', this.globalMotionState.focusTrend.toFixed(4));
+        cardData.element.style.setProperty('--shared-tilt-skew', this.globalMotionState.tiltSkew.toFixed(4));
       });
     };
     window.addEventListener(this.globalMotionEvent, this.handleGlobalMotionUpdate);

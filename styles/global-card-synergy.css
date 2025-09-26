@@ -10,6 +10,10 @@
   --global-tilt-y: 0;
   --global-tilt-strength: 0;
   --global-warp: 0;
+  --global-tilt-skew: 0;
+  --global-focus-trend: 0;
+  --global-scroll-speed: 0;
+  --global-scroll-direction: 0;
 }
 
 body {
@@ -22,12 +26,14 @@ body {
     (0.5 - var(--global-focus-y)) * 10px +
     var(--global-tilt-y) * 22px
   );
-  background-position: calc(50% + var(--global-background-shift-x)) calc(50% + var(--global-background-shift-y));
+  background-position: calc(50% + var(--global-background-shift-x) + var(--global-focus-trend) * 40px) calc(50% + var(--global-background-shift-y));
   perspective: calc(1600px - var(--global-bend-intensity) * 420px);
   transform-style: preserve-3d;
-  filter: saturate(calc(1 + var(--global-tilt-strength) * 0.12))
+  filter: saturate(calc(1 + var(--global-tilt-strength) * 0.12 + var(--global-scroll-speed) * 0.1))
     hue-rotate(calc(var(--global-warp) * 32deg))
-    brightness(calc(1 + var(--global-bend-intensity) * 0.08));
+    brightness(calc(1 + var(--global-bend-intensity) * 0.08 + var(--global-scroll-speed) * 0.05 + var(--global-focus-trend) * 0.06));
+  transform-origin: 50% 50%;
+  transform: rotateZ(calc(var(--global-tilt-skew) * 1.4deg * var(--global-scroll-direction)));
   transition: background-position 0.8s ease, filter 0.8s ease;
 }
 
@@ -134,6 +140,10 @@ body {
   --shared-bend-signal: var(--shared-bend, var(--global-bend-intensity, 0));
   --shared-warp-signal: var(--shared-warp, var(--global-warp, 0));
   --shared-scroll-signal: var(--shared-scroll, var(--global-scroll-momentum, 0));
+  --shared-scroll-direction-signal: var(--shared-scroll-direction, var(--global-scroll-direction, 0));
+  --shared-scroll-speed-signal: var(--shared-scroll-speed, var(--global-scroll-speed, 0));
+  --shared-focus-trend-signal: var(--shared-focus-trend, var(--global-focus-trend, 0));
+  --shared-tilt-skew-signal: var(--shared-tilt-skew, var(--global-tilt-skew, 0));
   transition:
     box-shadow 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94),
     border-color 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94),
@@ -148,7 +158,8 @@ body {
 [data-visualizer-card][data-support-role="primary"] {
   z-index: 5;
   filter: saturate(calc(1.05 + var(--card-focus-strength) * 0.45 + var(--shared-synergy-signal) * 0.4))
-    brightness(calc(1 + var(--card-focus-strength) * 0.2 + var(--shared-focus-signal) * 0.18));
+    brightness(calc(1 + var(--card-focus-strength) * 0.2 + var(--shared-focus-signal) * 0.18 + var(--shared-focus-trend-signal) * 0.1));
+  transform: translateZ(calc(var(--shared-focus-trend-signal) * 16px));
 }
 
 .global-visualizer-card[data-support-distance="0"],
@@ -198,12 +209,23 @@ body {
     rotateZ(calc(
       var(--card-twist) * 0.82 +
       var(--shared-warp-signal) * 6deg +
-      var(--shared-scroll-signal) * 4deg
+      var(--shared-scroll-signal) * 4deg +
+      var(--shared-tilt-skew-signal) * 4deg
     ))
     translateZ(calc(
       var(--card-focus-strength) * 26px +
       var(--shared-focus-signal) * 18px +
-      var(--shared-bend-signal) * 20px
+      var(--shared-bend-signal) * 20px +
+      var(--shared-focus-trend-signal) * 28px +
+      var(--shared-scroll-speed-signal) * 12px
+    ))
+    translateX(calc(
+      (var(--card-focus-x) - 0.5) * 22px +
+      var(--shared-scroll-direction-signal) * var(--shared-scroll-speed-signal) * 16px
+    ))
+    translateY(calc(
+      (var(--card-focus-y) - 0.5) * -18px +
+      var(--shared-focus-trend-signal) * -16px
     ))
     scale(calc(
       1 + var(--card-focus-strength) * 0.04 +

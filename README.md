@@ -37,5 +37,10 @@ Visit the **[Master Index](https://domusgpt.github.io/Clear-Seas-Draft/)** to ex
 
 🚀 **Every version is fully functional with complete assets and dependencies.**
 
+### Motion choreography docs
+
+The shared motion bus, CSS variables, and integration guidance are documented in
+[`docs/global-motion-reference.md`](docs/global-motion-reference.md).
+
 ---
 © 2025 Paul Phillips - Clear Seas Solutions LLC
