@@ -573,9 +573,11 @@ function attachToGroup(state) {
         targetY: 0.5
       },
       synergy: { current: 0, target: 0 },
+      rotation: { current: 0, target: 0 },
       section: null
     };
     groupStates.set(group, groupState);
+    group.style.setProperty('--group-rotation-phase', '0');
   }
   groupState.cards.add(state);
   state.group = group;
@@ -600,10 +602,12 @@ function detachFromGroup(state) {
     element.style.removeProperty('--group-focus-x');
     element.style.removeProperty('--group-focus-y');
     element.style.removeProperty('--group-synergy');
+    element.style.removeProperty('--group-rotation-phase');
     if (section) {
       section.removeAttribute('data-global-group-active');
       section.style.removeProperty('--section-focus-amount');
       section.style.removeProperty('--section-synergy');
+      section.style.removeProperty('--section-rotation-phase');
     }
     groupStates.delete(state.group);
   }
@@ -640,6 +644,7 @@ function createState(element, index) {
     support: { current: 0, target: 0 },
     twist: { current: 0, target: 0 },
     pulse: { current: 0, target: 0 },
+    rotation: { current: 0, target: 0 },
     scroll: 0,
     overlay: null,
     brandVideo: null,
@@ -653,6 +658,7 @@ function createState(element, index) {
   state.element.dataset.supportDistance = 'far';
   state.element.dataset.globalCardVisible = 'true';
   state.element.style.setProperty('--card-visibility', '1');
+  state.element.style.setProperty('--card-rotation-phase', '0');
   state.group = attachToGroup(state);
   const observer = ensureVisibilityObserver();
   if (observer) {
@@ -974,6 +980,9 @@ function step() {
   let weightedX = 0;
   let weightedY = 0;
   let totalFocus = 0;
+  let weightedRotation = 0;
+  let rotationWeight = 0;
+  let rotationMagnitude = 0;
   const toRemove = [];
 
   cardStates.forEach((state, element) => {
@@ -985,6 +994,10 @@ function step() {
       detachFromGroup(state);
       toRemove.push(element);
       return;
+    }
+
+    if (!state.rotation) {
+      state.rotation = { current: 0, target: 0 };
     }
 
     const visibilityFactor = typeof state.visibilityRatio === 'number'
@@ -1005,6 +1018,7 @@ function step() {
     const supportLerp = state.isVisible ? 0.1 : 0.16;
     const twistLerp = state.isVisible ? 0.18 : 0.26;
     const pulseLerp = state.isVisible ? 0.22 : 0.3;
+    const rotationLerp = state.isVisible ? 0.16 : 0.24;
 
     state.pointer.smoothX += (state.pointer.targetX - state.pointer.smoothX) * pointerLerp;
     state.pointer.smoothY += (state.pointer.targetY - state.pointer.smoothY) * pointerLerp;
@@ -1029,7 +1043,9 @@ function step() {
     element.style.setProperty('--card-pulse', pulse.toFixed(4));
     element.style.setProperty('--card-scroll-momentum', state.scroll.toFixed(4));
     const rotationPhase = ((state.pointer.smoothX - 0.5) * 0.65) - ((state.pointer.smoothY - 0.5) * 0.55) + state.scroll * 0.32 + supportStrength * 0.18;
-    element.style.setProperty('--card-rotation-phase', rotationPhase.toFixed(4));
+    state.rotation.target = rotationPhase;
+    state.rotation.current += (state.rotation.target - state.rotation.current) * rotationLerp;
+    element.style.setProperty('--card-rotation-phase', state.rotation.current.toFixed(4));
     if (!supportsVisibilityObserver) {
       element.style.setProperty('--card-visibility', state.isVisible ? '1' : '0');
     }
@@ -1039,6 +1055,9 @@ function step() {
       weightedX += state.pointer.smoothX * weighting;
       weightedY += state.pointer.smoothY * weighting;
       totalFocus += weighting;
+      weightedRotation += state.rotation.current * weighting;
+      rotationMagnitude += Math.abs(state.rotation.current) * weighting;
+      rotationWeight += weighting;
     }
 
     if (Math.abs(state.pointer.targetX - state.pointer.smoothX) > 0.001 ||
@@ -1046,6 +1065,7 @@ function step() {
         Math.abs(state.focus.target - state.focus.current) > 0.001 ||
         Math.abs(state.support.target - state.support.current) > 0.001 ||
         Math.abs(state.twist.target - state.twist.current) > 0.001 ||
+        Math.abs(state.rotation.current - state.rotation.target) > 0.001 ||
         state.pulse.current > 0.01 ||
         (!state.isVisible && (Math.abs(state.pointer.smoothX - 0.5) > 0.001 || Math.abs(state.pointer.smoothY - 0.5) > 0.001))) {
       continueAnimation = true;
@@ -1056,29 +1076,41 @@ function step() {
     let weightedGroupX = 0;
     let weightedGroupY = 0;
     let groupFocus = 0;
+    let weightedGroupRotation = 0;
+    let groupRotationWeight = 0;
     groupState.cards.forEach((cardState) => {
       const cardFocus = Math.max(0, Math.min(1.2, cardState.focus.current));
       if (cardFocus > 0.05) {
         weightedGroupX += cardState.pointer.smoothX * cardFocus;
         weightedGroupY += cardState.pointer.smoothY * cardFocus;
         groupFocus += cardFocus;
+        const cardRotation = cardState.rotation ? cardState.rotation.current : 0;
+        weightedGroupRotation += cardRotation * cardFocus;
+        groupRotationWeight += cardFocus;
       }
     });
 
     groupState.pointer.targetX = groupFocus > 0 ? weightedGroupX / groupFocus : 0.5;
     groupState.pointer.targetY = groupFocus > 0 ? weightedGroupY / groupFocus : 0.5;
     groupState.focus.target = Math.min(1, groupFocus);
+    const rotationTarget = groupRotationWeight > 0 ? weightedGroupRotation / groupRotationWeight : 0;
+    if (!groupState.rotation) {
+      groupState.rotation = { current: rotationTarget, target: rotationTarget };
+    }
+    groupState.rotation.target = rotationTarget;
 
     groupState.pointer.currentX += (groupState.pointer.targetX - groupState.pointer.currentX) * 0.16;
     groupState.pointer.currentY += (groupState.pointer.targetY - groupState.pointer.currentY) * 0.16;
     groupState.focus.current += (groupState.focus.target - groupState.focus.current) * 0.12;
     groupState.synergy.current += (groupState.synergy.target - groupState.synergy.current) * 0.12;
+    groupState.rotation.current += (groupState.rotation.target - groupState.rotation.current) * 0.14;
 
     const { element, section } = groupState;
     element.style.setProperty('--group-focus-amount', groupState.focus.current.toFixed(4));
     element.style.setProperty('--group-focus-x', groupState.pointer.currentX.toFixed(4));
     element.style.setProperty('--group-focus-y', groupState.pointer.currentY.toFixed(4));
     element.style.setProperty('--group-synergy', groupState.synergy.current.toFixed(4));
+    element.style.setProperty('--group-rotation-phase', groupState.rotation.current.toFixed(4));
 
     if (!groupState.section) {
       groupState.section = element.closest('.section, section, .section-block, .section-wrapper, .group-section') || null;
@@ -1087,12 +1119,14 @@ function step() {
       groupState.section.dataset.globalGroupActive = groupState.synergy.current > 0.05 ? 'true' : 'false';
       groupState.section.style.setProperty('--section-focus-amount', groupState.focus.current.toFixed(4));
       groupState.section.style.setProperty('--section-synergy', groupState.synergy.current.toFixed(4));
+      groupState.section.style.setProperty('--section-rotation-phase', groupState.rotation.current.toFixed(4));
     }
 
     if (Math.abs(groupState.pointer.targetX - groupState.pointer.currentX) > 0.001 ||
         Math.abs(groupState.pointer.targetY - groupState.pointer.currentY) > 0.001 ||
         Math.abs(groupState.focus.current - groupState.focus.target) > 0.001 ||
-        Math.abs(groupState.synergy.current - groupState.synergy.target) > 0.001) {
+        Math.abs(groupState.synergy.current - groupState.synergy.target) > 0.001 ||
+        Math.abs(groupState.rotation.current - groupState.rotation.target) > 0.001) {
       continueAnimation = true;
     }
   });
@@ -1123,6 +1157,16 @@ function step() {
     root.style.setProperty('--global-focus-x', '0.5');
     root.style.setProperty('--global-focus-y', '0.5');
     root.style.setProperty('--global-focus-amount', '0');
+  }
+
+  if (rotationWeight > 0) {
+    const averageRotation = weightedRotation / rotationWeight;
+    const normalisedMagnitude = Math.min(1, rotationMagnitude / rotationWeight);
+    root.style.setProperty('--global-rotation-phase', averageRotation.toFixed(4));
+    root.style.setProperty('--global-rotation-magnitude', normalisedMagnitude.toFixed(4));
+  } else {
+    root.style.setProperty('--global-rotation-phase', '0');
+    root.style.setProperty('--global-rotation-magnitude', '0');
   }
 
   if (continueAnimation) {

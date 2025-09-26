@@ -62,3 +62,13 @@ Each palette drives:
 - Conditional script preloads (e.g., immersive pages auto-load `immersive-experience-actualizer.js`).
 
 Any custom page can opt into a palette by setting `data-page-collection` or `data-showcase-theme` on `<html>`/`<body>` before loading the orchestrator.
+
+## Rotation-Synced Synergy Broadcast
+
+The global orchestrator now tracks rotation cues from every registered card, smoothing them into shared CSS variables so backgrounds, group containers, and holographic canvases lean with the same cadence as the active element.
+
+- `--global-rotation-phase` and `--global-rotation-magnitude` describe the weighted average tilt across the page, powering page-wide gradients and hue shifts.
+- `--group-rotation-phase` keeps each card stack’s halo, conic highlights, and sibling cards aligned to the same twist.
+- `--section-rotation-phase` exposes the same value to the nearest section wrapper so larger layout elements can respond without extra scripting.
+
+Cards, overlays, and canvases inherit these variables automatically, so any new layout that uses the shared classes gains the synchronized bending, tilt-responsive overlays, and ambient glow choreography by default.

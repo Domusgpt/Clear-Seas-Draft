@@ -5,13 +5,35 @@
   --global-scroll-momentum: 0;
   --global-scroll-tilt: 0deg;
   --global-synergy-glow: 0;
+  --global-rotation-phase: 0;
+  --global-rotation-magnitude: 0;
 }
 
 body {
   --global-background-shift-x: calc((var(--global-focus-x) - 0.5) * 12px + var(--global-scroll-momentum) * 18px);
   --global-background-shift-y: calc((0.5 - var(--global-focus-y)) * 10px);
   background-position: calc(50% + var(--global-background-shift-x)) calc(50% + var(--global-background-shift-y));
+  filter: hue-rotate(calc(var(--global-rotation-phase) * 40deg))
+    saturate(calc(1 + var(--global-rotation-magnitude) * 0.25));
   transition: background-position 0.8s ease, filter 0.8s ease;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: -30%;
+  pointer-events: none;
+  z-index: -1;
+  background: radial-gradient(
+    circle at calc(var(--global-focus-x) * 100%) calc(var(--global-focus-y) * 100%),
+    rgba(0, 255, 255, calc(0.1 + var(--global-focus-amount) * 0.25 + var(--global-rotation-magnitude) * 0.25)),
+    rgba(16, 12, 48, 0) 70%
+  );
+  opacity: calc(0.2 + var(--global-rotation-magnitude) * 0.35 + var(--global-focus-amount) * 0.25);
+  filter: blur(calc(80px - var(--global-rotation-magnitude) * 24px));
+  transform: rotate(calc(var(--global-rotation-phase) * 28deg))
+    scale(calc(1.12 + var(--global-rotation-magnitude) * 0.2));
+  transition: opacity 0.8s ease, filter 0.8s ease, transform 0.8s ease;
 }
 
 [data-global-card-group="true"] {
@@ -40,8 +62,30 @@ body {
   );
   opacity: calc(0.12 + var(--group-synergy) * 0.4);
   filter: blur(calc(28px - var(--group-focus-amount) * 12px));
-  transform: translateZ(-60px) scale(calc(1 + var(--group-synergy) * 0.08));
+  transform: translateZ(-60px)
+    scale(calc(1 + var(--group-synergy) * 0.08))
+    rotateZ(calc(var(--group-rotation-phase, 0) * 22deg));
   transition: opacity 0.6s ease, filter 0.6s ease, transform 0.6s ease;
+  pointer-events: none;
+}
+
+[data-global-card-group="true"]::after {
+  content: '';
+  position: absolute;
+  inset: -5% -4%;
+  z-index: -1;
+  border-radius: clamp(20px, 7vw, 54px);
+  background:
+    conic-gradient(from calc(var(--group-rotation-phase, 0) * 180deg),
+      rgba(0, 255, 213, calc(0.12 + var(--group-focus-amount) * 0.2)) 0%,
+      rgba(132, 56, 255, calc(0.12 + var(--group-synergy) * 0.28)) 35%,
+      rgba(255, 255, 255, 0) 70%);
+  opacity: calc(0.08 + var(--group-focus-amount) * 0.25 + var(--group-synergy) * 0.2);
+  mix-blend-mode: screen;
+  transform: translateZ(-44px)
+    rotateZ(calc(var(--group-rotation-phase, 0) * 32deg));
+  filter: blur(calc(24px - var(--group-synergy) * 10px));
+  transition: opacity 0.6s ease, transform 0.6s ease, filter 0.6s ease;
   pointer-events: none;
 }
 
@@ -190,10 +234,13 @@ body {
   );
   opacity: calc(0.35 + var(--card-focus-strength) * 0.5 + var(--card-support-intensity) * 0.25 + var(--group-synergy, 0) * 0.3 + var(--support-distance-glow, 0) + (var(--card-visibility-factor) - 1) * 0.15);
   filter: blur(calc(22px - var(--card-focus-strength) * 8px - var(--group-synergy, 0) * 6px + (1 - var(--card-visibility-factor)) * 6px));
-  transform: translateZ(calc(-24px + var(--support-distance-glow, 0) * 60px)) scale(calc(1.08 + var(--group-synergy, 0) * 0.06));
+  transform:
+    translateZ(calc(-24px + var(--support-distance-glow, 0) * 60px))
+    scale(calc(1.08 + var(--group-synergy, 0) * 0.06))
+    rotateZ(calc((var(--card-rotation-phase, 0) + var(--group-rotation-phase, 0)) * 12deg));
   pointer-events: none;
   z-index: 0;
-  transition: opacity 0.6s ease, filter 0.6s ease;
+  transition: opacity 0.6s ease, filter 0.6s ease, transform 0.6s ease;
 }
 
 .global-visualizer-card::after,
@@ -205,10 +252,11 @@ body {
   border: 1px solid rgba(255, 255, 255, calc(0.1 + var(--card-support-intensity) * 0.3 + var(--support-distance-glow, 0) * 0.4));
   opacity: calc(0.25 + var(--card-focus-strength) * 0.35 + var(--group-synergy, 0) * 0.2 + var(--support-distance-glow, 0) * 0.6 + (var(--card-visibility-factor) - 1) * 0.12);
   filter: blur(calc(6px - var(--card-focus-strength) * 2px - var(--group-synergy, 0) * 1.2px + (1 - var(--card-visibility-factor)) * 2px));
+  transform: rotateZ(calc((var(--card-rotation-phase, 0) + var(--group-rotation-phase, 0)) * 16deg));
   pointer-events: none;
   z-index: 1;
   mix-blend-mode: screen;
-  transition: opacity 0.6s ease, filter 0.6s ease;
+  transition: opacity 0.6s ease, filter 0.6s ease, transform 0.6s ease;
 }
 
 .global-visualizer-card,
@@ -217,7 +265,7 @@ body {
     perspective(1600px)
     rotateX(calc((0.5 - var(--card-focus-y)) * 26deg + var(--card-scroll-momentum) * 6deg))
     rotateY(calc((var(--card-focus-x) - 0.5) * 28deg))
-    rotateZ(calc(var(--card-twist)))
+    rotateZ(calc(var(--card-twist) + var(--group-rotation-phase, 0) * 8deg))
     translateZ(calc(var(--card-focus-strength) * 48px + var(--support-distance-z)))
     scale(calc(1 + var(--card-focus-strength) * 0.06 + var(--card-support-intensity) * 0.03));
   box-shadow:
@@ -248,7 +296,7 @@ body {
     translateZ(calc(18px + var(--card-focus-strength) * 36px + var(--group-synergy, 0) * 24px + var(--support-distance-z) * 0.4 + var(--brand-overlay-depth, 0px)))
     rotateX(calc(var(--card-scroll-momentum) * -1.8deg + var(--group-synergy, 0) * -1.2deg))
     rotateY(calc(var(--card-scroll-momentum) * 1.6deg + var(--group-synergy, 0) * 1.1deg))
-    rotateZ(var(--brand-overlay-rotate, 0deg));
+    rotateZ(calc(var(--brand-overlay-rotate, 0deg) + (var(--card-rotation-phase, 0) + var(--group-rotation-phase, 0)) * 14deg));
   transition: opacity 0.5s ease, filter 0.6s ease, transform 0.6s ease;
 }
 
@@ -291,7 +339,7 @@ body {
     translateZ(calc(-36px + var(--card-focus-strength) * -18px - var(--group-synergy, 0) * 16px + var(--support-distance-z) * -0.6 + var(--card-canvas-depth, 0px)))
     rotateX(calc((0.5 - var(--card-focus-y)) * 18deg + var(--card-scroll-momentum) * 4deg + var(--group-synergy, 0) * 2deg))
     rotateY(calc((var(--card-focus-x) - 0.5) * 18deg + var(--group-synergy, 0) * -2deg))
-    rotateZ(calc(var(--card-rotation-phase, 0) * 18deg))
+    rotateZ(calc((var(--card-rotation-phase, 0) + var(--group-rotation-phase, 0)) * 18deg))
     scale3d(calc(1 + var(--card-canvas-scale, 0)), calc(1 + var(--card-canvas-scale, 0)), 1);
   filter: saturate(calc(1.1 + var(--card-focus-strength) * 0.4 + var(--group-synergy, 0) * 0.25 + (var(--card-visibility-factor) - 1) * 0.3));
   pointer-events: none;
