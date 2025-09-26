@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en" data-site-code="parserator" data-page-id="parserator">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Parserator Systems – CSS-Web-Master Launch Surface</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles/css-web-master-tokens.css">
+  <link rel="stylesheet" href="styles/consolidated-styles.css">
+  <style>
+    :root {
+      color-scheme: light dark;
+    }
+    body.site-parserator {
+      font-family: 'Orbitron', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: radial-gradient(circle at top, rgba(18, 32, 64, 0.96), rgba(4, 12, 28, 0.96));
+      min-height: 100vh;
+      color: #e5f6ff;
+      display: flex;
+      flex-direction: column;
+    }
+    header.parserator-hero {
+      padding: clamp(3rem, 6vw, 6rem) clamp(2rem, 5vw, 5rem);
+      display: grid;
+      gap: clamp(2rem, 5vw, 4rem);
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+      border-bottom: 1px solid rgba(134, 211, 255, 0.24);
+    }
+    header.parserator-hero::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 20% 20%, rgba(134, 211, 255, 0.25), transparent 60%),
+        radial-gradient(circle at 80% 30%, rgba(255, 170, 223, 0.12), transparent 70%);
+      pointer-events: none;
+    }
+    .hero-headline {
+      font-size: clamp(2.6rem, 6vw, 4.6rem);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--token-primary-400, #8ddcff);
+      text-shadow: 0 12px 32px rgba(18, 32, 64, 0.65);
+    }
+    .hero-subtitle {
+      font-size: clamp(1rem, 2vw, 1.4rem);
+      max-width: 52ch;
+      line-height: 1.6;
+      color: rgba(229, 246, 255, 0.78);
+    }
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    .hero-actions a {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.85rem 1.6rem;
+      border-radius: 999px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #020c1c;
+      background: linear-gradient(135deg, #8ddcff 0%, #7ef6ff 100%);
+      box-shadow: 0 18px 35px rgba(126, 246, 255, 0.32);
+      text-decoration: none;
+    }
+    .hero-actions a.secondary {
+      background: transparent;
+      border: 1px solid rgba(229, 246, 255, 0.4);
+      color: rgba(229, 246, 255, 0.85);
+      box-shadow: none;
+    }
+    .layout-grid {
+      display: grid;
+      gap: clamp(1.5rem, 4vw, 3rem);
+      padding: clamp(2.5rem, 5vw, 5rem);
+    }
+    .grid-two-column {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: clamp(1.5rem, 3vw, 2.5rem);
+    }
+    .card {
+      background: rgba(2, 12, 28, 0.58);
+      border: 1px solid rgba(134, 211, 255, 0.24);
+      border-radius: 18px;
+      padding: clamp(1.5rem, 3vw, 2.5rem);
+      box-shadow: 0 22px 45px rgba(2, 12, 28, 0.38);
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(126, 246, 255, 0.12), transparent 60%);
+      opacity: 0;
+      transition: opacity 220ms ease;
+      pointer-events: none;
+    }
+    .card:hover::before {
+      opacity: 1;
+    }
+    .card h3 {
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 1rem;
+      margin-bottom: 0.75rem;
+      color: var(--token-primary-300, #aee8ff);
+    }
+    .card p {
+      line-height: 1.6;
+      color: rgba(229, 246, 255, 0.75);
+    }
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 1.25rem;
+    }
+    .badge {
+      padding: 0.35rem 0.9rem;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(229, 246, 255, 0.85);
+      border: 1px solid rgba(126, 246, 255, 0.35);
+    }
+    footer {
+      padding: 2.5rem clamp(2rem, 5vw, 4rem);
+      border-top: 1px solid rgba(134, 211, 255, 0.2);
+      display: grid;
+      gap: 0.75rem;
+      background: rgba(2, 12, 28, 0.72);
+    }
+    footer p {
+      color: rgba(229, 246, 255, 0.72);
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body class="site-parserator" data-site-code="parserator" data-page-profile="parserator-alpha">
+  <header class="parserator-hero" data-brand-overlay-filter="hue-rotate(18deg) saturate(1.4)" data-brand-overlay-opacity="1.1">
+    <div>
+      <p class="badge" data-brand-palette="foundation">Parserator Systems</p>
+      <h1 class="hero-headline">Launch the Parserator Flight Deck</h1>
+      <p class="hero-subtitle" data-brand-mode="immersive">
+        Precision parsing, telemetry aware automation, and CSS-Web-Master orchestration united under the Parserator banner.
+        This launch surface routes the asset manifest, brand overlays, and motion telemetry through the same interfaces used by
+        Clear Seas while enabling parserator.com to define its own rotations.
+      </p>
+      <div class="hero-actions">
+        <a href="#mission" data-brand-cycle="focus" data-brand-seed-offset="2">Review Mission</a>
+        <a class="secondary" href="#roadmap" data-brand-cycle="click" data-brand-seed-offset="4">View Roadmap</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="layout-grid">
+    <section id="mission" class="grid-two-column" data-brand-palette="foundation">
+      <article class="card" data-brand-seed="8" data-brand-cycle="hover">
+        <h3>Mission Profile</h3>
+        <p>
+          Parserator amplifies structured intelligence for enterprise knowledge flows. The CSS-Web-Master stack keeps the
+          launch profile aligned with Clear Seas primitives while unlocking Parserator specific tone, asset loops, and
+          telemetry instrumentation.
+        </p>
+        <div class="badge-row">
+          <span class="badge">Structured Intelligence</span>
+          <span class="badge">Telemetry</span>
+          <span class="badge">Brand Sync</span>
+        </div>
+      </article>
+      <article class="card" data-brand-seed="12" data-brand-cycle="hover" data-brand-palette="immersive">
+        <h3>Flight Operations</h3>
+        <p>
+          Shared orchestrator APIs manage the Parserator deck. Brand refreshes flow through
+          <code>css-web-master:brand-overrides-changed</code> while Clear Seas listeners still catch
+          <code>clear-seas:brand-overrides-changed</code> via the bridge.
+        </p>
+        <div class="badge-row">
+          <span class="badge">Dual-Namespace</span>
+          <span class="badge">Override API</span>
+          <span class="badge">Motion Bus</span>
+        </div>
+      </article>
+    </section>
+
+    <section id="roadmap" class="grid-two-column" data-brand-palette="concept">
+      <article class="card" data-brand-cycle="focus" data-brand-seed="18">
+        <h3>Launch Checklist</h3>
+        <p>
+          The essentials are wired: profile registry entry, shared manifest usage, and smoke harness coverage. Next steps focus
+          on Parserator-only scenes like inference labs and live data connectors. These tasks stay flagged in the gap analysis
+          so Clear Seas core work can ship independently.
+        </p>
+        <div class="badge-row">
+          <span class="badge">Essentials Complete</span>
+          <span class="badge">Site Specific TODO</span>
+          <span class="badge">Smoke Tested</span>
+        </div>
+      </article>
+      <article class="card" data-brand-seed="21" data-brand-cycle="hover" data-brand-palette="foundation">
+        <h3>Shared Capabilities</h3>
+        <p>
+          Parserator inherits the consolidated styles, card systems, and manifest tooling. All assets resolve through the new
+          tagged manifest filters ensuring the correct rotations when the site code equals <code>parserator</code>.
+        </p>
+        <div class="badge-row">
+          <span class="badge">Shared Styles</span>
+          <span class="badge">Asset Manifest</span>
+          <span class="badge">Card Systems</span>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <footer data-brand-palette="foundation">
+    <p>
+      Parserator launch surfaces remain under active construction. Site-specific labs, dataset stories, and telemetry overlays
+      are tracked in the CSS-Web-Master gap analysis so we can focus on the essentials today while highlighting the remaining
+      Parserator-exclusive work.
+    </p>
+    <p>Contact the Clear Seas + Parserator integration team for launch coordination.</p>
+  </footer>
+
+  <script type="module" src="scripts/global-page-orchestrator.js"></script>
+</body>
+</html>

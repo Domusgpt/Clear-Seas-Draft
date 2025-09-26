@@ -47,7 +47,7 @@ These builds experiment with alternative canvases, typography systems, or resear
 
 ## Brand Palette Synchronization
 
-The `global-page-orchestrator` now detects which collection a page belongs to and shares that profile through `window.__CLEAR_SEAS_PAGE_PROFILE`. The four active palettes are:
+The `global-page-orchestrator` now detects which collection a page belongs to and shares that profile through `window.__CSS_WEB_MASTER_PAGE_PROFILE` (still aliased as `window.__CLEAR_SEAS_PAGE_PROFILE`). The four active palettes are:
 
 - **Meta Index (`meta-index`)** – used for the overview map.
 - **Core Foundation (`core-foundation`)** – powers the 1–6 flagship builds.
