@@ -120,7 +120,11 @@ class CardSystemController {
         rawX: 0.5,
         rawY: 0.5,
         smoothX: 0.5,
-        smoothY: 0.5
+        smoothY: 0.5,
+        bendTarget: 0.12,
+        bendSmooth: 0.12,
+        twistTarget: 0,
+        twistSmooth: 0
       },
       layers: {
         overlay: null,
@@ -405,6 +409,8 @@ class CardSystemController {
       const pointer = cardData.pointer;
       pointer.smoothX += (pointer.rawX - pointer.smoothX) * 0.18;
       pointer.smoothY += (pointer.rawY - pointer.smoothY) * 0.18;
+      pointer.bendSmooth += ((pointer.bendTarget ?? 0.12) - (pointer.bendSmooth ?? 0.12)) * 0.16;
+      pointer.twistSmooth += ((pointer.twistTarget ?? 0) - (pointer.twistSmooth ?? 0)) * 0.2;
 
       const tiltX = (pointer.smoothY - 0.5) * 2;
       const tiltY = (pointer.smoothX - 0.5) * 2;
@@ -477,6 +483,29 @@ class CardSystemController {
         visualizer.scrollTiltTarget = sharedTiltTarget;
       }
     });
+
+    const pointerState = cardData.pointer || {};
+    const bendProgress = Math.max(0, Math.min(1, pointerState.bendSmooth ?? 0.12));
+    const pointerMagnitude = Math.min(1.25, Math.hypot(tiltX, tiltY));
+    const focusBoost = focus * 0.35;
+    const momentumBoost = Math.min(0.4, Math.abs(momentum) * 0.22);
+    const bendIntensity = Math.min(0.88, 0.08 + bendProgress * 0.75 + pointerMagnitude * 0.28 + focusBoost + momentumBoost);
+    const bendTiltX = -tiltX * 12 * bendIntensity;
+    const bendTiltY = tiltY * 14 * bendIntensity;
+    const bendSkewX = -tiltY * 6 * bendIntensity;
+    const bendSkewY = tiltX * 5 * bendIntensity;
+    const bendTwist = (pointerState.twistSmooth ?? 0) * 18 * bendIntensity;
+    const bendDepth = bendIntensity * 28 + focus * 18 + Math.abs(momentum) * 16;
+    const visualizerDepth = bendDepth * 0.6 + bendIntensity * 12;
+
+    cardData.element.style.setProperty('--bend-intensity', bendIntensity.toFixed(3));
+    cardData.element.style.setProperty('--bend-tilt-x-deg', `${bendTiltX.toFixed(3)}deg`);
+    cardData.element.style.setProperty('--bend-tilt-y-deg', `${bendTiltY.toFixed(3)}deg`);
+    cardData.element.style.setProperty('--bend-skew-x-deg', `${bendSkewX.toFixed(3)}deg`);
+    cardData.element.style.setProperty('--bend-skew-y-deg', `${bendSkewY.toFixed(3)}deg`);
+    cardData.element.style.setProperty('--bend-twist-deg', `${bendTwist.toFixed(3)}deg`);
+    cardData.element.style.setProperty('--bend-depth', `${bendDepth.toFixed(3)}px`);
+    cardData.element.style.setProperty('--visualizer-bend-depth', `${visualizerDepth.toFixed(3)}px`);
 
     cardData.reactiveElements?.forEach(el => {
       if (!el.isConnected) return;
@@ -728,18 +757,27 @@ class CardSystemController {
       mouseX = Math.max(0, Math.min(1, mouseX));
       mouseY = Math.max(0, Math.min(1, mouseY));
 
-      // Update all visualizers for this card
+      const offsetX = mouseX - 0.5;
+      const offsetY = 0.5 - mouseY;
+      const pointerDistance = Math.min(Math.hypot(offsetX, offsetY) * 1.35, 1.1);
+      const dynamicMomentum = Math.abs(this.scrollMomentum || 0);
+      const bendTarget = Math.min(1, 0.18 + pointerDistance * 1.1 + dynamicMomentum * 0.28);
+      const twistTarget = offsetX * offsetY * 1.2;
+
+      // Update all visualizers for this card with bend-aware intensity
       for (const visualizer of cardData.visualizers.values()) {
-        visualizer.updateInteraction(mouseX, mouseY, 1.0);
+        visualizer.updateInteraction(mouseX, mouseY, bendTarget);
       }
 
       // Update CSS custom properties for card transforms
       cardElement.style.setProperty('--mouse-x', (mouseX * 100) + '%');
       cardElement.style.setProperty('--mouse-y', (mouseY * 100) + '%');
-      cardElement.style.setProperty('--bend-intensity', '1');
+      cardElement.style.setProperty('--bend-intensity', bendTarget.toFixed(3));
 
       cardData.pointer.rawX = mouseX;
       cardData.pointer.rawY = mouseY;
+      cardData.pointer.bendTarget = bendTarget;
+      cardData.pointer.twistTarget = twistTarget;
     };
 
     const handleMouseEnter = () => {
@@ -747,6 +785,10 @@ class CardSystemController {
       cardData.active = true;
       cardElement.classList.add('visualizer-active');
       cardElement.dataset.focusState = 'active';
+
+      cardData.pointer.bendTarget = Math.max(cardData.pointer.bendTarget || 0, 0.24);
+      cardData.pointer.twistTarget = cardData.pointer.twistTarget || 0;
+      cardElement.style.setProperty('--bend-intensity', cardData.pointer.bendTarget.toFixed(3));
 
       // Boost reactivity for all visualizers
       for (const visualizer of cardData.visualizers.values()) {
@@ -772,9 +814,18 @@ class CardSystemController {
       cardElement.style.setProperty('--mouse-x', '50%');
       cardElement.style.setProperty('--mouse-y', '50%');
       cardElement.style.setProperty('--bend-intensity', '0');
+      cardElement.style.setProperty('--bend-tilt-x-deg', '0deg');
+      cardElement.style.setProperty('--bend-tilt-y-deg', '0deg');
+      cardElement.style.setProperty('--bend-skew-x-deg', '0deg');
+      cardElement.style.setProperty('--bend-skew-y-deg', '0deg');
+      cardElement.style.setProperty('--bend-twist-deg', '0deg');
+      cardElement.style.setProperty('--bend-depth', '0px');
+      cardElement.style.setProperty('--visualizer-bend-depth', '0px');
 
       cardData.pointer.rawX = 0.5;
       cardData.pointer.rawY = 0.5;
+      cardData.pointer.bendTarget = 0.12;
+      cardData.pointer.twistTarget = 0;
     };
 
     const handleClick = (e) => {

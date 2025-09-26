@@ -185,6 +185,16 @@ body.loading * { animation-play-state: paused !important; transition: none !impo
     --focus-pointer-y: 0.5;
     --visualizer-bleed: 1.24;
     --visualizer-scale: 1.18;
+    --bend-intensity: 0;
+    --bend-tilt-x-deg: 0deg;
+    --bend-tilt-y-deg: 0deg;
+    --bend-skew-x-deg: 0deg;
+    --bend-skew-y-deg: 0deg;
+    --bend-twist-deg: 0deg;
+    --bend-depth: 0px;
+    --visualizer-bend-depth: 0px;
+    --lift-scale: 1;
+    --lift-translate-y: 0px;
 }
 
 .visualizer-host,
@@ -235,13 +245,15 @@ body.loading * { animation-play-state: paused !important; transition: none !impo
     height: calc(118% * var(--visualizer-scale, 1.16));
     transform:
         translate(-50%, -50%)
-        rotateX(calc(var(--tilt-x, 0deg) + var(--tilt-scroll, 0deg)))
-        rotateY(var(--tilt-y, 0deg))
-        rotateZ(var(--visualizer-rot-zw, 0deg))
+        rotateX(calc(var(--tilt-x, 0deg) + var(--tilt-scroll, 0deg) + var(--bend-tilt-x-deg, 0deg) * 0.55))
+        rotateY(calc(var(--tilt-y, 0deg) + var(--bend-tilt-y-deg, 0deg) * 0.55))
+        rotateZ(calc(var(--visualizer-rot-zw, 0deg) + var(--bend-twist-deg, 0deg) * 0.4))
+        skewX(calc(var(--bend-skew-x-deg, 0deg) * 0.65))
+        skewY(calc(var(--bend-skew-y-deg, 0deg) * 0.65))
         translate3d(
             calc(var(--tilt-y-value, 0) * -16px),
             calc(var(--tilt-x-value, 0) * 16px + var(--visualizer-parallax, 0px)),
-            calc(var(--focus-intensity, 0) * 34px)
+            calc(var(--focus-intensity, 0) * 34px + var(--visualizer-bend-depth, 0px))
         );
     border-radius: 26px;
     opacity: calc(0.76 + var(--focus-intensity, 0) * 0.24);
@@ -504,11 +516,28 @@ a:hover {
     border-radius: 20px;
     background: var(--bg-secondary);
     transform-style: preserve-3d;
-    transition: transform var(--duration-normal) var(--ease-spring), 
+    --card-hover-scale: 1;
+    --card-hover-translate-z: 0px;
+    --card-perspective: var(--perspective, 1400px);
+    transition: transform var(--duration-normal) var(--ease-spring),
                 box-shadow var(--duration-normal) var(--ease-spring);
-    
+    transform:
+        perspective(var(--card-perspective))
+        rotateX(calc(var(--tilt-x, 0deg) + var(--bend-tilt-x-deg, 0deg)))
+        rotateY(calc(var(--tilt-y, 0deg) + var(--bend-tilt-y-deg, 0deg)))
+        rotateZ(var(--bend-twist-deg, 0deg))
+        skewX(var(--bend-skew-x-deg, 0deg))
+        skewY(var(--bend-skew-y-deg, 0deg))
+        translate3d(
+            calc(var(--focus-parallax-x, 0px) * 0.08),
+            calc(var(--lift-translate-y, 0px) + var(--focus-parallax-y, 0px) * 0.08),
+            calc(var(--card-hover-translate-z, 0px) + var(--bend-depth, 0px))
+        )
+        scale(var(--lift-scale, 1))
+        scale(var(--card-hover-scale));
+
     /* Neoskeuomorphic base shadow */
-    box-shadow: 
+    box-shadow:
         -8px -8px 16px var(--neo-shadow-light),
          8px  8px 16px var(--neo-shadow-dark),
          inset 1px 1px 0 var(--neo-highlight);
@@ -516,8 +545,9 @@ a:hover {
 
 /* Total Reactivity System - Pop-out on Hover */
 .unified-card:hover, .tech-card:hover, .portfolio-item:hover {
-    transform: scale(var(--pop-out-scale)) translateZ(var(--pop-out-translate-z));
-    box-shadow: 
+    --card-hover-scale: var(--pop-out-scale);
+    --card-hover-translate-z: var(--pop-out-translate-z);
+    box-shadow:
         0 0 50px var(--theme-primary),
         0 0 80px var(--theme-secondary),
         -12px -12px 24px var(--neo-shadow-light),
