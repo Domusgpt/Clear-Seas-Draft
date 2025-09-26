@@ -65,11 +65,28 @@ class CardSystemController {
   constructor() {
     this.visualizerManager = null;
     this.cards = new Map();
+    this.generatedCardId = 0;
     this.performanceMonitor = {
       activeVisualizers: 0,
       maxVisualizers: 6,
       performanceMode: 'auto'
     };
+    this.motionBroadcast = {
+      raf: null,
+      lastDetail: null,
+      lastTimestamp: performance.now(),
+      lastFocusAmount: 0
+    };
+    this.dynamicSelectors = [
+      { selector: '[data-visualizer-card]', roles: ['content', 'accent'], colorScheme: 'polychora' },
+      { selector: '[data-card]', roles: ['content'], colorScheme: 'polychora' },
+      { selector: '.version-card', roles: ['content', 'accent'], colorScheme: 'portfolio' },
+      { selector: '.project-card', roles: ['shadow', 'content', 'highlight'], colorScheme: 'quantum' },
+      { selector: '.experience-card', roles: ['content', 'highlight'], colorScheme: 'holographic' },
+      { selector: '.visualizer-card', roles: ['content', 'accent'], colorScheme: 'polychora' },
+      { selector: '.card', roles: ['content'], colorScheme: 'polychora' }
+    ];
+    this.ambientObserver = null;
 
     const overrideApi = useBrandOverrideApi();
     const overrideEvents = new Set(overrideApi.events || [overrideApi.eventName || PRIMARY_BRAND_OVERRIDE_EVENT]);
@@ -89,6 +106,10 @@ class CardSystemController {
         return set;
       }, []);
     this.brandOverrideEvent = overrideApi.eventName || PRIMARY_BRAND_OVERRIDE_EVENT;
+    this.primaryMotionEvent =
+      window.__CSS_WEB_MASTER_GLOBAL_MOTION_EVENT ||
+      window.__CLEAR_SEAS_GLOBAL_MOTION_EVENT ||
+      'css-web-master:motion-updated';
     this.globalMotionState = {
       focusAmount: 0,
       synergy: 0,
@@ -210,15 +231,7 @@ class CardSystemController {
         'assets/file_0000000006fc6230a8336bfa1fcebd89.png',
         'assets/image_8 (1).png'
       ],
-      videos: [
-        '20250505_1321_Neon Blossom Transformation_simple_compose_01jtgqf5vjevn8nbrnsx8yd5fs.mp4',
-        '20250505_1726_Noir Filament Mystery_simple_compose_01jth5f1kwe9r9zxqet54bz3q0.mp4',
-        '20250506_0014_Gemstone Coral Transformation_remix_01jthwv071e06vmjd0mn60zm3s.mp4',
-        '20250506_0014_Gemstone Coral Transformation_remix_01jthwv0c4fxk8m0e79ry2t4ke.mp4',
-        '1746496560073.mp4',
-        '1746500614769.mp4',
-        '1746576068221.mp4'
-      ],
+      videos: [],
       meta: {
         images: {},
         videos: {}
@@ -270,34 +283,119 @@ class CardSystemController {
     }
     
     this.visualizerManager = new window.CardVisualizerManager();
-    
+
     // Initialize all configured cards
     for (const [cardId, config] of Object.entries(this.cardConfigs)) {
       await this.initializeCard(cardId, config);
     }
-    
+
+    await this.registerAmbientCards();
+    this.observeAmbientCards();
+
     // Setup performance monitoring
     this.setupPerformanceMonitoring();
-    
+
     // Setup resize handling
     window.addEventListener('resize', this.handleResize.bind(this));
-    
+
+    this.startGlobalMotionBroadcast();
+
     console.log('✅ Card System fully initialized with VIB34D visualizers');
   }
-  
-  async initializeCard(cardId, config) {
-    const cardElement = document.getElementById(cardId);
+
+  resolveCardKey(cardElement, suggestedKey) {
     if (!cardElement) {
-      console.warn(`⚠️ Card element not found: ${cardId}`);
+      return null;
+    }
+
+    let key = cardElement.dataset.cardSystemId || suggestedKey || cardElement.id || '';
+    if (!key) {
+      this.generatedCardId += 1;
+      key = `auto-card-${this.generatedCardId}`;
+    }
+
+    if (!cardElement.dataset.cardSystemId) {
+      cardElement.dataset.cardSystemId = key;
+    }
+
+    if (!cardElement.id) {
+      cardElement.id = key;
+    }
+
+    if (!cardElement.dataset.globalCardSynergy) {
+      cardElement.dataset.globalCardSynergy = 'applied';
+    }
+
+    return key;
+  }
+
+  deriveCardConfig(cardElement, baseConfig = {}) {
+    const config = {
+      roles: ['content', 'accent'],
+      geometryPrefs: [0, 4, 7],
+      colorScheme: 'polychora',
+      ...baseConfig
+    };
+
+    if (cardElement?.dataset?.cardRoles) {
+      const roles = cardElement.dataset.cardRoles
+        .split(',')
+        .map((role) => role.trim())
+        .filter(Boolean);
+      if (roles.length) {
+        config.roles = roles;
+      }
+    }
+
+    if (cardElement?.dataset?.cardGeometry) {
+      const geometryPrefs = cardElement.dataset.cardGeometry
+        .split(',')
+        .map((value) => Number(value.trim()))
+        .filter((value) => Number.isFinite(value));
+      if (geometryPrefs.length) {
+        config.geometryPrefs = geometryPrefs;
+      }
+    }
+
+    if (cardElement?.dataset?.cardPalette) {
+      config.colorScheme = cardElement.dataset.cardPalette.trim();
+    } else if (baseConfig?.colorScheme) {
+      config.colorScheme = baseConfig.colorScheme;
+    }
+
+    if (!Array.isArray(config.roles) || !config.roles.length) {
+      config.roles = ['content'];
+    }
+
+    return config;
+  }
+
+  async initializeCard(target, inputConfig = {}, options = {}) {
+    const cardElement = typeof target === 'string' ? document.getElementById(target) : target;
+    if (!cardElement) {
+      console.warn(`⚠️ Card element not found: ${target}`);
       return;
+    }
+
+    const config = this.deriveCardConfig(cardElement, inputConfig || {});
+    const cardKey = this.resolveCardKey(cardElement, typeof target === 'string' ? target : null);
+
+    if (!cardKey) {
+      console.warn('⚠️ Unable to resolve card key for element', cardElement);
+      return;
+    }
+
+    if (this.cards.has(cardKey)) {
+      return this.cards.get(cardKey);
     }
 
     const overridesApi = useBrandOverrideApi();
     const brandOverrides = overridesApi.collect(cardElement);
 
     const cardData = {
+      id: cardKey,
       element: cardElement,
-      config: config,
+      config,
       visualizers: new Map(),
       active: false,
       focusIntensity: 0,
@@ -320,7 +418,7 @@ class CardSystemController {
       brandOverrides,
       assetCycle: 0
     };
-    
+
     // Create visualizers for each role
     for (const role of config.roles) {
       if (this.performanceMonitor.activeVisualizers >= this.performanceMonitor.maxVisualizers) {
@@ -337,21 +435,94 @@ class CardSystemController {
           // Apply card-specific configurations
           this.applyCardConfiguration(visualizer, config, role);
           
-          console.log(`🎯 Visualizer created: ${cardId}-${role}`);
+          console.log(`🎯 Visualizer created: ${cardKey}-${role}`);
         }
       } catch (error) {
-        console.error(`❌ Failed to create visualizer for ${cardId}-${role}:`, error);
+        console.error(`❌ Failed to create visualizer for ${cardKey}-${role}:`, error);
       }
     }
-    
+
     // Setup card-specific interactions
     this.setupCardInteractions(cardElement, cardData);
     this.decorateCard(cardElement, cardData);
     this.registerReactiveElements(cardData);
     this.startCardSynergyLoop(cardData);
 
-    this.cards.set(cardId, cardData);
+    cardElement.dataset.cardSystemReady = 'true';
+    this.cards.set(cardKey, cardData);
     this.applyScrollTiltToCards(this.scrollTilt);
+
+    if (options.ambient && !cardElement.dataset.brandCollection) {
+      cardElement.dataset.brandCollection = 'ambient';
+    }
+
+    return cardData;
+  }
+
+  collectAmbientCardCandidates(root = document) {
+    const candidates = [];
+    const visited = new Set();
+
+    const register = (element, config) => {
+      if (!element || visited.has(element)) {
+        return;
+      }
+      visited.add(element);
+      candidates.push({ element, config });
+    };
+
+    this.dynamicSelectors.forEach((entry) => {
+      if (!entry?.selector) {
+        return;
+      }
+      const context = root instanceof Element ? root : document;
+      context.querySelectorAll(entry.selector).forEach((element) => register(element, entry));
+      if (root instanceof Element && root.matches(entry.selector)) {
+        register(root, entry);
+      }
+    });
+
+    return candidates;
+  }
+
+  async registerAmbientCards(root = document) {
+    const candidates = this.collectAmbientCardCandidates(root);
+    for (const { element, config } of candidates) {
+      if (!element || element.dataset.cardSystemReady === 'true') {
+        continue;
+      }
+      if (!element.isConnected) {
+        continue;
+      }
+      const rect = element.getBoundingClientRect();
+      if (!rect || rect.width < 160 || rect.height < 160) {
+        continue;
+      }
+      const computed = getComputedStyle(element);
+      if (computed.display === 'none' || computed.visibility === 'hidden' || Number(computed.opacity) === 0) {
+        continue;
+      }
+      await this.initializeCard(element, config, { ambient: true });
+    }
+  }
+
+  observeAmbientCards() {
+    if (this.ambientObserver || typeof MutationObserver === 'undefined') {
+      return;
+    }
+
+    this.ambientObserver = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (!(node instanceof HTMLElement)) {
+            return;
+          }
+          this.registerAmbientCards(node);
+        });
+      });
+    });
+
+    this.ambientObserver.observe(document.body, { childList: true, subtree: true });
   }
   
   applyCardConfiguration(visualizer, config, role) {
@@ -1356,10 +1527,18 @@ class CardSystemController {
     }
   }
   
-  destroyCard(cardId) {
-    const cardData = this.cards.get(cardId);
+  destroyCard(target) {
+    const key = typeof target === 'string'
+      ? target
+      : target?.dataset?.cardSystemId || target?.id;
+
+    if (!key) {
+      return;
+    }
+
+    const cardData = this.cards.get(key);
     if (!cardData) return;
-    
+
     // Cleanup visualizers
     if (this.visualizerManager) {
       this.visualizerManager.destroyCardVisualizer(cardData.element);
@@ -1378,8 +1557,8 @@ class CardSystemController {
       overlay.remove();
     }
 
-    this.cards.delete(cardId);
-    console.log(`🗑️ Card destroyed: ${cardId}`);
+    this.cards.delete(key);
+    console.log(`🗑️ Card destroyed: ${key}`);
   }
   
   getCardStatus() {
@@ -1399,8 +1578,240 @@ class CardSystemController {
         if (visualizer.active) status.activeVisualizers++;
       }
     }
-    
+
     return status;
+  }
+
+  computeGlobalMotionDetail(timestamp = performance.now()) {
+    const cards = Array.from(this.cards.values());
+    const cardCount = cards.length;
+
+    if (!cardCount) {
+      this.motionBroadcast.lastFocusAmount = 0;
+      return {
+        focusX: 0.5,
+        focusY: 0.5,
+        focusAmount: 0,
+        focusTrend: 0,
+        tiltX: 0,
+        tiltY: 0,
+        tiltStrength: 0,
+        tiltSkew: 0,
+        bend: 0,
+        warp: 0,
+        scrollMomentum: 0,
+        scrollSpeed: 0,
+        scrollDirection: 0,
+        synergy: 0,
+        palette: this.pageProfile.palette,
+        collection: this.pageProfile.collection || null,
+        family: this.pageProfile.family || null,
+        siteCode: this.pageProfile.siteCode || null,
+        timestamp
+      };
+    }
+
+    let totalFocus = 0;
+    let weightedX = 0;
+    let weightedY = 0;
+    let aggregateTiltX = 0;
+    let aggregateTiltY = 0;
+    let aggregateTiltStrength = 0;
+    let aggregateBend = 0;
+    let aggregateWarp = 0;
+
+    cards.forEach((cardData) => {
+      const focus = Math.max(0, Math.min(1, cardData.focusIntensity || 0));
+      const pointer = cardData.pointer || {};
+      const smoothX = Number.isFinite(pointer.smoothX) ? pointer.smoothX : 0.5;
+      const smoothY = Number.isFinite(pointer.smoothY) ? pointer.smoothY : 0.5;
+      const bend = Number.isFinite(pointer.bendSmooth) ? pointer.bendSmooth : 0.12;
+      const twist = Number.isFinite(pointer.twistSmooth) ? pointer.twistSmooth : 0;
+      const tilt = cardData.currentTilt || { x: (smoothY - 0.5) * 2, y: (smoothX - 0.5) * 2 };
+
+      totalFocus += focus;
+      weightedX += smoothX * focus;
+      weightedY += smoothY * focus;
+      aggregateTiltX += tilt.x * focus;
+      aggregateTiltY += tilt.y * focus;
+      aggregateTiltStrength += Math.hypot(tilt.x, tilt.y) * focus;
+      aggregateBend += bend;
+      aggregateWarp += twist;
+    });
+
+    const normalizedFocus = totalFocus / cardCount;
+    const focusX = totalFocus > 0 ? weightedX / totalFocus : 0.5;
+    const focusY = totalFocus > 0 ? weightedY / totalFocus : 0.5;
+    const tiltX = totalFocus > 0 ? aggregateTiltX / totalFocus : 0;
+    const tiltY = totalFocus > 0 ? aggregateTiltY / totalFocus : 0;
+    const tiltStrength = totalFocus > 0 ? aggregateTiltStrength / totalFocus : 0;
+    const bend = aggregateBend / cardCount;
+    const warp = aggregateWarp / cardCount;
+    const scrollMomentum = Number(this.scrollMomentum || 0);
+    const scrollDirection = scrollMomentum === 0 ? 0 : scrollMomentum > 0 ? 1 : -1;
+    const scrollSpeed = Math.abs(scrollMomentum) * 120;
+    const focusAmount = Math.min(1, normalizedFocus);
+    const focusTrend = (focusAmount - (this.motionBroadcast.lastFocusAmount || 0)) * 60;
+    this.motionBroadcast.lastFocusAmount = focusAmount;
+
+    return {
+      focusX,
+      focusY,
+      focusAmount,
+      focusTrend,
+      tiltX,
+      tiltY,
+      tiltStrength,
+      tiltSkew: tiltX - tiltY,
+      bend,
+      warp,
+      scrollMomentum,
+      scrollSpeed,
+      scrollDirection,
+      synergy: Math.min(1.2, totalFocus),
+      palette: this.pageProfile.palette,
+      collection: this.pageProfile.collection || null,
+      family: this.pageProfile.family || null,
+      siteCode: this.pageProfile.siteCode || null,
+      timestamp
+    };
+  }
+
+  shouldDispatchGlobalMotion(previous, next) {
+    if (!previous) {
+      return true;
+    }
+
+    const thresholds = {
+      focusX: 0.0012,
+      focusY: 0.0012,
+      focusAmount: 0.0012,
+      focusTrend: 0.0006,
+      tiltX: 0.001,
+      tiltY: 0.001,
+      tiltStrength: 0.001,
+      tiltSkew: 0.001,
+      bend: 0.001,
+      warp: 0.001,
+      scrollMomentum: 0.001,
+      scrollSpeed: 0.001,
+      scrollDirection: 0.51,
+      synergy: 0.001
+    };
+
+    return Object.keys(thresholds).some((key) => {
+      const delta = Math.abs((next[key] || 0) - (previous[key] || 0));
+      return delta > thresholds[key];
+    });
+  }
+
+  updateGlobalMotionTargets(detail) {
+    const globals = window.__CSS_WEB_MASTER_GLOBALS || (window.__CSS_WEB_MASTER_GLOBALS = {});
+    const motion =
+      window.__CSS_WEB_MASTER_GLOBAL_MOTION ||
+      window.__CLEAR_SEAS_GLOBAL_MOTION ||
+      {
+        focus: { x: 0.5, y: 0.5, amount: 0 },
+        tilt: { x: 0, y: 0, strength: 0 },
+        bend: 0,
+        warp: 0,
+        scroll: 0,
+        scrollDirection: 0,
+        scrollSpeed: 0,
+        focusTrend: 0,
+        tiltSkew: 0,
+        synergy: 0,
+        palette: this.pageProfile.palette || null,
+        collection: this.pageProfile.collection || null,
+        family: this.pageProfile.family || null,
+        siteCode: this.pageProfile.siteCode || null,
+        updatedAt: performance.now(),
+        eventName: this.primaryMotionEvent
+      };
+
+    motion.focus.x = detail.focusX;
+    motion.focus.y = detail.focusY;
+    motion.focus.amount = detail.focusAmount;
+    motion.tilt.x = detail.tiltX;
+    motion.tilt.y = detail.tiltY;
+    motion.tilt.strength = detail.tiltStrength;
+    motion.tiltSkew = detail.tiltSkew;
+    motion.bend = detail.bend;
+    motion.warp = detail.warp;
+    motion.scroll = detail.scrollMomentum;
+    motion.scrollDirection = detail.scrollDirection;
+    motion.scrollSpeed = detail.scrollSpeed;
+    motion.focusTrend = detail.focusTrend;
+    motion.synergy = detail.synergy;
+    motion.palette = detail.palette;
+    motion.collection = detail.collection;
+    motion.family = detail.family;
+    motion.siteCode = detail.siteCode;
+    motion.updatedAt = detail.timestamp;
+
+    window.__CSS_WEB_MASTER_GLOBAL_MOTION = motion;
+    window.__CLEAR_SEAS_GLOBAL_MOTION = motion;
+    globals.motionState = motion;
+  }
+
+  updateMotionCss(detail) {
+    const root = document.documentElement;
+    root.style.setProperty('--global-focus-x', detail.focusX.toFixed(4));
+    root.style.setProperty('--global-focus-y', detail.focusY.toFixed(4));
+    root.style.setProperty('--global-focus-amount', detail.focusAmount.toFixed(4));
+    root.style.setProperty('--global-focus-trend', detail.focusTrend.toFixed(4));
+    root.style.setProperty('--global-tilt-x', detail.tiltX.toFixed(4));
+    root.style.setProperty('--global-tilt-y', detail.tiltY.toFixed(4));
+    root.style.setProperty('--global-tilt-strength', detail.tiltStrength.toFixed(4));
+    root.style.setProperty('--global-tilt-skew', detail.tiltSkew.toFixed(4));
+    root.style.setProperty('--global-bend-intensity', detail.bend.toFixed(4));
+    root.style.setProperty('--global-warp', detail.warp.toFixed(4));
+    root.style.setProperty('--global-scroll-momentum', detail.scrollMomentum.toFixed(4));
+    root.style.setProperty('--global-scroll-tilt', `${(detail.scrollMomentum * 6).toFixed(3)}deg`);
+    root.style.setProperty('--global-scroll-speed', detail.scrollSpeed.toFixed(4));
+    root.style.setProperty('--global-scroll-direction', detail.scrollDirection.toFixed(0));
+    root.style.setProperty('--global-synergy-glow', Math.min(1, detail.synergy).toFixed(4));
+  }
+
+  dispatchGlobalMotion(detail) {
+    const now = detail.timestamp || performance.now();
+    const elapsed = now - (this.motionBroadcast.lastTimestamp || 0);
+
+    if (elapsed < 24 && !this.shouldDispatchGlobalMotion(this.motionBroadcast.lastDetail, detail)) {
+      return;
+    }
+
+    if (elapsed < 12 && !this.shouldDispatchGlobalMotion(this.motionBroadcast.lastDetail, detail)) {
+      return;
+    }
+
+    this.motionBroadcast.lastDetail = { ...detail };
+    this.motionBroadcast.lastTimestamp = now;
+
+    const payload = { ...detail };
+    this.globalMotionEvents.forEach((eventName) => {
+      window.dispatchEvent(new CustomEvent(eventName, { detail: payload }));
+    });
+  }
+
+  broadcastGlobalMotion(timestamp = performance.now()) {
+    const detail = this.computeGlobalMotionDetail(timestamp);
+    this.updateGlobalMotionTargets(detail);
+    this.updateMotionCss(detail);
+    this.dispatchGlobalMotion(detail);
+  }
+
+  startGlobalMotionBroadcast() {
+    if (this.motionBroadcast.raf) {
+      return;
+    }
+
+    const tick = (time) => {
+      this.broadcastGlobalMotion(time);
+      this.motionBroadcast.raf = requestAnimationFrame(tick);
+    };
+
+    this.motionBroadcast.raf = requestAnimationFrame(tick);
   }
 }
 

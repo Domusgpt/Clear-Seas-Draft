@@ -1933,26 +1933,75 @@ function observeMutations() {
   observer.observe(document.body, { childList: true, subtree: true });
 }
 
+const GLOBAL_CARD_MOTION_ENABLE_ATTRIBUTE = 'data-enable-global-card-motion';
+const GLOBAL_CARD_MOTION_DISABLE_ATTRIBUTE = 'data-disable-global-card-motion';
+let hasLoggedGlobalMotionDisabled = false;
+
+function elementHasTruthyDataAttribute(element, attribute) {
+  if (!element || !element.hasAttribute(attribute)) {
+    return false;
+  }
+  const rawValue = element.getAttribute(attribute);
+  if (rawValue === null) {
+    return false;
+  }
+  const value = rawValue.trim().toLowerCase();
+  return value === '' || value === 'true' || value === '1' || value === attribute;
+}
+
+function resolveCardMotionGateElements() {
+  const elements = [document.documentElement];
+  if (document.body) {
+    elements.push(document.body);
+  }
+  return elements.filter(Boolean);
+}
+
+function isGlobalCardMotionOptedIn() {
+  const gateElements = resolveCardMotionGateElements();
+  const hasOptOut = gateElements.some((element) =>
+    elementHasTruthyDataAttribute(element, GLOBAL_CARD_MOTION_DISABLE_ATTRIBUTE)
+  );
+  if (hasOptOut) {
+    return false;
+  }
+  return true;
+}
+
+function logGlobalMotionDisabled(reason) {
+  if (hasLoggedGlobalMotionDisabled) {
+    return;
+  }
+  hasLoggedGlobalMotionDisabled = true;
+  try {
+    console.info(`⏸️ Global card orchestrator disabled: ${reason}`);
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.log('Global card orchestrator disabled.');
+  }
+}
+
 async function initialise() {
   preparePageProfile(activePageProfile);
   ensureStylesheet('styles/global-card-synergy.css', 'global-card-synergy');
-  collectCandidateElements().forEach((element) => registerCard(element));
-  updateSupportTargets(null);
-  observeMutations();
-  window.addEventListener('scroll', handleScroll, { passive: true });
-  let resizeTimeout = null;
-  window.addEventListener('resize', () => {
-    clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(() => {
-      collectCandidateElements().forEach((element) => registerCard(element));
-    }, 120);
-  });
-  handleScroll();
   await ensureCardSystem();
+  if (window.cardSystemController && typeof window.cardSystemController.startGlobalMotionBroadcast === 'function') {
+    window.cardSystemController.startGlobalMotionBroadcast();
+  }
 }
 
+const maybeInitialise = () => {
+  if (isGlobalCardMotionOptedIn()) {
+    initialise();
+  } else {
+    logGlobalMotionDisabled(
+      `remove ${GLOBAL_CARD_MOTION_DISABLE_ATTRIBUTE} from <html> or <body> to re-enable.`
+    );
+  }
+};
+
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initialise, { once: true });
+  document.addEventListener('DOMContentLoaded', maybeInitialise, { once: true });
 } else {
-  initialise();
+  maybeInitialise();
 }
