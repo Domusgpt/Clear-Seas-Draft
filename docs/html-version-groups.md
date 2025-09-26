@@ -63,6 +63,16 @@ Each palette drives:
 
 Any custom page can opt into a palette by setting `data-page-collection` or `data-showcase-theme` on `<html>`/`<body>` before loading the orchestrator.
 
+### Page Profile Registry
+
+The new `scripts/page-profile-registry.js` module exposes these group definitions so other scripts can reference them without duplicating logic. It exports a lightweight API:
+
+- `list()` – returns the available profile keys plus their family, palette, and layout metadata.
+- `resolve()` – matches the active document against filenames, dataset tags, and title tokens to pick the correct profile.
+- `apply()` – applies dataset attributes (`data-global-page-family`, `data-global-page-layout`) and CSS variables (e.g., `--global-brand-accent`) that downstream styles consume.
+
+`global-page-orchestrator.js` now imports the registry directly, ensuring every HTML build shares the same grouping, accent colors, and overlay depth heuristics.
+
 ## Global Motion Telemetry
 
 The shared orchestrator now publishes frame-smoothed motion data so satellite scripts and inline styles can react in unison:

@@ -14,27 +14,60 @@
   --global-focus-trend: 0;
   --global-scroll-speed: 0;
   --global-scroll-direction: 0;
+  --global-brand-accent: #6fe8ff;
+  --global-family-focus-boost: 1;
+  --global-family-bend-boost: 1;
+  --global-family-parallax-scale: 1;
+  --global-family-overlay-bloom: 1;
 }
 
 body {
   --global-background-shift-x: calc(
-    (var(--global-focus-x) - 0.5) * 12px +
-    var(--global-scroll-momentum) * 18px +
-    var(--global-tilt-x) * 24px
+    ((var(--global-focus-x) - 0.5) * 12px +
+      var(--global-scroll-momentum) * 18px +
+      var(--global-tilt-x) * 24px) * var(--global-family-parallax-scale)
   );
   --global-background-shift-y: calc(
-    (0.5 - var(--global-focus-y)) * 10px +
-    var(--global-tilt-y) * 22px
+    ((0.5 - var(--global-focus-y)) * 10px +
+      var(--global-tilt-y) * 22px) * var(--global-family-parallax-scale)
   );
-  background-position: calc(50% + var(--global-background-shift-x) + var(--global-focus-trend) * 40px) calc(50% + var(--global-background-shift-y));
-  perspective: calc(1600px - var(--global-bend-intensity) * 420px);
+  background-position: calc(50% + var(--global-background-shift-x) + var(--global-focus-trend) * 40px * var(--global-family-parallax-scale)) calc(50% + var(--global-background-shift-y));
+  perspective: calc(1600px - var(--global-bend-intensity) * 420px * var(--global-family-bend-boost));
   transform-style: preserve-3d;
-  filter: saturate(calc(1 + var(--global-tilt-strength) * 0.12 + var(--global-scroll-speed) * 0.1))
+  filter: saturate(calc((1 + var(--global-tilt-strength) * 0.12 + var(--global-scroll-speed) * 0.1) * var(--global-family-focus-boost)))
     hue-rotate(calc(var(--global-warp) * 32deg))
-    brightness(calc(1 + var(--global-bend-intensity) * 0.08 + var(--global-scroll-speed) * 0.05 + var(--global-focus-trend) * 0.06));
+    brightness(calc((1 + var(--global-bend-intensity) * 0.08 + var(--global-scroll-speed) * 0.05 + var(--global-focus-trend) * 0.06) * var(--global-family-focus-boost)));
   transform-origin: 50% 50%;
   transform: rotateZ(calc(var(--global-tilt-skew) * 1.4deg * var(--global-scroll-direction)));
   transition: background-position 0.8s ease, filter 0.8s ease;
+}
+
+html[data-global-page-family="meta"] {
+  --global-family-parallax-scale: 1.12;
+  --global-family-focus-boost: 1.08;
+  --global-family-bend-boost: 0.82;
+  --global-family-overlay-bloom: 1.12;
+}
+
+html[data-global-page-family="foundation"] {
+  --global-family-parallax-scale: 1;
+  --global-family-focus-boost: 1.02;
+  --global-family-bend-boost: 1;
+  --global-family-overlay-bloom: 1.05;
+}
+
+html[data-global-page-family="immersive"] {
+  --global-family-parallax-scale: 1.24;
+  --global-family-focus-boost: 1.18;
+  --global-family-bend-boost: 1.28;
+  --global-family-overlay-bloom: 1.25;
+}
+
+html[data-global-page-family="labs"] {
+  --global-family-parallax-scale: 1.2;
+  --global-family-focus-boost: 1.14;
+  --global-family-bend-boost: 1.05;
+  --global-family-overlay-bloom: 1.32;
 }
 
 [data-global-card-group="true"] {
@@ -66,7 +99,7 @@ body {
     rgba(132, 56, 255, calc(0.05 + var(--group-synergy) * 0.25)) 48%,
     rgba(8, 10, 24, 0) 80%
   );
-  opacity: calc(0.12 + var(--group-synergy) * 0.4);
+  opacity: calc((0.12 + var(--group-synergy) * 0.4) * var(--global-family-overlay-bloom));
   filter: blur(calc(28px - var(--group-focus-amount) * 12px - var(--global-tilt-strength) * 6px));
   transform:
     translateZ(calc(-60px - var(--global-bend-intensity) * 40px))
@@ -160,6 +193,10 @@ body {
   filter: saturate(calc(1.05 + var(--card-focus-strength) * 0.45 + var(--shared-synergy-signal) * 0.4))
     brightness(calc(1 + var(--card-focus-strength) * 0.2 + var(--shared-focus-signal) * 0.18 + var(--shared-focus-trend-signal) * 0.1));
   transform: translateZ(calc(var(--shared-focus-trend-signal) * 16px));
+  box-shadow:
+    0 0 calc(18px + var(--card-focus-strength) * 36px) color-mix(in srgb, var(--global-brand-accent) 60%, transparent),
+    0 0 calc(32px + var(--shared-synergy-signal) * 48px) rgba(12, 20, 40, 0.32);
+  border-color: color-mix(in srgb, var(--global-brand-accent) 35%, rgba(255, 255, 255, 0.25));
 }
 
 .global-visualizer-card[data-support-distance="0"],

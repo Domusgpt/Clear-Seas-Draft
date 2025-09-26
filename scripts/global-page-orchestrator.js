@@ -1,3 +1,5 @@
+import { resolvePageProfile, applyProfileMetadata } from './page-profile-registry.js';
+
 const BRAND_OVERRIDE_EVENT = window.__CLEAR_SEAS_BRAND_OVERRIDE_EVENT || 'clear-seas:brand-overrides-changed';
 
 const GLOBAL_MOTION_EVENT = window.__CLEAR_SEAS_GLOBAL_MOTION_EVENT || 'clear-seas:motion-updated';
@@ -518,204 +520,32 @@ const brandOverrideApi = (() => {
   return api;
 })();
 
-const pageCollectionProfiles = [
-  {
-    key: 'meta-index',
-    palette: 'meta',
-    fileNames: new Set(['index.html']),
-    tags: new Set(['index', 'map', 'meta']),
-    titleTokens: ['all versions', 'collections'],
-    videoPattern: [0, 1],
-    imageOrder: [2, 3, 4, 0, 1, 5, 6, 7, 8],
-    videoOrder: [4, 5, 6, 0, 1, 2, 3],
-    overlay: {
-      blend: 'screen',
-      opacity: 1.08,
-      filter: 'hue-rotate(18deg) saturate(1.35) brightness(1.1)',
-      rotate: '6deg',
-      depth: '18px'
-    },
-    canvas: {
-      scale: 0.08,
-      depth: '12px'
-    }
-  },
-  {
-    key: 'core-foundation',
-    palette: 'foundation',
-    fileNames: new Set([
-      '1-index.html',
-      '2-index-optimized.html',
-      '3-index-fixed.html',
-      '4-index-unified.html',
-      '5-index-vib34d-integrated.html',
-      '6-index-totalistic.html'
-    ]),
-    tags: new Set(['core', 'foundation', 'totalistic', 'unified']),
-    titleTokens: ['clear seas solutions', 'totalistic', 'integrated'],
-    videoPattern: [0, 1, 0, 0],
-    imageOrder: [0, 5, 1, 6, 2, 7, 3, 8, 4],
-    videoOrder: [1, 2, 3, 0, 4, 5, 6],
-    overlay: {
-      blend: 'soft-light',
-      opacity: 0.96,
-      filter: 'saturate(1.2) brightness(1.05)',
-      rotate: '2deg',
-      depth: '8px'
-    },
-    canvas: {
-      scale: 0.12,
-      depth: '18px'
-    }
-  },
-  {
-    key: 'immersive-ai',
-    palette: 'immersive',
-    fileNames: new Set([
-      '10-pr-4.html', '11-pr-5.html', '12-pr-6.html',
-      '14-pr-8.html', '15-pr-9.html', '16-pr-10.html',
-      '17-pr-11.html', '18-pr-12.html', '19-pr-13.html',
-      '20-pr-14.html', '21-pr-15.html', '22-pr-16.html',
-      '23-pr-17.html', '24-pr-18.html', '25-pr-19.html',
-      '26-pr-20.html', '27-pr-21.html', '28-pr-22.html',
-      '29-pr-23.html', '30-pr-24.html'
-    ]),
-    tags: new Set(['immersive', 'mission', 'pulse', 'signal', 'pr', 'blueprint']),
-    titleTokens: ['immersive experience', 'mission axis', 'experience blueprint'],
-    videoPattern: [1, 0, 1, 1],
-    imageOrder: [4, 0, 5, 1, 6, 2, 7, 3, 8],
-    videoOrder: [4, 5, 6, 0, 1, 2, 3],
-    overlay: {
-      blend: 'color-dodge',
-      opacity: 1.14,
-      filter: 'hue-rotate(32deg) saturate(1.5) brightness(1.18)',
-      rotate: '9deg',
-      depth: '28px'
-    },
-    canvas: {
-      scale: 0.18,
-      depth: '26px'
-    },
-    scripts: ['scripts/immersive-experience-actualizer.js']
-  },
-  {
-    key: 'concept-labs',
-    palette: 'concept',
-    fileNames: new Set([
-      '7-pr-1.html',
-      '8-pr-2.html',
-      '9-pr-3.html',
-      '13-pr-7.html',
-      '25-orthogonal-depth-progression.html',
-      'ultimate-clear-seas-holistic-system.html'
-    ]),
-    tags: new Set(['concept', 'lab', 'gallery', 'codex', 'orthogonal', 'ultimate']),
-    titleTokens: ['visual codex', 'orthogonal depth', 'holistic system'],
-    videoPattern: [1, 1, 0, 1],
-    imageOrder: [6, 7, 8, 3, 4, 0, 1, 2, 5],
-    videoOrder: [2, 3, 4, 5, 6, 0, 1],
-    overlay: {
-      blend: 'lighten',
-      opacity: 1.22,
-      filter: 'hue-rotate(280deg) saturate(1.45) brightness(1.12)',
-      rotate: '-7deg',
-      depth: '32px'
-    },
-    canvas: {
-      scale: 0.22,
-      depth: '34px'
-    }
-  }
-];
-
-function normaliseFileName(name) {
-  if (!name) {
-    return 'index.html';
-  }
-  const trimmed = name.trim().toLowerCase();
-  if (!trimmed) {
-    return 'index.html';
-  }
-  if (trimmed.endsWith('.html')) {
-    return trimmed;
-  }
-  return `${trimmed}.html`;
-}
-
-function computeHashSeed(input) {
-  let hash = 0;
-  const source = input || '';
-  for (let i = 0; i < source.length; i += 1) {
-    hash = (hash * 131 + source.charCodeAt(i)) >>> 0;
-  }
-  return hash;
-}
-
 function detectActivePageProfile() {
-  const docEl = document.documentElement;
-  const body = document.body || null;
-  const path = typeof window !== 'undefined' && window.location ? window.location.pathname : '';
-  const pathToken = path ? path.split('/').filter(Boolean).pop() : '';
-  const metaName = normaliseFileName(pathToken || docEl.dataset.pageId || '');
-  const candidateTokens = [
-    docEl.dataset.pageCollection,
-    docEl.dataset.collection,
-    docEl.dataset.showcaseTheme,
-    docEl.dataset.showcaseCard,
-    body && body.dataset ? body.dataset.pageCollection : null,
-    body && body.dataset ? body.dataset.collection : null
-  ].filter(Boolean).map((token) => token.toLowerCase());
-  const title = (document.title || '').toLowerCase();
-
-  let matched = pageCollectionProfiles.find((profile) => profile.fileNames.has(metaName));
-  if (!matched) {
-    matched = pageCollectionProfiles.find((profile) => candidateTokens.some((token) => profile.tags.has(token)));
-  }
-  if (!matched) {
-    matched = pageCollectionProfiles.find((profile) => profile.titleTokens.some((token) => title.includes(token)));
-  }
-  if (!matched) {
-    matched = pageCollectionProfiles.find((profile) => profile.key === 'core-foundation') || pageCollectionProfiles[0];
-  }
-
-  const signatureParts = [metaName, title].concat(candidateTokens);
-  const signature = signatureParts.filter(Boolean).join('|') || metaName;
-  const seed = computeHashSeed(signature);
-  const imageSeed = brandAssets.images.length ? seed % brandAssets.images.length : 0;
-  const videoSeed = brandAssets.videos.length ? Math.floor(seed / 7) % brandAssets.videos.length : 0;
-
+  const resolved = resolvePageProfile();
   const profile = {
-    key: matched.key,
-    palette: matched.palette,
-    videoPattern: matched.videoPattern || null,
-    imageOrder: matched.imageOrder || null,
-    videoOrder: matched.videoOrder || null,
-    overlay: matched.overlay || {},
-    canvas: matched.canvas || {},
-    scripts: matched.scripts ? [...matched.scripts] : [],
-    signature,
-    seed,
-    imageSeed,
-    videoSeed
+    key: resolved?.key || 'core-foundation',
+    palette: resolved?.palette || 'foundation',
+    family: resolved?.family || resolved?.key || 'core-foundation',
+    layout: resolved?.layout || 'grid',
+    accent: resolved?.accent || null,
+    videoPattern: resolved?.videoPattern || null,
+    imageOrder: resolved?.imageOrder || null,
+    videoOrder: resolved?.videoOrder || null,
+    overlay: resolved?.overlay || {},
+    canvas: resolved?.canvas || {},
+    scripts: Array.isArray(resolved?.scripts) ? [...resolved.scripts] : [],
+    signature: resolved?.signature || '',
+    seed: resolved?.seed || 0
   };
 
-  if (metaName === 'ultimate-clear-seas-holistic-system.html') {
+  profile.imageSeed = brandAssets.images.length ? profile.seed % brandAssets.images.length : 0;
+  profile.videoSeed = brandAssets.videos.length ? Math.floor(profile.seed / 7) % brandAssets.videos.length : 0;
+
+  if (resolved?.metaName === 'ultimate-clear-seas-holistic-system.html') {
     profile.scripts.push('scripts/ultimate-holistic-vib34d-system.js');
   }
 
-  docEl.dataset.globalPageCollection = profile.key;
-  docEl.dataset.globalBrandPalette = profile.palette;
-  if (body) {
-    body.dataset.globalPageCollection = profile.key;
-    body.dataset.globalBrandPalette = profile.palette;
-  }
-  docEl.style.setProperty('--global-brand-palette', profile.palette);
-  if (profile.overlay?.filter) {
-    docEl.style.setProperty('--global-brand-overlay-filter', profile.overlay.filter);
-  }
-  if (profile.overlay?.opacity != null) {
-    docEl.style.setProperty('--global-brand-overlay-opacity', profile.overlay.opacity.toString());
-  }
+  applyProfileMetadata(profile);
   window.__CLEAR_SEAS_PAGE_PROFILE = profile;
   return profile;
 }
@@ -736,6 +566,8 @@ function preparePageProfile(profile) {
   if (sharedMotion) {
     sharedMotion.palette = profile.palette || null;
     sharedMotion.collection = profile.key || null;
+    sharedMotion.family = profile.family || null;
+    sharedMotion.layout = profile.layout || null;
   }
 }
 
