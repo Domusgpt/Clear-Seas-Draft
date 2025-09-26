@@ -53,6 +53,18 @@ class CardSystemController {
     };
 
     this.brandOverrideEvent = (useBrandOverrideApi().eventName) || BRAND_OVERRIDE_EVENT;
+    this.globalMotionEvent = window.__CLEAR_SEAS_GLOBAL_MOTION_EVENT || 'clear-seas:motion-updated';
+    this.globalMotionState = {
+      focusAmount: 0,
+      synergy: 0,
+      tiltX: 0,
+      tiltY: 0,
+      tiltStrength: 0,
+      bend: 0,
+      warp: 0,
+      scrollMomentum: 0,
+      timestamp: performance.now()
+    };
     this.handleBrandOverridesChanged = () => {
       const overridesApi = useBrandOverrideApi();
       this.cards.forEach((cardData) => {
@@ -65,6 +77,35 @@ class CardSystemController {
       });
     };
     window.addEventListener(this.brandOverrideEvent, this.handleBrandOverridesChanged);
+    this.handleGlobalMotionUpdate = (event) => {
+      const detail = event?.detail || {};
+      this.globalMotionState = {
+        focusAmount: Number(detail.focusAmount) || 0,
+        synergy: Number(detail.synergy) || 0,
+        tiltX: Number(detail.tiltX) || 0,
+        tiltY: Number(detail.tiltY) || 0,
+        tiltStrength: Number(detail.tiltStrength) || 0,
+        bend: Number(detail.bend) || 0,
+        warp: Number(detail.warp) || 0,
+        scrollMomentum: Number(detail.scrollMomentum) || 0,
+        timestamp: typeof detail.timestamp === 'number' ? detail.timestamp : performance.now()
+      };
+
+      this.cards.forEach((cardData) => {
+        if (!cardData?.element) {
+          return;
+        }
+        cardData.element.style.setProperty('--shared-focus-amount', this.globalMotionState.focusAmount.toFixed(4));
+        cardData.element.style.setProperty('--shared-synergy', this.globalMotionState.synergy.toFixed(4));
+        cardData.element.style.setProperty('--shared-tilt-x', this.globalMotionState.tiltX.toFixed(4));
+        cardData.element.style.setProperty('--shared-tilt-y', this.globalMotionState.tiltY.toFixed(4));
+        cardData.element.style.setProperty('--shared-tilt-strength', this.globalMotionState.tiltStrength.toFixed(4));
+        cardData.element.style.setProperty('--shared-bend', this.globalMotionState.bend.toFixed(4));
+        cardData.element.style.setProperty('--shared-warp', this.globalMotionState.warp.toFixed(4));
+        cardData.element.style.setProperty('--shared-scroll', this.globalMotionState.scrollMomentum.toFixed(4));
+      });
+    };
+    window.addEventListener(this.globalMotionEvent, this.handleGlobalMotionUpdate);
 
     this.pageProfile = window.__CLEAR_SEAS_PAGE_PROFILE || {
       key: 'core-foundation',
@@ -644,19 +685,41 @@ class CardSystemController {
 
     const focus = Math.max(0, Math.min(1, cardData.focusIntensity));
     const momentum = this.scrollMomentum || 0;
+    const sharedMotion = this.globalMotionState || {};
+    const sharedFocusAmount = Math.max(0, Math.min(1, sharedMotion.focusAmount || 0));
+    const sharedSynergy = Math.max(0, Math.min(1.2, sharedMotion.synergy || 0));
+    const sharedTiltX = sharedMotion.tiltX || 0;
+    const sharedTiltY = sharedMotion.tiltY || 0;
+    const sharedTiltStrength = Math.max(0, sharedMotion.tiltStrength || 0);
+    const sharedBend = Math.max(0, sharedMotion.bend || 0);
+    const sharedWarp = sharedMotion.warp || 0;
+    const sharedScroll = sharedMotion.scrollMomentum || 0;
 
-    const parallaxStrength = 26 + focus * 24;
-    const parallaxX = tiltY * parallaxStrength;
-    const parallaxY = tiltX * -parallaxStrength;
-    const depthBase = focus * 60 + Math.abs(momentum) * 80;
+    const tiltBlendRatio = 0.35 + sharedTiltStrength * 0.25;
+    const fusedTiltX = tiltX + sharedTiltY * tiltBlendRatio + sharedScroll * 0.16;
+    const fusedTiltY = tiltY + sharedTiltX * tiltBlendRatio - sharedScroll * 0.12;
+    const synergyLift = sharedSynergy * 0.35 + sharedFocusAmount * 0.25;
+
+    const parallaxStrength = 26 + focus * 24 + synergyLift * 18;
+    const parallaxX = fusedTiltY * parallaxStrength;
+    const parallaxY = fusedTiltX * -parallaxStrength;
+    const depthBase = focus * 60 + Math.abs(momentum) * 80 + synergyLift * 30 + sharedBend * 32;
 
     cardData.element.style.setProperty('--focus-intensity', focus.toFixed(4));
-    cardData.element.style.setProperty('--focus-tilt-x-deg', `${(-tiltX * 14).toFixed(2)}deg`);
-    cardData.element.style.setProperty('--focus-tilt-y-deg', `${(tiltY * 18).toFixed(2)}deg`);
+    cardData.element.style.setProperty('--focus-tilt-x-deg', `${(-fusedTiltX * 14).toFixed(2)}deg`);
+    cardData.element.style.setProperty('--focus-tilt-y-deg', `${(fusedTiltY * 18).toFixed(2)}deg`);
     cardData.element.style.setProperty('--focus-parallax-x', `${parallaxX.toFixed(3)}px`);
     cardData.element.style.setProperty('--focus-parallax-y', `${parallaxY.toFixed(3)}px`);
     cardData.element.style.setProperty('--focus-depth', `${depthBase.toFixed(2)}px`);
     cardData.element.style.setProperty('--focus-pulse', cardData.clickPulse.toFixed(3));
+    cardData.element.style.setProperty('--shared-focus-amount', sharedFocusAmount.toFixed(4));
+    cardData.element.style.setProperty('--shared-synergy', sharedSynergy.toFixed(4));
+    cardData.element.style.setProperty('--shared-tilt-x', sharedTiltX.toFixed(4));
+    cardData.element.style.setProperty('--shared-tilt-y', sharedTiltY.toFixed(4));
+    cardData.element.style.setProperty('--shared-tilt-strength', sharedTiltStrength.toFixed(4));
+    cardData.element.style.setProperty('--shared-bend', sharedBend.toFixed(4));
+    cardData.element.style.setProperty('--shared-warp', sharedWarp.toFixed(4));
+    cardData.element.style.setProperty('--shared-scroll', sharedScroll.toFixed(4));
 
     const overlay = cardData.layers.overlay;
     if (overlay) {
@@ -664,22 +727,22 @@ class CardSystemController {
     }
 
     if (cardData.brandVideo) {
-      const playbackRate = 0.85 + focus * 0.5 + Math.abs(momentum) * 0.25;
+      const playbackRate = 0.85 + focus * 0.5 + Math.abs(momentum + sharedScroll) * 0.25 + synergyLift * 0.12;
       cardData.brandVideo.playbackRate = Math.max(0.75, Math.min(1.8, playbackRate));
     }
 
-    const sharedTiltTarget = this.scrollTilt + tiltY * 0.45;
+    const sharedTiltTarget = this.scrollTilt + fusedTiltY * 0.45 + sharedTiltY * 0.35;
     cardData.visualizers.forEach(visualizer => {
       if (!visualizer) return;
       const baseXW = visualizer.variantParams?.rot4dXW || 0;
       const baseYW = visualizer.variantParams?.rot4dYW || 0;
       const baseZW = visualizer.variantParams?.rot4dZW || 0;
-      const focusEnergy = focus * 0.6;
+      const focusEnergy = focus * 0.6 + synergyLift * 0.35;
 
       if (visualizer.externalRotations) {
-        visualizer.externalRotations.xw = baseXW + (-tiltX * 0.55 + momentum * 0.4) * focusEnergy;
-        visualizer.externalRotations.yw = baseYW + (tiltY * 0.65 + momentum * -0.35) * focusEnergy;
-        visualizer.externalRotations.zw = baseZW + (tiltX * 0.35 + tiltY * 0.25) * focusEnergy;
+        visualizer.externalRotations.xw = baseXW + (-fusedTiltX * 0.55 + (momentum + sharedScroll) * 0.4) * focusEnergy;
+        visualizer.externalRotations.yw = baseYW + (fusedTiltY * 0.65 + (momentum + sharedScroll) * -0.35) * focusEnergy;
+        visualizer.externalRotations.zw = baseZW + (fusedTiltX * 0.35 + fusedTiltY * 0.25 + sharedWarp * 0.3) * focusEnergy;
       }
 
       if (typeof visualizer.scrollTiltTarget === 'number') {
@@ -689,17 +752,20 @@ class CardSystemController {
 
     const pointerState = cardData.pointer || {};
     const bendProgress = Math.max(0, Math.min(1, pointerState.bendSmooth ?? 0.12));
-    const pointerMagnitude = Math.min(1.25, Math.hypot(tiltX, tiltY));
+    const pointerMagnitude = Math.min(1.25, Math.hypot(fusedTiltX, fusedTiltY));
     const focusBoost = focus * 0.35;
     const momentumBoost = Math.min(0.4, Math.abs(momentum) * 0.22);
-    const bendIntensity = Math.min(0.88, 0.08 + bendProgress * 0.75 + pointerMagnitude * 0.28 + focusBoost + momentumBoost);
-    const bendTiltX = -tiltX * 12 * bendIntensity;
-    const bendTiltY = tiltY * 14 * bendIntensity;
-    const bendSkewX = -tiltY * 6 * bendIntensity;
-    const bendSkewY = tiltX * 5 * bendIntensity;
+    const synergyBoost = Math.min(0.5, synergyLift * 0.6 + sharedBend * 0.45);
+    const bendIntensity = Math.min(0.95,
+      0.08 + bendProgress * 0.7 + pointerMagnitude * 0.26 + focusBoost + momentumBoost + synergyBoost
+    );
+    const bendTiltX = -fusedTiltX * 12 * bendIntensity;
+    const bendTiltY = fusedTiltY * 14 * bendIntensity;
+    const bendSkewX = -(fusedTiltY + sharedTiltY * 0.2) * 6 * bendIntensity;
+    const bendSkewY = (fusedTiltX + sharedTiltX * 0.2) * 5 * bendIntensity;
     const bendTwist = (pointerState.twistSmooth ?? 0) * 18 * bendIntensity;
-    const bendDepth = bendIntensity * 28 + focus * 18 + Math.abs(momentum) * 16;
-    const visualizerDepth = bendDepth * 0.6 + bendIntensity * 12;
+    const bendDepth = bendIntensity * 28 + focus * 18 + Math.abs(momentum + sharedScroll) * 16 + synergyLift * 20;
+    const visualizerDepth = bendDepth * 0.6 + bendIntensity * 12 + sharedBend * 12;
 
     cardData.element.style.setProperty('--bend-intensity', bendIntensity.toFixed(3));
     cardData.element.style.setProperty('--bend-tilt-x-deg', `${bendTiltX.toFixed(3)}deg`);
@@ -713,6 +779,12 @@ class CardSystemController {
     cardData.reactiveElements?.forEach(el => {
       if (!el.isConnected) return;
       el.style.setProperty('--focus-intensity', focus.toFixed(4));
+      el.style.setProperty('--shared-focus-amount', sharedFocusAmount.toFixed(4));
+      el.style.setProperty('--shared-synergy', sharedSynergy.toFixed(4));
+      el.style.setProperty('--shared-tilt-x', sharedTiltX.toFixed(4));
+      el.style.setProperty('--shared-tilt-y', sharedTiltY.toFixed(4));
+      el.style.setProperty('--shared-bend', sharedBend.toFixed(4));
+      el.style.setProperty('--shared-scroll', sharedScroll.toFixed(4));
     });
   }
 
@@ -784,6 +856,13 @@ class CardSystemController {
         --focus-parallax-y: 0px;
         --focus-depth: 0px;
         --focus-pulse: 0;
+        --shared-focus-signal: var(--shared-focus-amount, var(--global-focus-amount, 0));
+        --shared-synergy-signal: var(--shared-synergy, var(--global-synergy-glow, 0));
+        --shared-tilt-x-signal: var(--shared-tilt-x, var(--global-tilt-x, 0));
+        --shared-tilt-y-signal: var(--shared-tilt-y, var(--global-tilt-y, 0));
+        --shared-bend-signal: var(--shared-bend, var(--global-bend-intensity, 0));
+        --shared-scroll-signal: var(--shared-scroll, var(--global-scroll-momentum, 0));
+        --shared-warp-signal: var(--shared-warp, var(--global-warp, 0));
       }
 
       .card-brand-enhanced .visualization-container,
@@ -802,16 +881,16 @@ class CardSystemController {
           box-shadow 0.6s ease;
         transform:
           perspective(1400px)
-          rotateX(var(--focus-tilt-x-deg))
-          rotateY(var(--focus-tilt-y-deg))
+          rotateX(calc(var(--focus-tilt-x-deg) + var(--shared-tilt-y-signal) * -12deg))
+          rotateY(calc(var(--focus-tilt-y-deg) + var(--shared-tilt-x-signal) * 12deg))
           translate3d(
-            calc(var(--focus-parallax-x) * 0.45),
-            calc(var(--focus-parallax-y) * 0.45),
-            var(--focus-depth)
+            calc(var(--focus-parallax-x) * 0.45 + var(--shared-scroll-signal) * -8px),
+            calc(var(--focus-parallax-y) * 0.45 + var(--shared-scroll-signal) * 10px),
+            calc(var(--focus-depth) + var(--shared-bend-signal) * 18px)
           );
         filter:
-          saturate(calc(1 + var(--focus-intensity) * 0.2))
-          brightness(calc(1 + var(--focus-intensity) * 0.15));
+          saturate(calc(1 + var(--focus-intensity) * 0.2 + var(--shared-synergy-signal) * 0.2))
+          brightness(calc(1 + var(--focus-intensity) * 0.15 + var(--shared-focus-signal) * 0.12));
         will-change: transform, filter, opacity;
       }
 
@@ -837,14 +916,14 @@ class CardSystemController {
         width: 135% !important;
         height: 135% !important;
         transform: translate(-50%, -50%) scale(1.12)
-          rotateX(calc(var(--visualizer-scroll-tilt, 0) * -6deg + var(--focus-tilt-x-deg)))
-          rotateY(calc(var(--visualizer-scroll-tilt, 0) * 3deg + var(--focus-tilt-y-deg)))
-          translateZ(calc(var(--focus-depth, 0px) * 0.32 + var(--scroll-momentum) * 22px));
+          rotateX(calc(var(--visualizer-scroll-tilt, 0) * -6deg + var(--focus-tilt-x-deg) + var(--shared-tilt-y-signal) * -12deg))
+          rotateY(calc(var(--visualizer-scroll-tilt, 0) * 3deg + var(--focus-tilt-y-deg) + var(--shared-tilt-x-signal) * 12deg))
+          translateZ(calc(var(--focus-depth, 0px) * 0.32 + var(--scroll-momentum) * 22px + var(--shared-bend-signal) * 24px + var(--shared-focus-signal) * 14px));
         transform-origin: center;
         pointer-events: none;
         border-radius: 20px;
-        filter: saturate(calc(1.08 + var(--focus-intensity) * 0.18))
-          brightness(calc(1.04 + var(--focus-intensity) * 0.22));
+        filter: saturate(calc(1.08 + var(--focus-intensity) * 0.18 + var(--shared-synergy-signal) * 0.22))
+          brightness(calc(1.04 + var(--focus-intensity) * 0.22 + var(--shared-focus-signal) * 0.15));
         box-shadow:
           0 0 calc(45px + 35px * var(--focus-intensity)) rgba(0, 255, 255, 0.22),
           0 0 calc(85px + 35px * var(--focus-intensity)) rgba(255, 0, 255, 0.18);
@@ -856,21 +935,21 @@ class CardSystemController {
         background-position: center;
         background-size: contain;
         background-repeat: no-repeat;
-        opacity: calc((0.24 + var(--focus-intensity) * 0.28 + var(--focus-pulse) * 0.18) * var(--brand-overlay-opacity, 1));
+        opacity: calc((0.24 + var(--focus-intensity) * 0.28 + var(--focus-pulse) * 0.18 + var(--shared-synergy-signal) * 0.18 + var(--shared-focus-signal) * 0.12) * var(--brand-overlay-opacity, 1));
         mix-blend-mode: var(--brand-overlay-blend, screen);
         pointer-events: none;
         transform:
           rotate(var(--brand-rotation, 0deg))
           translate3d(
-            calc(var(--focus-parallax-x) * -0.35 + var(--scroll-momentum) * -14px),
-            calc(var(--focus-parallax-y) * 0.35 + var(--scroll-momentum) * 18px),
-            calc(var(--focus-depth, 0px) * 0.45 + var(--scroll-momentum) * 28px + var(--brand-overlay-depth, 0px))
+            calc(var(--focus-parallax-x) * -0.35 + var(--scroll-momentum) * -14px + var(--shared-scroll-signal) * -12px),
+            calc(var(--focus-parallax-y) * 0.35 + var(--scroll-momentum) * 18px + var(--shared-scroll-signal) * 16px),
+            calc(var(--focus-depth, 0px) * 0.45 + var(--scroll-momentum) * 28px + var(--shared-bend-signal) * 26px + var(--brand-overlay-depth, 0px))
           )
-          scale(calc(1.04 + var(--focus-intensity) * 0.08 + var(--focus-pulse) * 0.04));
+          scale(calc(1.04 + var(--focus-intensity) * 0.08 + var(--focus-pulse) * 0.04 + var(--shared-synergy-signal) * 0.08));
         animation: cardBrandFloat 18s ease-in-out infinite alternate;
         filter:
-          saturate(calc(1.2 + var(--focus-intensity) * 0.25))
-          drop-shadow(0 0 calc(25px + 25px * var(--focus-intensity)) rgba(0, 255, 255, 0.25))
+          saturate(calc(1.2 + var(--focus-intensity) * 0.25 + var(--shared-synergy-signal) * 0.25))
+          drop-shadow(0 0 calc(25px + 25px * var(--focus-intensity) + var(--shared-synergy-signal) * 18px) rgba(0, 255, 255, 0.25))
           var(--brand-overlay-filter, brightness(1));
       }
 
@@ -878,21 +957,21 @@ class CardSystemController {
         position: absolute;
         inset: -30%;
         object-fit: cover;
-        opacity: calc((0.22 + var(--focus-intensity) * 0.35 + var(--focus-pulse) * 0.22) * var(--brand-overlay-opacity, 1));
+        opacity: calc((0.22 + var(--focus-intensity) * 0.35 + var(--focus-pulse) * 0.22 + var(--shared-synergy-signal) * 0.2) * var(--brand-overlay-opacity, 1));
         mix-blend-mode: var(--brand-overlay-blend, lighten);
         pointer-events: none;
         border-radius: 28px;
         transform:
           rotate(var(--brand-rotation, 0deg))
           translate3d(
-            calc(var(--focus-parallax-x) * -0.28 + var(--scroll-momentum) * -10px),
-            calc(var(--focus-parallax-y) * 0.28 + var(--scroll-momentum) * 20px),
-            calc(var(--focus-depth, 0px) * 0.65 + var(--scroll-momentum) * 36px + var(--brand-overlay-depth, 0px))
+            calc(var(--focus-parallax-x) * -0.28 + var(--scroll-momentum) * -10px + var(--shared-scroll-signal) * -12px),
+            calc(var(--focus-parallax-y) * 0.28 + var(--scroll-momentum) * 20px + var(--shared-scroll-signal) * 18px),
+            calc(var(--focus-depth, 0px) * 0.65 + var(--scroll-momentum) * 36px + var(--shared-bend-signal) * 32px + var(--brand-overlay-depth, 0px))
           )
-          scale(calc(1.05 + var(--focus-intensity) * 0.08));
+          scale(calc(1.05 + var(--focus-intensity) * 0.08 + var(--shared-synergy-signal) * 0.1));
         filter:
-          saturate(calc(1.2 + var(--focus-intensity) * 0.3))
-          contrast(calc(1.05 + var(--focus-intensity) * 0.2))
+          saturate(calc(1.2 + var(--focus-intensity) * 0.3 + var(--shared-synergy-signal) * 0.25))
+          contrast(calc(1.05 + var(--focus-intensity) * 0.2 + var(--shared-focus-signal) * 0.14))
           blur(0.2px)
           var(--brand-overlay-filter, brightness(1));
         animation: cardBrandDrift 24s ease-in-out infinite;

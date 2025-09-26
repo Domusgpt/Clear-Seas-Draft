@@ -69,5 +69,6 @@ The shared orchestrator now publishes frame-smoothed motion data so satellite sc
 
 - **CSS variables:** `--global-bend-intensity`, `--global-tilt-x`, `--global-tilt-y`, `--global-tilt-strength`, and `--global-warp` join the existing focus/scroll values on `:root`. These feed the upgraded `global-card-synergy.css` bending treatments so canvases, overlays, and supporting cards lean together around the highlighted element.
 - **Runtime object:** `window.__CLEAR_SEAS_GLOBAL_MOTION` mirrors the latest focus, tilt, bend, scroll, and synergy readings for JavaScript consumers. Read-only access lets visualizer engines or analytics tap into the same smoothed signals without reimplementing observers.
+- **Browser event:** `clear-seas:motion-updated` (also exposed as `window.__CLEAR_SEAS_GLOBAL_MOTION_EVENT`) dispatches whenever the shared motion snapshot shifts. Card systems can subscribe once and receive normalized `focus`, `tilt`, `bend`, `warp`, `scrollMomentum`, and `synergy` values instead of polling.
 
 Tie new modules or shader parameters into these shared signals instead of duplicating interaction listeners to keep every layer phase-aligned.

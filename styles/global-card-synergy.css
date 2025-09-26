@@ -126,6 +126,14 @@ body {
   --card-visibility-factor: var(--card-visibility, 1);
   --support-distance-z: 0px;
   --support-distance-glow: 0;
+  --shared-focus-signal: var(--shared-focus-amount, var(--global-focus-amount, 0));
+  --shared-synergy-signal: var(--shared-synergy, var(--global-synergy-glow, 0));
+  --shared-tilt-x-signal: var(--shared-tilt-x, var(--global-tilt-x, 0));
+  --shared-tilt-y-signal: var(--shared-tilt-y, var(--global-tilt-y, 0));
+  --shared-tilt-strength-signal: var(--shared-tilt-strength, var(--global-tilt-strength, 0));
+  --shared-bend-signal: var(--shared-bend, var(--global-bend-intensity, 0));
+  --shared-warp-signal: var(--shared-warp, var(--global-warp, 0));
+  --shared-scroll-signal: var(--shared-scroll, var(--global-scroll-momentum, 0));
   transition:
     box-shadow 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94),
     border-color 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94),
@@ -139,8 +147,8 @@ body {
 .global-visualizer-card[data-support-role="primary"],
 [data-visualizer-card][data-support-role="primary"] {
   z-index: 5;
-  filter: saturate(calc(1.05 + var(--card-focus-strength) * 0.45))
-    brightness(calc(1 + var(--card-focus-strength) * 0.2));
+  filter: saturate(calc(1.05 + var(--card-focus-strength) * 0.45 + var(--shared-synergy-signal) * 0.4))
+    brightness(calc(1 + var(--card-focus-strength) * 0.2 + var(--shared-focus-signal) * 0.18));
 }
 
 .global-visualizer-card[data-support-distance="0"],
@@ -175,31 +183,87 @@ body {
 
 .global-visualizer-card[data-support-role="supporting"],
 [data-visualizer-card][data-support-role="supporting"] {
-  opacity: calc(0.82 + var(--card-support-intensity) * 0.18);
-  filter: saturate(calc(0.86 + var(--card-focus-strength) * 0.2));
+  opacity: calc(0.82 + var(--card-support-intensity) * 0.18 + var(--shared-synergy-signal) * 0.12);
+  filter: saturate(calc(0.86 + var(--card-focus-strength) * 0.2 + var(--shared-synergy-signal) * 0.28));
   transform: perspective(1600px)
-    rotateX(calc((0.5 - var(--card-focus-y)) * 22deg + var(--card-scroll-momentum) * 4deg))
-    rotateY(calc((var(--card-focus-x) - 0.5) * 20deg))
-    rotateZ(calc(var(--card-twist) * 0.82))
-    translateZ(calc(var(--card-focus-strength) * 26px))
-    scale(calc(1 + var(--card-focus-strength) * 0.04 + var(--card-support-intensity) * 0.02));
+    rotateX(calc(
+      (0.5 - var(--card-focus-y)) * 22deg +
+      var(--card-scroll-momentum) * 4deg +
+      var(--shared-tilt-y-signal) * 16deg
+    ))
+    rotateY(calc(
+      (var(--card-focus-x) - 0.5) * 20deg +
+      var(--shared-tilt-x-signal) * 18deg
+    ))
+    rotateZ(calc(
+      var(--card-twist) * 0.82 +
+      var(--shared-warp-signal) * 6deg +
+      var(--shared-scroll-signal) * 4deg
+    ))
+    translateZ(calc(
+      var(--card-focus-strength) * 26px +
+      var(--shared-focus-signal) * 18px +
+      var(--shared-bend-signal) * 20px
+    ))
+    scale(calc(
+      1 + var(--card-focus-strength) * 0.04 +
+      var(--card-support-intensity) * 0.02 +
+      var(--shared-synergy-signal) * 0.04
+    ));
 }
 
 .global-visualizer-card[data-support-role="ambient"],
 [data-visualizer-card][data-support-role="ambient"] {
-  opacity: calc(0.72 + var(--card-support-intensity) * 0.2);
-  filter: saturate(calc(0.78 + var(--card-focus-strength) * 0.18));
+  opacity: calc(0.72 + var(--card-support-intensity) * 0.2 + var(--shared-synergy-signal) * 0.1);
+  filter: saturate(calc(0.78 + var(--card-focus-strength) * 0.18 + var(--shared-synergy-signal) * 0.18));
   transform: perspective(1500px)
-    rotateX(calc((0.5 - var(--card-focus-y)) * 18deg + var(--card-scroll-momentum) * 2deg))
-    rotateY(calc((var(--card-focus-x) - 0.5) * 18deg))
-    rotateZ(calc(var(--card-twist) * 0.65))
-    translateZ(calc(var(--card-focus-strength) * 18px))
-    scale(calc(0.98 + var(--card-support-intensity) * 0.02));
+    rotateX(calc(
+      (0.5 - var(--card-focus-y)) * 18deg +
+      var(--card-scroll-momentum) * 2deg +
+      var(--shared-tilt-y-signal) * 14deg
+    ))
+    rotateY(calc(
+      (var(--card-focus-x) - 0.5) * 18deg +
+      var(--shared-tilt-x-signal) * 14deg
+    ))
+    rotateZ(calc(
+      var(--card-twist) * 0.65 +
+      var(--shared-warp-signal) * 5deg +
+      var(--shared-scroll-signal) * 3deg
+    ))
+    translateZ(calc(
+      var(--card-focus-strength) * 18px +
+      var(--shared-bend-signal) * 16px +
+      var(--shared-focus-signal) * 12px
+    ))
+    scale(calc(0.98 + var(--card-support-intensity) * 0.02 + var(--shared-synergy-signal) * 0.03));
 }
 
 .global-visualizer-card[data-support-role="neutral"],
 [data-visualizer-card][data-support-role="neutral"] {
-  opacity: 1;
+  opacity: calc(0.85 + var(--card-support-intensity) * 0.12 + var(--shared-synergy-signal) * 0.12);
+  filter: saturate(calc(0.9 + var(--card-focus-strength) * 0.18 + var(--shared-synergy-signal) * 0.2));
+  transform: perspective(1550px)
+    rotateX(calc(
+      (0.5 - var(--card-focus-y)) * 20deg +
+      var(--card-scroll-momentum) * 3deg +
+      var(--shared-tilt-y-signal) * 15deg
+    ))
+    rotateY(calc(
+      (var(--card-focus-x) - 0.5) * 19deg +
+      var(--shared-tilt-x-signal) * 16deg
+    ))
+    rotateZ(calc(
+      var(--card-twist) * 0.74 +
+      var(--shared-warp-signal) * 5deg +
+      var(--shared-scroll-signal) * 3.5deg
+    ))
+    translateZ(calc(
+      var(--card-focus-strength) * 22px +
+      var(--shared-bend-signal) * 18px +
+      var(--shared-focus-signal) * 16px
+    ))
+    scale(calc(1 + var(--card-support-intensity) * 0.015 + var(--shared-synergy-signal) * 0.035));
 }
 
 .global-visualizer-card::before,

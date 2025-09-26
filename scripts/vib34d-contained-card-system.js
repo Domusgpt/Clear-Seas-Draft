@@ -139,6 +139,18 @@ class VIB34DContainedCardSystem {
     // Import VIB34D systems
     this.engineClasses = {};
     this.brandOverrideEvent = vibBrandOverrideApi.eventName || BRAND_OVERRIDE_EVENT;
+    this.globalMotionEvent = window.__CLEAR_SEAS_GLOBAL_MOTION_EVENT || 'clear-seas:motion-updated';
+    this.globalMotionState = {
+      focusAmount: 0,
+      synergy: 0,
+      tiltX: 0,
+      tiltY: 0,
+      tiltStrength: 0,
+      bend: 0,
+      warp: 0,
+      scrollMomentum: 0,
+      timestamp: performance.now()
+    };
     this.handleBrandOverridesChanged = () => {
       this.cardVisualizers.forEach((visualizer) => {
         if (!visualizer || typeof visualizer.refreshBrandLayer !== 'function') {
@@ -148,6 +160,27 @@ class VIB34DContainedCardSystem {
       });
     };
     window.addEventListener(this.brandOverrideEvent, this.handleBrandOverridesChanged);
+    this.handleGlobalMotionUpdate = (event) => {
+      const detail = event?.detail || {};
+      this.globalMotionState = {
+        focusAmount: Number(detail.focusAmount) || 0,
+        synergy: Number(detail.synergy) || 0,
+        tiltX: Number(detail.tiltX) || 0,
+        tiltY: Number(detail.tiltY) || 0,
+        tiltStrength: Number(detail.tiltStrength) || 0,
+        bend: Number(detail.bend) || 0,
+        warp: Number(detail.warp) || 0,
+        scrollMomentum: Number(detail.scrollMomentum) || 0,
+        timestamp: typeof detail.timestamp === 'number' ? detail.timestamp : performance.now()
+      };
+
+      this.cardVisualizers.forEach((visualizer) => {
+        if (visualizer && typeof visualizer.setGlobalMotion === 'function') {
+          visualizer.setGlobalMotion(this.globalMotionState);
+        }
+      });
+    };
+    window.addEventListener(this.globalMotionEvent, this.handleGlobalMotionUpdate);
     this.loadVIB34DSystems();
   }
 
@@ -201,6 +234,9 @@ class VIB34DContainedCardSystem {
 
     // Create contained visualizer instance
     const visualizer = new VIB34DContainedVisualizer(card, systemType, this.engineClasses);
+    if (visualizer && typeof visualizer.setGlobalMotion === 'function') {
+      visualizer.setGlobalMotion(this.globalMotionState);
+    }
     this.cardVisualizers.set(card, visualizer);
 
     console.log(`🎨 Created ${systemType} visualizer for card:`, card.id);
@@ -225,6 +261,7 @@ class VIB34DContainedCardSystem {
 
   destroy() {
     window.removeEventListener(this.brandOverrideEvent, this.handleBrandOverridesChanged);
+    window.removeEventListener(this.globalMotionEvent, this.handleGlobalMotionUpdate);
     this.cardVisualizers.forEach(visualizer => visualizer.destroy());
     this.cardVisualizers.clear();
     if (this.observer) {
@@ -283,7 +320,46 @@ class VIB34DContainedVisualizer {
       rot4dZW: 0
     };
 
+    this.globalMotionState = {
+      focusAmount: 0,
+      synergy: 0,
+      tiltX: 0,
+      tiltY: 0,
+      tiltStrength: 0,
+      bend: 0,
+      warp: 0,
+      scrollMomentum: 0,
+      timestamp: performance.now()
+    };
+
     this.init();
+  }
+
+  setGlobalMotion(motion = {}) {
+    const normalized = {
+      focusAmount: Math.max(0, Math.min(1, Number(motion.focusAmount) || 0)),
+      synergy: Math.max(0, Math.min(1.2, Number(motion.synergy) || 0)),
+      tiltX: Number(motion.tiltX) || 0,
+      tiltY: Number(motion.tiltY) || 0,
+      tiltStrength: Math.max(0, Number(motion.tiltStrength) || 0),
+      bend: Math.max(0, Number(motion.bend) || 0),
+      warp: Number(motion.warp) || 0,
+      scrollMomentum: Number(motion.scrollMomentum) || 0,
+      timestamp: typeof motion.timestamp === 'number' ? motion.timestamp : performance.now()
+    };
+
+    this.globalMotionState = normalized;
+
+    if (this.card) {
+      this.card.style.setProperty('--shared-focus-amount', normalized.focusAmount.toFixed(4));
+      this.card.style.setProperty('--shared-synergy', normalized.synergy.toFixed(4));
+      this.card.style.setProperty('--shared-tilt-x', normalized.tiltX.toFixed(4));
+      this.card.style.setProperty('--shared-tilt-y', normalized.tiltY.toFixed(4));
+      this.card.style.setProperty('--shared-tilt-strength', normalized.tiltStrength.toFixed(4));
+      this.card.style.setProperty('--shared-bend', normalized.bend.toFixed(4));
+      this.card.style.setProperty('--shared-warp', normalized.warp.toFixed(4));
+      this.card.style.setProperty('--shared-scroll', normalized.scrollMomentum.toFixed(4));
+    }
   }
 
   init() {
@@ -625,17 +701,24 @@ class VIB34DContainedVisualizer {
     this.mouseState.y += (this.mouseState.targetY - this.mouseState.y) * 0.1;
 
     // Convert mouse position to VIB34D 4D rotation parameters
-    this.dynamicParams.rot4dXW = (this.mouseState.x - 0.5) * Math.PI;
-    this.dynamicParams.rot4dYW = (this.mouseState.y - 0.5) * Math.PI;
-    this.dynamicParams.rot4dZW = Math.sin(Date.now() * 0.001) * 0.2;
+    const motion = this.globalMotionState || {};
+    const globalTiltX = motion.tiltX || 0;
+    const globalTiltY = motion.tiltY || 0;
+    const globalWarp = motion.warp || 0;
+    const globalSynergy = Math.max(0, motion.synergy || 0);
+    const globalFocus = Math.max(0, motion.focusAmount || 0);
+
+    this.dynamicParams.rot4dXW = (this.mouseState.x - 0.5) * Math.PI + globalTiltY * Math.PI * 0.45;
+    this.dynamicParams.rot4dYW = (this.mouseState.y - 0.5) * Math.PI - globalTiltX * Math.PI * 0.45;
+    this.dynamicParams.rot4dZW = Math.sin(Date.now() * 0.001) * 0.2 + globalWarp * 0.4;
 
     // Dynamic parameter modulation based on mouse interaction
-    const morphModulation = this.parameters.morphFactor + (this.mouseState.y - 0.5) * 0.8;
-    const chaosModulation = this.parameters.chaos + (this.mouseState.x - 0.5) * 0.3;
-    const intensityModulation = this.parameters.intensity + (this.mouseState.intensity - 0.7) * 0.5;
+    const morphModulation = this.parameters.morphFactor + (this.mouseState.y - 0.5) * 0.8 + globalSynergy * 0.35;
+    const chaosModulation = this.parameters.chaos + (this.mouseState.x - 0.5) * 0.3 + globalWarp * 0.2;
+    const intensityModulation = this.parameters.intensity + (this.mouseState.intensity - 0.7) * 0.5 + globalFocus * 0.45;
 
     // Geometry morphing based on mouse movement (cycles through available geometries)
-    const geometryFloat = this.parameters.geometry + (this.mouseState.x * 2.0); // Allows geometry blending
+    const geometryFloat = this.parameters.geometry + (this.mouseState.x * 2.0) + globalSynergy * 1.2; // Allows geometry blending
 
     // Update VIB34D system with rich parameter set
     this.updateVIB34DParameters({
@@ -655,8 +738,8 @@ class VIB34DContainedVisualizer {
       saturation: this.parameters.saturation
     });
 
-    const tiltXDeg = (0.5 - this.mouseState.y) * 18;
-    const tiltYDeg = (this.mouseState.x - 0.5) * 18;
+    const tiltXDeg = (0.5 - this.mouseState.y) * 18 - globalTiltX * 22;
+    const tiltYDeg = (this.mouseState.x - 0.5) * 18 + globalTiltY * 22;
     this.card.style.setProperty('--tilt-x', `${tiltXDeg.toFixed(2)}deg`);
     this.card.style.setProperty('--tilt-y', `${tiltYDeg.toFixed(2)}deg`);
     this.card.style.setProperty('--tilt-x-value', tiltXDeg.toFixed(4));
@@ -672,7 +755,10 @@ class VIB34DContainedVisualizer {
 
     const step = () => {
       const isEngaged = this.card.matches(':hover') || this.card.matches(':focus-within');
-      const baseTarget = isEngaged ? 1.05 : 0.32;
+      const sharedMotion = this.globalMotionState || {};
+      const synergyLift = Math.max(0, sharedMotion.synergy || 0);
+      const sharedFocus = Math.max(0, sharedMotion.focusAmount || 0);
+      const baseTarget = isEngaged ? 1.05 + synergyLift * 0.18 : 0.32 + sharedFocus * 0.25;
       this.focusState.target += (baseTarget - this.focusState.target) * 0.08;
       this.focusState.current += (this.focusState.target - this.focusState.current) * 0.12;
       this.focusState.pulse *= 0.88;
@@ -683,7 +769,11 @@ class VIB34DContainedVisualizer {
 
       if (this.brandMedia instanceof HTMLVideoElement) {
         const scrollVelocity = Number(this.card.style.getPropertyValue('--scroll-velocity') || 0);
-        const playbackRate = 0.85 + focusValue * 0.42 + Math.abs(scrollVelocity) * 0.18;
+        const sharedScroll = sharedMotion.scrollMomentum || 0;
+        const playbackRate = 0.85
+          + focusValue * 0.42
+          + Math.abs(scrollVelocity + sharedScroll) * 0.18
+          + synergyLift * 0.12;
         this.brandMedia.playbackRate = Math.min(1.8, Math.max(0.7, playbackRate));
       }
 

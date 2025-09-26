@@ -1,5 +1,8 @@
 const BRAND_OVERRIDE_EVENT = window.__CLEAR_SEAS_BRAND_OVERRIDE_EVENT || 'clear-seas:brand-overrides-changed';
 
+const GLOBAL_MOTION_EVENT = window.__CLEAR_SEAS_GLOBAL_MOTION_EVENT || 'clear-seas:motion-updated';
+window.__CLEAR_SEAS_GLOBAL_MOTION_EVENT = GLOBAL_MOTION_EVENT;
+
 const brandAssets = window.__CLEAR_SEAS_BRAND_ASSETS || (window.__CLEAR_SEAS_BRAND_ASSETS = {
   images: [
     'assets/Screenshot_20250430-141821.png',
@@ -790,8 +793,70 @@ const sharedMotion = window.__CLEAR_SEAS_GLOBAL_MOTION || (window.__CLEAR_SEAS_G
   scroll: 0,
   synergy: 0,
   palette: null,
-  collection: null
+  collection: null,
+  updatedAt: performance.now(),
+  eventName: GLOBAL_MOTION_EVENT
 });
+
+const motionEventState = {
+  lastDispatch: 0,
+  lastDetail: null
+};
+
+function shouldDispatchMotionEvent(previous, next) {
+  if (!previous) {
+    return true;
+  }
+
+  const thresholds = {
+    focusX: 0.0012,
+    focusY: 0.0012,
+    focusAmount: 0.0012,
+    tiltX: 0.001,
+    tiltY: 0.001,
+    tiltStrength: 0.001,
+    bend: 0.001,
+    warp: 0.001,
+    scrollMomentum: 0.001,
+    synergy: 0.001
+  };
+
+  return Object.keys(thresholds).some((key) => {
+    const delta = Math.abs((next[key] || 0) - (previous[key] || 0));
+    return delta > thresholds[key];
+  });
+}
+
+function maybeDispatchGlobalMotionEvent() {
+  const detail = {
+    focusX: sharedMotion.focus.x,
+    focusY: sharedMotion.focus.y,
+    focusAmount: sharedMotion.focus.amount,
+    tiltX: sharedMotion.tilt.x,
+    tiltY: sharedMotion.tilt.y,
+    tiltStrength: sharedMotion.tilt.strength,
+    bend: sharedMotion.bend,
+    warp: sharedMotion.warp,
+    scrollMomentum: sharedMotion.scroll,
+    synergy: sharedMotion.synergy,
+    timestamp: sharedMotion.updatedAt
+  };
+
+  const now = detail.timestamp || performance.now();
+  const elapsed = now - motionEventState.lastDispatch;
+
+  if (elapsed < 32 && !shouldDispatchMotionEvent(motionEventState.lastDetail, detail)) {
+    return;
+  }
+
+  if (!shouldDispatchMotionEvent(motionEventState.lastDetail, detail) && elapsed < 120) {
+    return;
+  }
+
+  motionEventState.lastDetail = { ...detail };
+  motionEventState.lastDispatch = now;
+  window.dispatchEvent(new CustomEvent(GLOBAL_MOTION_EVENT, { detail }));
+}
 
 const supportsVisibilityObserver = typeof window !== 'undefined' && 'IntersectionObserver' in window;
 let visibilityObserver = null;
@@ -1767,6 +1832,8 @@ function step() {
   sharedMotion.scroll = globalState.scroll.current;
   sharedMotion.synergy = globalState.synergy.current;
   sharedMotion.updatedAt = performance.now();
+
+  maybeDispatchGlobalMotionEvent();
 
   if (continueAnimation) {
     requestTick();
