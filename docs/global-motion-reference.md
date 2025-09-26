@@ -7,10 +7,11 @@ patterns for downstream systems.
 
 ## Runtime snapshot
 
-The orchestrator stores the latest values on `window.__CLEAR_SEAS_GLOBAL_MOTION` and
-dispatches them through the `clear-seas:motion-updated` event (also exported as
-`window.__CLEAR_SEAS_GLOBAL_MOTION_EVENT`). Each dispatch now includes the following
-properties:
+The orchestrator stores the latest values on `window.__CSS_WEB_MASTER_GLOBAL_MOTION`
+(aliased to `window.__CLEAR_SEAS_GLOBAL_MOTION`) and dispatches them through the
+`css-web-master:motion-updated` event (still aliased to `clear-seas:motion-updated`
+via `window.__CSS_WEB_MASTER_GLOBAL_MOTION_EVENT`). Each dispatch now includes the
+following properties:
 
 | Field | Description |
 |-------|-------------|
@@ -30,11 +31,11 @@ properties:
 | `timestamp` | High-resolution timestamp for the snapshot. |
 
 Consumers that only need the latest state can read from
-`window.__CLEAR_SEAS_GLOBAL_MOTION`. For reactive experiences, listen for the shared
-event:
+`window.__CSS_WEB_MASTER_GLOBAL_MOTION`. For reactive experiences, listen for the
+shared event:
 
 ```js
-window.addEventListener(window.__CLEAR_SEAS_GLOBAL_MOTION_EVENT, (event) => {
+window.addEventListener(window.__CSS_WEB_MASTER_GLOBAL_MOTION_EVENT, (event) => {
   const motion = event.detail;
   // ...update shaders, canvases, analytics, etc.
 });
