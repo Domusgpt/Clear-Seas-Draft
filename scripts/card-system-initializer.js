@@ -4,12 +4,19 @@
  * Manages canvas creation/destruction and performance optimization
  */
 
-const PRIMARY_BRAND_OVERRIDE_EVENT =
-  window.__CSS_WEB_MASTER_BRAND_OVERRIDE_EVENT ||
-  window.__CLEAR_SEAS_BRAND_OVERRIDE_EVENT ||
-  'css-web-master:brand-overrides-changed';
-const LEGACY_BRAND_OVERRIDE_EVENT = window.__CLEAR_SEAS_BRAND_OVERRIDE_EVENT || 'clear-seas:brand-overrides-changed';
-const BRAND_OVERRIDE_EVENTS = [...new Set([PRIMARY_BRAND_OVERRIDE_EVENT, LEGACY_BRAND_OVERRIDE_EVENT])];
+(function cardSystemInitializer(global) {
+  const sharedEventKey = '__CSS_WEB_MASTER_PRIMARY_BRAND_OVERRIDE_EVENT';
+  if (!global[sharedEventKey]) {
+    global[sharedEventKey] =
+      global.__CSS_WEB_MASTER_BRAND_OVERRIDE_EVENT ||
+      global.__CLEAR_SEAS_BRAND_OVERRIDE_EVENT ||
+      'css-web-master:brand-overrides-changed';
+  }
+
+  const PRIMARY_BRAND_OVERRIDE_EVENT = global[sharedEventKey];
+  const LEGACY_BRAND_OVERRIDE_EVENT =
+    global.__CLEAR_SEAS_BRAND_OVERRIDE_EVENT || 'clear-seas:brand-overrides-changed';
+  const BRAND_OVERRIDE_EVENTS = [...new Set([PRIMARY_BRAND_OVERRIDE_EVENT, LEGACY_BRAND_OVERRIDE_EVENT])];
 
 const fallbackBrandOverrideApi = {
   collect: () => null,
@@ -46,9 +53,13 @@ const fallbackBrandOverrideApi = {
   events: BRAND_OVERRIDE_EVENTS
 };
 
-function useBrandOverrideApi() {
-  return window.__CSS_WEB_MASTER_BRAND_OVERRIDE_API || window.__CLEAR_SEAS_BRAND_OVERRIDE_API || fallbackBrandOverrideApi;
-}
+  function useBrandOverrideApi() {
+    return (
+      global.__CSS_WEB_MASTER_BRAND_OVERRIDE_API ||
+      global.__CLEAR_SEAS_BRAND_OVERRIDE_API ||
+      fallbackBrandOverrideApi
+    );
+  }
 
 class CardSystemController {
   constructor() {
@@ -1394,45 +1405,46 @@ class CardSystemController {
 }
 
 // Global card system instance
-window.cardSystemController = null;
-window.cardSystemStatusInterval = null;
+  global.cardSystemController = null;
+  global.cardSystemStatusInterval = null;
 
-async function bootCardSystem() {
-  if (window.cardSystemController) {
-    return window.cardSystemController;
+  async function bootCardSystem() {
+    if (global.cardSystemController) {
+      return global.cardSystemController;
+    }
+
+    // Wait a bit for other scripts to load
+    await new Promise(resolve => setTimeout(resolve, 200));
+
+    global.cardSystemController = new CardSystemController();
+    await global.cardSystemController.initialize();
+
+    if (!global.cardSystemStatusInterval) {
+      global.cardSystemStatusInterval = setInterval(() => {
+        if (global.cardSystemController) {
+          const status = global.cardSystemController.getCardStatus();
+          console.log('🎨 Card System Status:', status);
+        }
+      }, 10000); // Log every 10 seconds
+    }
+
+    return global.cardSystemController;
   }
 
-  // Wait a bit for other scripts to load
-  await new Promise(resolve => setTimeout(resolve, 200));
+  global.bootCardSystem = bootCardSystem;
 
-  window.cardSystemController = new CardSystemController();
-  await window.cardSystemController.initialize();
+  const handleReady = () => {
+    bootCardSystem().catch(error => {
+      console.error('❌ Failed to boot card system:', error);
+    });
+  };
 
-  if (!window.cardSystemStatusInterval) {
-    window.cardSystemStatusInterval = setInterval(() => {
-      if (window.cardSystemController) {
-        const status = window.cardSystemController.getCardStatus();
-        console.log('🎨 Card System Status:', status);
-      }
-    }, 10000); // Log every 10 seconds
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', handleReady);
+  } else {
+    handleReady();
   }
 
-  return window.cardSystemController;
-}
-
-window.bootCardSystem = bootCardSystem;
-
-const handleReady = () => {
-  bootCardSystem().catch(error => {
-    console.error('❌ Failed to boot card system:', error);
-  });
-};
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', handleReady);
-} else {
-  handleReady();
-}
-
-console.log('🎨 Card System Initializer loaded');
+  console.log('🎨 Card System Initializer loaded');
+})(window);
 

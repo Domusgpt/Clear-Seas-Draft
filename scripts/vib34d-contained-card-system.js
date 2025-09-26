@@ -5,12 +5,19 @@
  * A Paul Phillips Manifestation - Paul@clearseassolutions.com
  */
 
-const PRIMARY_BRAND_OVERRIDE_EVENT =
-  window.__CSS_WEB_MASTER_BRAND_OVERRIDE_EVENT ||
-  window.__CLEAR_SEAS_BRAND_OVERRIDE_EVENT ||
-  'css-web-master:brand-overrides-changed';
-const LEGACY_BRAND_OVERRIDE_EVENT = window.__CLEAR_SEAS_BRAND_OVERRIDE_EVENT || 'clear-seas:brand-overrides-changed';
-const BRAND_OVERRIDE_EVENTS = [...new Set([PRIMARY_BRAND_OVERRIDE_EVENT, LEGACY_BRAND_OVERRIDE_EVENT])];
+(function vib34dContainedCardSystem(global) {
+  const sharedEventKey = '__CSS_WEB_MASTER_PRIMARY_BRAND_OVERRIDE_EVENT';
+  if (!global[sharedEventKey]) {
+    global[sharedEventKey] =
+      global.__CSS_WEB_MASTER_BRAND_OVERRIDE_EVENT ||
+      global.__CLEAR_SEAS_BRAND_OVERRIDE_EVENT ||
+      'css-web-master:brand-overrides-changed';
+  }
+
+  const PRIMARY_BRAND_OVERRIDE_EVENT = global[sharedEventKey];
+  const LEGACY_BRAND_OVERRIDE_EVENT =
+    global.__CLEAR_SEAS_BRAND_OVERRIDE_EVENT || 'clear-seas:brand-overrides-changed';
+  const BRAND_OVERRIDE_EVENTS = [...new Set([PRIMARY_BRAND_OVERRIDE_EVENT, LEGACY_BRAND_OVERRIDE_EVENT])];
 
 const VIB34D_BRAND_LIBRARY_DEFAULTS = {
   overlays: [
@@ -74,10 +81,10 @@ const vibBrandOverrideFallback = {
   events: BRAND_OVERRIDE_EVENTS
 };
 
-const vibBrandOverrideApi =
-  window.__CSS_WEB_MASTER_BRAND_OVERRIDE_API ||
-  window.__CLEAR_SEAS_BRAND_OVERRIDE_API ||
-  vibBrandOverrideFallback;
+  const vibBrandOverrideApi =
+    global.__CSS_WEB_MASTER_BRAND_OVERRIDE_API ||
+    global.__CLEAR_SEAS_BRAND_OVERRIDE_API ||
+    vibBrandOverrideFallback;
 
 function ensureVibSharedBrandLibrary() {
   const mergeUnique = (target, source) => {
@@ -90,14 +97,14 @@ function ensureVibSharedBrandLibrary() {
     return target;
   };
 
-  if (window.ClearSeasBrandLibrary && typeof window.clearSeasAcquireBrandAsset === 'function') {
-    mergeUnique(window.ClearSeasBrandLibrary.overlays ||= [], VIB34D_BRAND_LIBRARY_DEFAULTS.overlays);
-    mergeUnique(window.ClearSeasBrandLibrary.videos ||= [], VIB34D_BRAND_LIBRARY_DEFAULTS.videos);
-    mergeUnique(window.ClearSeasBrandLibrary.logos ||= [], VIB34D_BRAND_LIBRARY_DEFAULTS.logos);
-    return window.clearSeasAcquireBrandAsset;
+  if (global.ClearSeasBrandLibrary && typeof global.clearSeasAcquireBrandAsset === 'function') {
+    mergeUnique((global.ClearSeasBrandLibrary.overlays ||= []), VIB34D_BRAND_LIBRARY_DEFAULTS.overlays);
+    mergeUnique((global.ClearSeasBrandLibrary.videos ||= []), VIB34D_BRAND_LIBRARY_DEFAULTS.videos);
+    mergeUnique((global.ClearSeasBrandLibrary.logos ||= []), VIB34D_BRAND_LIBRARY_DEFAULTS.logos);
+    return global.clearSeasAcquireBrandAsset;
   }
 
-  const pageProfile = window.__CSS_WEB_MASTER_PAGE_PROFILE || window.__CLEAR_SEAS_PAGE_PROFILE || {};
+  const pageProfile = global.__CSS_WEB_MASTER_PAGE_PROFILE || global.__CLEAR_SEAS_PAGE_PROFILE || {};
   const library = {
     overlays: [...VIB34D_BRAND_LIBRARY_DEFAULTS.overlays],
     videos: [...VIB34D_BRAND_LIBRARY_DEFAULTS.videos],
@@ -134,12 +141,12 @@ function ensureVibSharedBrandLibrary() {
   };
 
   library.acquire = acquire;
-  window.ClearSeasBrandLibrary = library;
-  window.clearSeasAcquireBrandAsset = acquire;
+  global.ClearSeasBrandLibrary = library;
+  global.clearSeasAcquireBrandAsset = acquire;
   return acquire;
-}
+  }
 
-const acquireVibBrandAsset = ensureVibSharedBrandLibrary();
+  const acquireVibBrandAsset = ensureVibSharedBrandLibrary();
 
 class VIB34DContainedCardSystem {
   constructor() {
@@ -153,8 +160,8 @@ class VIB34DContainedCardSystem {
     BRAND_OVERRIDE_EVENTS.forEach((eventName) => overrideEvents.add(eventName));
     this.brandOverrideEvents = [...overrideEvents];
     this.globalMotionEvents = [
-      window.__CSS_WEB_MASTER_GLOBAL_MOTION_EVENT,
-      window.__CLEAR_SEAS_GLOBAL_MOTION_EVENT,
+      global.__CSS_WEB_MASTER_GLOBAL_MOTION_EVENT,
+      global.__CLEAR_SEAS_GLOBAL_MOTION_EVENT,
       'css-web-master:motion-updated',
       'clear-seas:motion-updated'
     ]
@@ -989,15 +996,16 @@ class VIB34DContainedVisualizer {
   }
 }
 
-// Auto-initialize VIB34D Contained Card System
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    window.vib34dCardSystem = new VIB34DContainedCardSystem();
-  });
-} else {
-  window.vib34dCardSystem = new VIB34DContainedCardSystem();
-}
+  // Auto-initialize VIB34D Contained Card System
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      global.vib34dCardSystem = new VIB34DContainedCardSystem();
+    });
+  } else {
+    global.vib34dCardSystem = new VIB34DContainedCardSystem();
+  }
 
-// Export for manual use
-window.VIB34DContainedCardSystem = VIB34DContainedCardSystem;
-window.VIB34DContainedVisualizer = VIB34DContainedVisualizer;
+  // Export for manual use
+  global.VIB34DContainedCardSystem = VIB34DContainedCardSystem;
+  global.VIB34DContainedVisualizer = VIB34DContainedVisualizer;
+})(window);

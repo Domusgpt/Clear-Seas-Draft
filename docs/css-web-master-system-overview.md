@@ -66,8 +66,8 @@ site tags for property-specific rotations.
 
 ## Extending to New Sites
 
-- **parserator.com**: Start from a PR-series immersive deck to reuse mission-axis navigation. Update the profile registry with a
-  `parserator` family that swaps in the new logos/videos and adjust copy modules accordingly.
+- **parserator.com**: `parserator.html` now boots the `parserator-alpha` profile so the essentials are in place. Follow-up work
+  focuses on Parserator-exclusive scenes (labs, telemetry overlays) that remain flagged in the gap analysis.
 - **vib3code.com**: Leverage the VIB34D-integrated builds for continuity with the existing visualizer engines. Register
   additional shader parameters if new interaction types are required.
 - **Future CSS properties**: Define new families within `page-profile-registry`, point them at shared synergy styles, and create

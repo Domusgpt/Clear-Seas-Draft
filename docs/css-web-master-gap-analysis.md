@@ -20,6 +20,15 @@ CSS-Web-Master platform production-ready for parserator.com, vib3code.com, and f
 - Filename heuristics prioritize `index`/`pr` naming. Define detection patterns for future site URLs or configure explicit
   overrides.
 
+## Site-specific follow-ups
+
+- ⏳ **Parserator-exclusive scenes** – Inference labs, dataset storytelling, and telemetry overlays are tracked separately so
+  the Clear Seas baseline can ship while Parserator creative work continues.
+- ⏳ **VIB3Code gallery rebuild** – The vib3code.com showcase still references the original Clear Seas layouts and needs a
+  dedicated gallery once single-site priorities rise.
+- ⏳ **Per-site deployment runbooks** – Document hostnames, CI triggers, and CDN packaging steps for parserator.com and
+  vib3code.com before the first live release.
+
 ## Asset Management
 
 - The brand override registry expects assets in `/assets/` with Clear Seas naming conventions.

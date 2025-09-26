@@ -1,6 +1,6 @@
 # HTML Version Smoke Test Report
 
-_Updated: 2025-09-26_
+_Updated: 2025-05-10_
 
 ## Test methodology
 - A new Playwright smoke harness (`tests/html_smoke_test.py`) serves the repository through a temporary HTTP server and opens every top-level HTML file in headless Chromium. It records console errors, page exceptions, failed network requests, and HTTP 4xx/5xx responses so we can distinguish real defects from environment limitations.【F:tests/html_smoke_test.py†L1-L114】
@@ -14,12 +14,12 @@ _Updated: 2025-09-26_
 ## Results summary
 | HTML file | Status | Notes |
 | --- | --- | --- |
-| 1-index.html | ❌ | Global constant `PRIMARY_BRAND_OVERRIDE_EVENT` is declared twice when both card systems load. |
-| 2-index-optimized.html | ❌ | Same `PRIMARY_BRAND_OVERRIDE_EVENT` redeclaration conflict as 1-index. |
+| 1-index.html | ⚠️ | Only external Google Fonts requests fail inside the container. |
+| 2-index-optimized.html | ⚠️ | Same Google Fonts warning as 1-index. |
 | 3-index-fixed.html | ⚠️ | Only external Google Fonts requests fail inside the container. |
 | 4-index-unified.html | ⚠️ | Only external Google Fonts requests fail inside the container. |
 | 5-index-vib34d-integrated.html | ⚠️ | Only external Google Fonts requests fail inside the container. |
-| 6-index-totalistic.html | ❌ | `PRIMARY_BRAND_OVERRIDE_EVENT` redeclaration plus `❌ ClearSeasContextPool not available` warning shows the brand override pool never initialises. |
+| 6-index-totalistic.html | ❌ | `ClearSeasContextPool` still never loads, so the layered visualizer bootstrap logs an error. |
 | 7-pr-1.html | ⚠️ | Only Google Fonts blocked by environment. |
 | 8-pr-2.html | ⚠️ | Only Google Fonts blocked by environment. |
 | 9-pr-3.html | ⚠️ | Google Fonts blocked and long MP4 downloads abort when the browser exits. |
@@ -46,9 +46,13 @@ _Updated: 2025-09-26_
 | 29-pr-23.html | ❌ | Same missing `styles/assets` imagery as 10-pr-4. |
 | 30-pr-24.html | ❌ | Load event never finishes because every `styles/assets` image 404s; audit hit the 20s timeout. |
 | ULTIMATE-clear-seas-holistic-system.html | ⚠️ | Google Fonts blocked and hero MP4 streams cancelled when the browser closes. |
-| index.html | ⚠️ | Hero MP4 downloads abort when the headless browser exits; no in-page errors detected. |
+| index.html | ✅ | Navigation reaches `load` with no runtime or network errors. |
+| parserator.html | ⚠️ | Only external Google Fonts requests fail inside the container. |
+
+The `PRIMARY_BRAND_OVERRIDE_EVENT` redeclaration is resolved, so the core builds now load successfully; Totalistic still needs the
+`ClearSeasContextPool` script restored, and the PR galleries continue to 404 their placeholder assets.
 
 ## Next steps
-1. **Deduplicate brand override globals** – move `PRIMARY_BRAND_OVERRIDE_EVENT` to a single shared module so pages that load both card systems stop throwing fatal SyntaxErrors. That will also unblock the `ClearSeasContextPool` bootstrap on Totalistic.
-2. **Fix static asset paths** – update the PR showcase templates so card imagery references `/assets/*.png` (or move the files under `styles/assets/`). The same adjustment is needed for the missing `/demos/*.html` showcase embeds.
+1. **Fix static asset paths** – update the PR showcase templates so card imagery references `/assets/*.png` (or move the files under `styles/assets/`). The same adjustment is needed for the missing `/demos/*.html` showcase embeds.
+2. **Load the ClearSeas context pool** – ensure `6-index-totalistic.html` includes the script that defines `window.ClearSeasContextPool` so the layered visualizers initialise without logging an error.
 3. **Optional test hardening** – if we need fully green runs inside CI, bundle critical fonts locally and host video fixtures under `/assets` so the smoke harness avoids remote TLS altogether.

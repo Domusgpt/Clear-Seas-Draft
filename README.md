@@ -12,8 +12,8 @@ Brand asset rotations are sourced from `scripts/site-asset-manifest.js`, and tea
 
 ### ✅ Deployment Snapshot
 - **6 Main HTML Versions**: Baseline production-ready experiences.
+- **Parserator Launch Surface**: `parserator.html` boots the `parserator-alpha` profile with CSS-Web-Master orchestration.
 - **13 PR Branch Versions**: Themed explorations sourced from the showcase (PRs #1, #4–#24).
-- **Total**: 19+ HTML builds ready to be remixed into site-specific stacks.
 - **Supporting Assets**: Shared scripts, orchestrators, style systems, and uploaded video/logo packs.
 
 ### 🎯 Access Everything
@@ -27,10 +27,14 @@ modules overlap so you can pick the correct starting point for each CSS family s
 ### Core HTML Versions (1-6):
 1. **Production** - Main website (index.html)
 2. **Optimized** - Performance enhanced
-3. **Fixed** - Bug fixes applied  
+3. **Fixed** - Bug fixes applied
 4. **Unified** - Unified architecture
 5. **VIB34D Integrated** - Advanced 4D visualization
 6. **Totalistic** - Complete experience
+
+### Site launch surfaces
+- **Parserator Systems** – [`parserator.html`](parserator.html) activates the parserator-specific profile while preserving the
+  Clear Seas fallbacks.
 
 ### PR Branch Versions (7-30):
 - **7-pr-1** - Initial avant-garde consulting experience
@@ -48,7 +52,8 @@ modules overlap so you can pick the correct starting point for each CSS family s
 - **29-pr-23** - Holographic background with pinned showcases
 - **30-pr-24** - Amplified reactive background and card choreography
 
-🚀 **Every version is fully functional with complete assets and dependencies.**
+🚀 **Core versions load successfully; PR galleries still reference placeholder imagery/iframes (see the smoke report for open
+items).**
 
 ### Motion choreography docs
 
@@ -63,6 +68,8 @@ Additional CSS-Web-Master documentation is tracked in:
   generalize before production rollouts on parserator.com or vib3code.com.
 - [`docs/dev-updates/2025-05-07-css-web-master-transition.md`](docs/dev-updates/2025-05-07-css-web-master-transition.md) –
   developer log detailing the latest transition steps and recommended next moves.
+- [`docs/dev-updates/2025-05-10-parserator-launch-surface.md`](docs/dev-updates/2025-05-10-parserator-launch-surface.md) –
+  documents the Parserator entry point, brand-event dedupe, and the current smoke-test focus areas.
 - [`styles/css-web-master-tokens.css`](styles/css-web-master-tokens.css) – neutral design tokens consumed by consolidated
   stylesheets for per-site overrides.
 - [`docs/html-version-test-report.md`](docs/html-version-test-report.md) – latest smoke-test results for every HTML build and the

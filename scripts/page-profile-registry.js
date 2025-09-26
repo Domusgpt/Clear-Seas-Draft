@@ -140,7 +140,7 @@ const PROFILE_DEFINITIONS = [
     siteCode: 'parserator',
     layout: 'grid',
     palette: 'foundation',
-    fileNames: [],
+    fileNames: ['parserator.html'],
     tags: ['parserator', 'propulsion', 'systems', 'aero', 'launch'],
     titleTokens: ['parserator', 'propulsion systems', 'aero lab'],
     imageOrder: [0, 5, 1, 6, 2, 7, 3, 8, 4],
