@@ -1933,6 +1933,56 @@ function observeMutations() {
   observer.observe(document.body, { childList: true, subtree: true });
 }
 
+const GLOBAL_CARD_MOTION_ENABLE_ATTRIBUTE = 'data-enable-global-card-motion';
+const GLOBAL_CARD_MOTION_DISABLE_ATTRIBUTE = 'data-disable-global-card-motion';
+let hasLoggedGlobalMotionDisabled = false;
+
+function elementHasTruthyDataAttribute(element, attribute) {
+  if (!element || !element.hasAttribute(attribute)) {
+    return false;
+  }
+  const rawValue = element.getAttribute(attribute);
+  if (rawValue === null) {
+    return false;
+  }
+  const value = rawValue.trim().toLowerCase();
+  return value === '' || value === 'true' || value === '1' || value === attribute;
+}
+
+function resolveCardMotionGateElements() {
+  const elements = [document.documentElement];
+  if (document.body) {
+    elements.push(document.body);
+  }
+  return elements.filter(Boolean);
+}
+
+function isGlobalCardMotionOptedIn() {
+  const gateElements = resolveCardMotionGateElements();
+  const hasOptOut = gateElements.some((element) =>
+    elementHasTruthyDataAttribute(element, GLOBAL_CARD_MOTION_DISABLE_ATTRIBUTE)
+  );
+  if (hasOptOut) {
+    return false;
+  }
+  return gateElements.some((element) =>
+    elementHasTruthyDataAttribute(element, GLOBAL_CARD_MOTION_ENABLE_ATTRIBUTE)
+  );
+}
+
+function logGlobalMotionDisabled(reason) {
+  if (hasLoggedGlobalMotionDisabled) {
+    return;
+  }
+  hasLoggedGlobalMotionDisabled = true;
+  try {
+    console.info(`⏸️ Global card orchestrator disabled: ${reason}`);
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.log('Global card orchestrator disabled.');
+  }
+}
+
 async function initialise() {
   preparePageProfile(activePageProfile);
   ensureStylesheet('styles/global-card-synergy.css', 'global-card-synergy');
@@ -1951,8 +2001,18 @@ async function initialise() {
   await ensureCardSystem();
 }
 
+const maybeInitialise = () => {
+  if (isGlobalCardMotionOptedIn()) {
+    initialise();
+  } else {
+    logGlobalMotionDisabled(
+      `add ${GLOBAL_CARD_MOTION_ENABLE_ATTRIBUTE} to <html> or <body> to opt in.`
+    );
+  }
+};
+
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initialise, { once: true });
+  document.addEventListener('DOMContentLoaded', maybeInitialise, { once: true });
 } else {
-  initialise();
+  maybeInitialise();
 }
