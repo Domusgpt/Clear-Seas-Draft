@@ -3,6 +3,72 @@ import { mergeAssetManifest, resolveBrandAssets, getAssetManifestSnapshot } from
 
 const cssWebMasterGlobals = window.__CSS_WEB_MASTER_GLOBALS || (window.__CSS_WEB_MASTER_GLOBALS = {});
 
+const rootElement = document.documentElement;
+const reduceMotionQuery = typeof window.matchMedia === 'function'
+  ? window.matchMedia('(prefers-reduced-motion: reduce)')
+  : null;
+
+const normaliseSetting = (value) => (typeof value === 'string' ? value.trim().toLowerCase() : '');
+
+const motionDatasetSetting = normaliseSetting(rootElement.dataset.globalCardMotion);
+const brandVideoDatasetSetting = normaliseSetting(rootElement.dataset.brandVideos);
+
+const explicitMotionEnable = ['enabled', 'enable', 'on', 'true'].includes(motionDatasetSetting);
+const explicitMotionDisable = ['disabled', 'disable', 'off', 'false'].includes(motionDatasetSetting);
+const runtimeMotionDisabled =
+  window.__CLEAR_SEAS_DISABLE_GLOBAL_CARD_MOTION === true ||
+  window.__CSS_WEB_MASTER_DISABLE_GLOBAL_CARD_MOTION === true;
+
+const prefersReducedMotion = Boolean(reduceMotionQuery && reduceMotionQuery.matches);
+
+let motionDisableReason = null;
+let disableGlobalCardMotion = false;
+
+if (runtimeMotionDisabled) {
+  disableGlobalCardMotion = true;
+  motionDisableReason = 'runtime-flag';
+} else if (explicitMotionDisable) {
+  disableGlobalCardMotion = true;
+  motionDisableReason = 'page-opt-out';
+} else if (!explicitMotionEnable && prefersReducedMotion) {
+  disableGlobalCardMotion = true;
+  motionDisableReason = 'prefers-reduced-motion';
+} else if (!explicitMotionEnable) {
+  disableGlobalCardMotion = true;
+  motionDisableReason = 'default-opt-out';
+}
+
+const explicitBrandVideoEnable = ['enabled', 'enable', 'on', 'true'].includes(brandVideoDatasetSetting);
+const explicitBrandVideoDisable = ['disabled', 'disable', 'off', 'false'].includes(brandVideoDatasetSetting);
+const runtimeBrandVideoDisabled = window.__CLEAR_SEAS_DISABLE_BRAND_VIDEOS === true;
+
+const disableBrandVideos =
+  runtimeBrandVideoDisabled ||
+  disableGlobalCardMotion ||
+  explicitBrandVideoDisable ||
+  (!explicitBrandVideoEnable);
+
+cssWebMasterGlobals.globalCardMotionDisabled = disableGlobalCardMotion;
+cssWebMasterGlobals.globalCardMotionReason = motionDisableReason;
+cssWebMasterGlobals.brandVideosDisabled = disableBrandVideos;
+
+window.__CLEAR_SEAS_DISABLE_GLOBAL_CARD_MOTION = disableGlobalCardMotion;
+window.__CSS_WEB_MASTER_DISABLE_GLOBAL_CARD_MOTION = disableGlobalCardMotion;
+window.__CLEAR_SEAS_DISABLE_BRAND_VIDEOS = disableBrandVideos;
+
+if (disableGlobalCardMotion) {
+  rootElement.dataset.globalCardSynergy = 'disabled';
+  rootElement.dataset.globalCardMotion = 'disabled';
+} else {
+  rootElement.dataset.globalCardMotion = 'enabled';
+}
+
+if (disableBrandVideos) {
+  rootElement.dataset.brandVideos = 'disabled';
+} else {
+  rootElement.dataset.brandVideos = 'enabled';
+}
+
 const DEFAULT_BRAND_EVENT = 'css-web-master:brand-overrides-changed';
 const DEFAULT_CLEAR_SEAS_BRAND_EVENT = 'clear-seas:brand-overrides-changed';
 const resolvedCssBrandEvent =
@@ -70,6 +136,88 @@ const updateManifestSnapshot = () => {
 };
 
 updateManifestSnapshot();
+
+function applyStaticMotionDefaults() {
+  const defaults = {
+    '--global-scroll-momentum': '0',
+    '--global-scroll-tilt': '0deg',
+    '--global-synergy-glow': '0',
+    '--global-focus-x': '0.5',
+    '--global-focus-y': '0.5',
+    '--global-focus-amount': '0',
+    '--global-bend-intensity': '0',
+    '--global-tilt-x': '0',
+    '--global-tilt-y': '0',
+    '--global-tilt-strength': '0',
+    '--global-tilt-skew': '0',
+    '--global-warp': '0',
+    '--global-focus-trend': '0',
+    '--global-scroll-speed': '0',
+    '--global-scroll-direction': '0'
+  };
+  Object.entries(defaults).forEach(([property, value]) => {
+    rootElement.style.setProperty(property, value);
+  });
+}
+
+function removeBrandVideos() {
+  if (!disableBrandVideos) {
+    return;
+  }
+  const removeVideos = () => {
+    document
+      .querySelectorAll('.global-brand-overlay video, .card-brand-overlay video')
+      .forEach((video) => {
+        try {
+          video.pause();
+        } catch (error) {
+          // Ignore pause failures in teardown
+        }
+        video.remove();
+      });
+  };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', removeVideos, { once: true });
+  } else {
+    removeVideos();
+  }
+}
+
+function markMotionDisabled() {
+  if (!disableGlobalCardMotion) {
+    return;
+  }
+  applyStaticMotionDefaults();
+  const disableElements = () => {
+    document
+      .querySelectorAll('[data-global-card-group], [data-global-card-synergy]')
+      .forEach((element) => {
+        if (element.dataset) {
+          delete element.dataset.globalCardGroup;
+          element.dataset.globalCardSynergy = 'disabled';
+          element.dataset.supportRole = 'neutral';
+          element.dataset.supportDistance = 'far';
+        }
+        if (element && element.style) {
+          element.style.setProperty('--card-focus-x', '0.5');
+          element.style.setProperty('--card-focus-y', '0.5');
+          element.style.setProperty('--card-focus-strength', '0');
+          element.style.setProperty('--card-support-intensity', '0');
+          element.style.setProperty('--card-scroll-momentum', '0');
+          element.style.setProperty('--card-twist', '0deg');
+          element.style.setProperty('--card-overlay-shift', '0px');
+        }
+      });
+  };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', disableElements, { once: true });
+  } else {
+    disableElements();
+  }
+}
+
+removeBrandVideos();
+markMotionDisabled();
 
 const syncBrandAssets = (siteCode) => {
   const resolved = resolveBrandAssets(siteCode);
@@ -1093,11 +1241,21 @@ function ensureBrandLayer(state) {
   }
   const existingVideo = overlay.querySelector('video');
   if (existingVideo) {
-    existingVideo.muted = true;
-    existingVideo.loop = true;
-    existingVideo.autoplay = true;
-    existingVideo.playsInline = true;
-    state.brandVideo = existingVideo;
+    if (disableBrandVideos) {
+      try {
+        existingVideo.pause();
+      } catch (error) {
+        // Ignore pause failures in teardown
+      }
+      existingVideo.remove();
+      state.brandVideo = null;
+    } else {
+      existingVideo.muted = true;
+      existingVideo.loop = true;
+      existingVideo.autoplay = true;
+      existingVideo.playsInline = true;
+      state.brandVideo = existingVideo;
+    }
   }
 
   const overlaySettings = brandOverrideApi.mergeOverlaySettings(
@@ -1124,12 +1282,12 @@ function ensureBrandLayer(state) {
     card.style.setProperty('--card-canvas-depth', canvasSettings.depth);
   }
 
-  const preferVideo = brandOverrideApi.resolveMode(state.overrides, shouldPreferVideo(state));
+  const preferVideo = !disableBrandVideos && brandOverrideApi.resolveMode(state.overrides, shouldPreferVideo(state));
   const cycleIndex = state.index + (state.assetCycle || 0);
   let videoSource = null;
   let imageSource = null;
 
-  if (preferVideo) {
+  if (preferVideo && !disableBrandVideos) {
     videoSource = brandOverrideApi.pickAsset(state.overrides, 'videos', cycleIndex, (index) => pickBrandVideo(index));
     if (!videoSource) {
       imageSource = brandOverrideApi.pickAsset(state.overrides, 'images', cycleIndex, (index) => pickBrandImage(index));
@@ -1137,7 +1295,9 @@ function ensureBrandLayer(state) {
   } else {
     imageSource = brandOverrideApi.pickAsset(state.overrides, 'images', cycleIndex, (index) => pickBrandImage(index));
     if (!imageSource) {
-      videoSource = brandOverrideApi.pickAsset(state.overrides, 'videos', cycleIndex, (index) => pickBrandVideo(index));
+      videoSource = !disableBrandVideos
+        ? brandOverrideApi.pickAsset(state.overrides, 'videos', cycleIndex, (index) => pickBrandVideo(index))
+        : null;
     }
   }
 
@@ -1149,7 +1309,7 @@ function ensureBrandLayer(state) {
   overlay.style.setProperty('--brand-overlay-rotate', overlaySettings.rotate || '0deg');
   overlay.style.setProperty('--brand-overlay-depth', overlaySettings.depth || '0px');
 
-  if (videoSource) {
+  if (videoSource && !disableBrandVideos) {
     overlay.style.backgroundImage = 'none';
     if (!overlay.querySelector('video')) {
       overlay.innerHTML = '';
@@ -1951,8 +2111,10 @@ async function initialise() {
   await ensureCardSystem();
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initialise, { once: true });
-} else {
-  initialise();
+if (!disableGlobalCardMotion) {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initialise, { once: true });
+  } else {
+    initialise();
+  }
 }
