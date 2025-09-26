@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clear Seas Solutions - All Versions (30 Total)</title>
+    <title>CSS-Web-Master Control Surface – Clear Seas Draft Library</title>
     <style>
         * {
             margin: 0;
@@ -59,6 +59,34 @@
 
         .section {
             margin-bottom: 40px;
+        }
+
+        .section-header {
+            margin-bottom: 25px;
+        }
+
+        .section-intro {
+            margin-top: 12px;
+            font-size: 0.95rem;
+            line-height: 1.7;
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+        .section-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        .meta-chip {
+            padding: 6px 14px;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.24);
         }
 
         .section-title {
@@ -153,6 +181,12 @@
             color: #93c5fd;
         }
 
+        .lab-version .status-badge {
+            background: rgba(236, 72, 153, 0.18);
+            border: 1px solid rgba(244, 114, 182, 0.35);
+            color: #f9a8d4;
+        }
+
         .footer {
             text-align: center;
             margin-top: 40px;
@@ -176,15 +210,18 @@
 <body>
     <div class="container">
         <div class="header">
-            <div class="logo">🌊 Clear Seas Solutions</div>
-            <div class="subtitle">Complete Multi-Version Deployment System</div>
-            <div class="count">30 Total Versions • 6 Main + 24 PR Branches</div>
-            <p>Explore different iterations and compare approaches side-by-side</p>
+            <div class="logo">🧭 CSS-Web-Master Control Surface</div>
+            <div class="subtitle">Powered by the Clear Seas Draft multi-version library</div>
+            <div class="count">32 Experiences • 6 Core + 24 PR Branches + 2 Labs</div>
+            <p>Use this library to seed future CSS-family launches (paraerator.com, vib3code.com, and beyond).</p>
         </div>
 
         <!-- MAIN HTML VERSIONS (1-6) -->
         <div class="section">
-            <div class="section-title">Core HTML Versions (1-6)</div>
+            <div class="section-header">
+                <div class="section-title">Core HTML Versions (1-6)</div>
+                <p class="section-intro">Flagship builds that establish the production architecture, performance tuning, unified layouts, VIB34D integration, and the fully orchestrated totalistic experience.</p>
+            </div>
             <div class="version-grid">
                 <div class="version-card main-version">
                     <div class="version-number">01</div>
@@ -248,30 +285,18 @@
             </div>
         </div>
 
-        <!-- PR BRANCH VERSIONS (8-30) -->
+        <!-- IMMERSIVE AI COMMAND DECK COLLECTION -->
         <div class="section">
-            <div class="section-title">PR Branch Versions (8-30)</div>
+            <div class="section-header">
+                <div class="section-title">Immersive AI Command Deck Collection (PR 4–24)</div>
+                <p class="section-intro">Interlinked prototypes that share the Clear Seas AI mission-axis layout, translucent orb fields, and synchronized scroll choreography. Use this collection to compare how narrative emphasis, staging density, and conversion flows evolve while the underlying CSS and JS stack stays consistent.</p>
+                <div class="section-meta">
+                    <span class="meta-chip">Shared CSS: styles/clear-seas-ai.css</span>
+                    <span class="meta-chip">Shared JS: scripts/clear-seas-ai.js</span>
+                    <span class="meta-chip">PR Variants: #4 – #24 (excludes special labs)</span>
+                </div>
+            </div>
             <div class="version-grid">
-                <div class="version-card pr-version">
-                    <div class="version-number">08</div>
-                    <div class="status-badge">PR #2</div>
-                    <div class="version-title">Avant-garde AI Landing Page</div>
-                    <div class="version-description">
-                        Create avant-garde AI consulting landing page with intelligent design and sophisticated interactions.
-                    </div>
-                    <a href="./8-pr-2.html" class="version-link">Launch Version</a>
-                </div>
-
-                <div class="version-card pr-version">
-                    <div class="version-number">09</div>
-                    <div class="status-badge">PR #3</div>
-                    <div class="version-title">Clear Seas Intelligence Homepage</div>
-                    <div class="version-description">
-                        Design new Clear Seas Intelligence AI consulting homepage with advanced geometric cognition features.
-                    </div>
-                    <a href="./9-pr-3.html" class="version-link">Launch Version</a>
-                </div>
-
                 <div class="version-card pr-version">
                     <div class="version-number">10</div>
                     <div class="status-badge">PR #4</div>
@@ -300,16 +325,6 @@
                         Create immersive Clear Seas AI experience with advanced geometric processing and holographic elements.
                     </div>
                     <a href="./12-pr-6.html" class="version-link">Launch Version</a>
-                </div>
-
-                <div class="version-card pr-version">
-                    <div class="version-number">13</div>
-                    <div class="status-badge">PR #7</div>
-                    <div class="version-title">Clear Seas AI Consulting</div>
-                    <div class="version-description">
-                        Create Clear Seas AI consulting experience with refined visual codex and navigation systems.
-                    </div>
-                    <a href="./13-pr-7.html" class="version-link">Launch Version</a>
                 </div>
 
                 <div class="version-card pr-version">
@@ -351,7 +366,6 @@
                     </div>
                     <a href="./17-pr-11.html" class="version-link">Launch Version</a>
                 </div>
-
 
                 <div class="version-card pr-version">
                     <div class="version-number">18</div>
@@ -485,11 +499,85 @@
             </div>
         </div>
 
+        <!-- DISTINCT CONCEPT LABS & SPECIAL STUDIES -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">Concept Labs &amp; Special Studies</div>
+                <p class="section-intro">Exploratory builds that diverge from the mission-axis system to investigate alternate visual systems, stacked canvases, and high-energy holographic research environments.</p>
+                <div class="section-meta">
+                    <span class="meta-chip">Unique frameworks outside the shared AI stack</span>
+                </div>
+            </div>
+            <div class="version-grid">
+                <div class="version-card pr-version lab-version">
+                    <div class="version-number">07</div>
+                    <div class="status-badge">PR #1</div>
+                    <div class="version-title">Polytopal Home Experience</div>
+                    <div class="version-description">
+                        Canvas-driven homepage that pairs clear narrative lanes with the original polytopal particle field and responsive navigation.
+                    </div>
+                    <a href="./7-pr-1.html" class="version-link">Launch Version</a>
+                </div>
+
+                <div class="version-card pr-version lab-version">
+                    <div class="version-number">08</div>
+                    <div class="status-badge">PR #2</div>
+                    <div class="version-title">Avant-garde AI Landing Page</div>
+                    <div class="version-description">
+                        Create avant-garde AI consulting landing page with intelligent design and sophisticated interactions.
+                    </div>
+                    <a href="./8-pr-2.html" class="version-link">Launch Version</a>
+                </div>
+
+                <div class="version-card pr-version lab-version">
+                    <div class="version-number">09</div>
+                    <div class="status-badge">PR #3</div>
+                    <div class="version-title">Clear Seas Intelligence Homepage</div>
+                    <div class="version-description">
+                        Design new Clear Seas Intelligence AI consulting homepage with advanced geometric cognition features.
+                    </div>
+                    <a href="./9-pr-3.html" class="version-link">Launch Version</a>
+                </div>
+
+                <div class="version-card pr-version lab-version">
+                    <div class="version-number">13</div>
+                    <div class="status-badge">PR #7</div>
+                    <div class="version-title">Visual Codex Gallery</div>
+                    <div class="version-description">
+                        Fixed-layout neon codex that experiments with 4D polytopal backgrounds, crystalline palettes, and gallery-style narration.
+                    </div>
+                    <a href="./13-pr-7.html" class="version-link">Launch Version</a>
+                </div>
+
+                <div class="version-card lab-version">
+                    <div class="version-number">L1</div>
+                    <div class="status-badge">LAB</div>
+                    <div class="version-title">Orthogonal Depth Progression</div>
+                    <div class="version-description">
+                        Experimental camera lab that maps orthogonal scroll momentum into layered holographic tilt systems.
+                    </div>
+                    <a href="./25-orthogonal-depth-progression.html" class="version-link">Launch Version</a>
+                </div>
+
+                <div class="version-card lab-version">
+                    <div class="version-number">L2</div>
+                    <div class="status-badge">LAB</div>
+                    <div class="version-title">Ultimate Holistic System</div>
+                    <div class="version-description">
+                        Unified VIB34D showcase that activates the ultimate holistic choreography script across canvases and overlays.
+                    </div>
+                    <a href="./ULTIMATE-clear-seas-holistic-system.html" class="version-link">Launch Version</a>
+                </div>
+            </div>
+        </div>
+
         <div class="footer">
-            <p><strong>Clear Seas Solutions Multi-Version Deployment</strong></p>
-            <p>Compare approaches • Test interactions • Evaluate different design directions</p>
+            <p><strong>CSS-Web-Master – Clear Seas Draft Foundation</strong></p>
+            <p>Compare approaches • Sync choreography • Spin up site-specific experiences</p>
             <p style="margin-top: 15px; opacity: 0.5;">© 2025 Paul Phillips - Clear Seas Solutions LLC</p>
         </div>
     </div>
+
+    <!-- The landing index intentionally omits the global orchestrator so the page loads fast and stays static. -->
 </body>
 </html>
