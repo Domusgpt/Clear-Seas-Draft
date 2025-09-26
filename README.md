@@ -5,6 +5,9 @@ historical Clear Seas Draft experience while layering documentation, orchestrati
 pages—like **paraerator.com**, **vib3code.com**, and future CSS destinations—can inherit the same choreography with minimal
 duplication.
 
+Runtime globals now expose both `__CSS_WEB_MASTER_*` and legacy `__CLEAR_SEAS_*` namespaces, and shared typography/color tokens
+live in `styles/css-web-master-tokens.css` so each property can reskin the choreography without forking the master styles.
+
 ### ✅ Deployment Snapshot
 - **6 Main HTML Versions**: Baseline production-ready experiences.
 - **13 PR Branch Versions**: Themed explorations sourced from the showcase (PRs #1, #4–#24).
@@ -58,6 +61,8 @@ Additional CSS-Web-Master documentation is tracked in:
   generalize before production rollouts on paraerator.com or vib3code.com.
 - [`docs/dev-updates/2025-05-07-css-web-master-transition.md`](docs/dev-updates/2025-05-07-css-web-master-transition.md) –
   developer log detailing the latest transition steps and recommended next moves.
+- [`styles/css-web-master-tokens.css`](styles/css-web-master-tokens.css) – neutral design tokens consumed by consolidated
+  stylesheets for per-site overrides.
 
 ---
 © 2025 Paul Phillips - Clear Seas Solutions LLC

@@ -6,15 +6,17 @@ CSS-Web-Master platform production-ready for paraerator.com, vib3code.com, and f
 ## Naming & Branding
 
 - **Global variables & events** still use the `clear-seas` prefix (`window.__CLEAR_SEAS_GLOBAL_MOTION`, `clear-seas:motion-updated`).
-  - *Action:* Introduce aliases or a namespace bridge (e.g., `window.__CSS_WEB_MASTER`) so downstream integrations can migrate
-    without breaking existing builds.
+  - ✅ **Completed:** `global-page-orchestrator`, `card-system-initializer`, and `vib34d-contained-card-system` now publish
+    `__CSS_WEB_MASTER_*` globals and dispatch both `css-web-master:*` and legacy `clear-seas:*` events.
+  - ⏭️ *Follow-on:* Audit bespoke modules for hard-coded event strings and migrate them to the registry aliases.
 - **Dataset attributes** applied by `global-page-orchestrator` are `data-global-page-family/layout`. Confirm if new properties
   require additional tags (e.g., `data-site-code`).
 
 ## Page Profile Registry
 
 - Profiles currently reference Clear Seas-specific copy and brand asset packages.
-  - *Action:* Split palette metadata from marketing copy to allow new sites to opt into the same colors without inheriting copy.
+  - ✅ **Completed:** Palette definitions now live in a shared library, and a `paraerator` site profile demonstrates how new
+    properties reuse the foundation palette while swapping copy/modules.
 - Filename heuristics prioritize `index`/`pr` naming. Define detection patterns for future site URLs or configure explicit
   overrides.
 
@@ -31,7 +33,8 @@ CSS-Web-Master platform production-ready for paraerator.com, vib3code.com, and f
 - `styles/clear-seas-ai.css` includes marketing copy classes and iconography unique to the Clear Seas mission deck.
   - *Action:* Extract generic motion/visualizer styles into a neutral stylesheet and let each site layer its own typography.
 - `styles/consolidated-styles.css` references fonts and color tokens specific to Clear Seas.
-  - *Action:* Externalize font stacks and color tokens into CSS variables so sites can swap values without duplicating files.
+  - ✅ **Completed:** Neutral tokens live in `styles/css-web-master-tokens.css`, and downstream styles consume them via CSS
+    variables for per-site overrides.
 
 ## Documentation
 
