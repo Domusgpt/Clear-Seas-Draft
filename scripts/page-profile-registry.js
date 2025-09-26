@@ -1,14 +1,6 @@
-const PROFILE_DEFINITIONS = [
-  {
-    key: 'meta-index',
-    label: 'Meta Index Overview',
-    family: 'meta',
-    layout: 'map',
-    palette: 'meta',
+const PALETTE_LIBRARY = {
+  meta: {
     accent: '#7ef6ff',
-    fileNames: ['index.html'],
-    tags: ['index', 'meta', 'map', 'directory'],
-    titleTokens: ['all versions', 'collections', 'clear seas solutions'],
     overlay: {
       blend: 'screen',
       opacity: 1.08,
@@ -19,28 +11,10 @@ const PROFILE_DEFINITIONS = [
     canvas: {
       scale: 0.08,
       depth: '12px'
-    },
-    imageOrder: [2, 3, 4, 0, 1, 5, 6, 7, 8],
-    videoOrder: [4, 5, 6, 0, 1, 2, 3],
-    videoPattern: [0, 1]
+    }
   },
-  {
-    key: 'core-foundation',
-    label: 'Core Foundation Builds',
-    family: 'foundation',
-    layout: 'grid',
-    palette: 'foundation',
+  foundation: {
     accent: '#8ddcff',
-    fileNames: [
-      '1-index.html',
-      '2-index-optimized.html',
-      '3-index-fixed.html',
-      '4-index-unified.html',
-      '5-index-vib34d-integrated.html',
-      '6-index-totalistic.html'
-    ],
-    tags: ['core', 'foundation', 'totalistic', 'unified'],
-    titleTokens: ['clear seas solutions', 'totalistic', 'integrated'],
     overlay: {
       blend: 'soft-light',
       opacity: 0.96,
@@ -51,7 +25,68 @@ const PROFILE_DEFINITIONS = [
     canvas: {
       scale: 0.12,
       depth: '18px'
+    }
+  },
+  immersive: {
+    accent: '#ffaadf',
+    overlay: {
+      blend: 'color-dodge',
+      opacity: 1.14,
+      filter: 'hue-rotate(32deg) saturate(1.5) brightness(1.18)',
+      rotate: '9deg',
+      depth: '28px'
     },
+    canvas: {
+      scale: 0.18,
+      depth: '26px'
+    }
+  },
+  concept: {
+    accent: '#caa5ff',
+    overlay: {
+      blend: 'lighten',
+      opacity: 1.22,
+      filter: 'hue-rotate(280deg) saturate(1.45) brightness(1.12)',
+      rotate: '-7deg',
+      depth: '32px'
+    },
+    canvas: {
+      scale: 0.22,
+      depth: '34px'
+    }
+  }
+};
+
+const PROFILE_DEFINITIONS = [
+  {
+    key: 'meta-index',
+    label: 'Meta Index Overview',
+    family: 'meta',
+    layout: 'map',
+    palette: 'meta',
+    fileNames: ['index.html'],
+    tags: ['index', 'meta', 'map', 'directory'],
+    titleTokens: ['all versions', 'collections', 'clear seas solutions'],
+    imageOrder: [2, 3, 4, 0, 1, 5, 6, 7, 8],
+    videoOrder: [4, 5, 6, 0, 1, 2, 3],
+    videoPattern: [0, 1]
+  },
+  {
+    key: 'core-foundation',
+    label: 'Core Foundation Builds',
+    family: 'foundation',
+    layout: 'grid',
+    palette: 'foundation',
+    fileNames: [
+      '1-index.html',
+      '2-index-optimized.html',
+      '3-index-fixed.html',
+      '4-index-unified.html',
+      '5-index-vib34d-integrated.html',
+      '6-index-totalistic.html'
+    ],
+    tags: ['core', 'foundation', 'totalistic', 'unified'],
+    titleTokens: ['clear seas solutions', 'totalistic', 'integrated'],
     imageOrder: [0, 5, 1, 6, 2, 7, 3, 8, 4],
     videoOrder: [1, 2, 3, 0, 4, 5, 6],
     videoPattern: [0, 1, 0, 0]
@@ -62,7 +97,6 @@ const PROFILE_DEFINITIONS = [
     family: 'immersive',
     layout: 'timeline',
     palette: 'immersive',
-    accent: '#ffaadf',
     fileNames: [
       '10-pr-4.html', '11-pr-5.html', '12-pr-6.html',
       '14-pr-8.html', '15-pr-9.html', '16-pr-10.html',
@@ -74,17 +108,6 @@ const PROFILE_DEFINITIONS = [
     ],
     tags: ['immersive', 'mission', 'pulse', 'signal', 'pr', 'blueprint'],
     titleTokens: ['immersive experience', 'mission axis', 'experience blueprint'],
-    overlay: {
-      blend: 'color-dodge',
-      opacity: 1.14,
-      filter: 'hue-rotate(32deg) saturate(1.5) brightness(1.18)',
-      rotate: '9deg',
-      depth: '28px'
-    },
-    canvas: {
-      scale: 0.18,
-      depth: '26px'
-    },
     imageOrder: [4, 0, 5, 1, 6, 2, 7, 3, 8],
     videoOrder: [4, 5, 6, 0, 1, 2, 3],
     videoPattern: [1, 0, 1, 1],
@@ -96,7 +119,6 @@ const PROFILE_DEFINITIONS = [
     family: 'labs',
     layout: 'gallery',
     palette: 'concept',
-    accent: '#caa5ff',
     fileNames: [
       '7-pr-1.html',
       '8-pr-2.html',
@@ -107,20 +129,24 @@ const PROFILE_DEFINITIONS = [
     ],
     tags: ['concept', 'lab', 'gallery', 'codex', 'orthogonal', 'ultimate'],
     titleTokens: ['visual codex', 'orthogonal depth', 'holistic system'],
-    overlay: {
-      blend: 'lighten',
-      opacity: 1.22,
-      filter: 'hue-rotate(280deg) saturate(1.45) brightness(1.12)',
-      rotate: '-7deg',
-      depth: '32px'
-    },
-    canvas: {
-      scale: 0.22,
-      depth: '34px'
-    },
     imageOrder: [6, 7, 8, 3, 4, 0, 1, 2, 5],
     videoOrder: [2, 3, 4, 5, 6, 0, 1],
     videoPattern: [1, 1, 0, 1]
+  },
+  {
+    key: 'parserator-alpha',
+    label: 'Parserator Systems Launchpad',
+    family: 'parserator',
+    siteCode: 'parserator',
+    layout: 'grid',
+    palette: 'foundation',
+    fileNames: ['parserator.html'],
+    tags: ['parserator', 'propulsion', 'systems', 'aero', 'launch'],
+    titleTokens: ['parserator', 'propulsion systems', 'aero lab'],
+    imageOrder: [0, 5, 1, 6, 2, 7, 3, 8, 4],
+    videoOrder: [1, 2, 3, 0, 4, 5, 6],
+    videoPattern: [0, 1, 0, 1],
+    scripts: ['scripts/immersive-experience-actualizer.js']
   }
 ];
 
@@ -150,12 +176,38 @@ function computeHashSeed(input) {
   return hash;
 }
 
-const normalisedProfiles = PROFILE_DEFINITIONS.map((definition) => ({
-  ...definition,
-  fileNames: new Set((definition.fileNames || []).map(normaliseFileName)),
-  tags: new Set((definition.tags || []).map(normaliseToken)),
-  titleTokens: (definition.titleTokens || []).map(normaliseToken)
-}));
+const normalisedProfiles = PROFILE_DEFINITIONS.map((definition) => {
+  const paletteKey = definition.palette || definition.paletteKey || 'foundation';
+  const paletteDefaults = PALETTE_LIBRARY[paletteKey] || {};
+  const paletteOverrides = definition.paletteOverrides || {};
+  const accent = definition.accent || paletteOverrides.accent || paletteDefaults.accent || null;
+  const overlay = {
+    ...(paletteDefaults.overlay || {}),
+    ...(paletteOverrides.overlay || {}),
+    ...(definition.overlay || {})
+  };
+  const canvas = {
+    ...(paletteDefaults.canvas || {}),
+    ...(paletteOverrides.canvas || {}),
+    ...(definition.canvas || {})
+  };
+  const rawSiteCode = definition.siteCode || null;
+  const siteCodeToken = rawSiteCode ? normaliseToken(rawSiteCode) : null;
+
+  return {
+    ...definition,
+    palette: paletteKey,
+    paletteKey,
+    siteCode: rawSiteCode,
+    siteCodeToken,
+    accent,
+    overlay,
+    canvas,
+    fileNames: new Set((definition.fileNames || []).map(normaliseFileName)),
+    tags: new Set((definition.tags || []).map(normaliseToken)),
+    titleTokens: (definition.titleTokens || []).map(normaliseToken)
+  };
+});
 
 export function listPageProfiles() {
   return normalisedProfiles.map((profile) => ({
@@ -164,7 +216,8 @@ export function listPageProfiles() {
     family: profile.family,
     layout: profile.layout,
     palette: profile.palette,
-    accent: profile.accent
+    accent: profile.accent,
+    siteCode: profile.siteCode || null
   }));
 }
 
@@ -175,10 +228,15 @@ function readCandidateTokens(docEl, bodyEl) {
     tokens.push(docEl.dataset.collection);
     tokens.push(docEl.dataset.showcaseTheme);
     tokens.push(docEl.dataset.showcaseCard);
+    tokens.push(docEl.dataset.siteCode);
+    tokens.push(docEl.dataset.globalSiteCode);
+    tokens.push(docEl.dataset.brandSite);
   }
   if (bodyEl && bodyEl.dataset) {
     tokens.push(bodyEl.dataset.pageCollection);
     tokens.push(bodyEl.dataset.collection);
+    tokens.push(bodyEl.dataset.siteCode);
+    tokens.push(bodyEl.dataset.globalSiteCode);
   }
   return tokens.filter(Boolean).map(normaliseToken);
 }
@@ -192,10 +250,37 @@ export function resolvePageProfile(context = {}) {
   const metaName = normaliseFileName(pathToken || (docEl && docEl.dataset ? docEl.dataset.pageId : '') || '');
   const title = normaliseToken(doc ? doc.title : context.title || '');
   const candidateTokens = readCandidateTokens(docEl, body);
+  const pathTokens = path
+    ? path
+        .split(/[\\/]+/)
+        .filter(Boolean)
+        .map(normaliseToken)
+    : [];
+  const requestedSiteCode = normaliseToken(
+    context.siteCode ||
+      (docEl && docEl.dataset ? docEl.dataset.siteCode : '') ||
+      (docEl && docEl.dataset ? docEl.dataset.globalSiteCode : '') ||
+      (body && body.dataset ? body.dataset.siteCode : '') ||
+      (body && body.dataset ? body.dataset.globalSiteCode : '')
+  );
+  const searchTokens = [...candidateTokens];
+  if (requestedSiteCode) {
+    searchTokens.push(requestedSiteCode);
+  }
+  pathTokens.forEach((token) => {
+    if (token) {
+      searchTokens.push(token);
+    }
+  });
 
   let matched = normalisedProfiles.find((profile) => profile.fileNames.has(metaName));
+  if (!matched && requestedSiteCode) {
+    matched = normalisedProfiles.find((profile) => profile.siteCodeToken === requestedSiteCode);
+  }
   if (!matched) {
-    matched = normalisedProfiles.find((profile) => candidateTokens.some((token) => profile.tags.has(token)));
+    matched = normalisedProfiles.find((profile) =>
+      searchTokens.some((token) => profile.tags.has(token) || (profile.siteCodeToken && profile.siteCodeToken === token))
+    );
   }
   if (!matched) {
     matched = normalisedProfiles.find((profile) => profile.titleTokens.some((token) => title.includes(token)));
@@ -204,7 +289,7 @@ export function resolvePageProfile(context = {}) {
     matched = normalisedProfiles.find((profile) => profile.key === 'core-foundation') || normalisedProfiles[0];
   }
 
-  const signatureParts = [metaName, title].concat(candidateTokens);
+  const signatureParts = [metaName, title, requestedSiteCode].concat(searchTokens);
   const signature = signatureParts.filter(Boolean).join('|') || metaName;
   const seed = computeHashSeed(signature);
 
@@ -214,6 +299,7 @@ export function resolvePageProfile(context = {}) {
     family: matched.family,
     layout: matched.layout,
     palette: matched.palette,
+    paletteKey: matched.paletteKey,
     accent: matched.accent,
     overlay: matched.overlay ? { ...matched.overlay } : {},
     canvas: matched.canvas ? { ...matched.canvas } : {},
@@ -221,10 +307,13 @@ export function resolvePageProfile(context = {}) {
     videoOrder: matched.videoOrder ? [...matched.videoOrder] : null,
     videoPattern: matched.videoPattern ? [...matched.videoPattern] : null,
     scripts: matched.scripts ? [...matched.scripts] : [],
+    siteCode: matched.siteCode || null,
+    siteCodeToken: matched.siteCodeToken || null,
+    requestedSiteCode: requestedSiteCode || null,
     signature,
     seed,
     metaName,
-    candidateTokens
+    candidateTokens: searchTokens
   };
 }
 
@@ -241,11 +330,23 @@ export function applyProfileMetadata(profile, targetDocument = typeof document !
   docEl.dataset.globalBrandPalette = profile.palette;
   docEl.dataset.globalPageFamily = profile.family || profile.key;
   docEl.dataset.globalPageLayout = profile.layout || 'grid';
+  docEl.dataset.globalPaletteKey = profile.paletteKey || profile.palette || '';
+  if (profile.siteCode) {
+    docEl.dataset.globalSiteCode = profile.siteCode;
+  } else {
+    delete docEl.dataset.globalSiteCode;
+  }
   if (body) {
     body.dataset.globalPageCollection = profile.key;
     body.dataset.globalBrandPalette = profile.palette;
     body.dataset.globalPageFamily = profile.family || profile.key;
     body.dataset.globalPageLayout = profile.layout || 'grid';
+    body.dataset.globalPaletteKey = profile.paletteKey || profile.palette || '';
+    if (profile.siteCode) {
+      body.dataset.globalSiteCode = profile.siteCode;
+    } else {
+      delete body.dataset.globalSiteCode;
+    }
   }
   if (profile.accent) {
     docEl.style.setProperty('--global-brand-accent', profile.accent);
@@ -262,11 +363,13 @@ export function applyProfileMetadata(profile, targetDocument = typeof document !
 }
 
 if (typeof window !== 'undefined') {
-  window.__CLEAR_SEAS_PAGE_PROFILE_REGISTRY = {
+  const registry = {
     list: listPageProfiles,
     resolve: resolvePageProfile,
     apply: applyProfileMetadata
   };
+  window.__CLEAR_SEAS_PAGE_PROFILE_REGISTRY = registry;
+  window.__CSS_WEB_MASTER_PAGE_PROFILE_REGISTRY = registry;
 }
 
 export default {
