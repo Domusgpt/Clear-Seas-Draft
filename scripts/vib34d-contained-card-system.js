@@ -5,6 +5,8 @@
  * A Paul Phillips Manifestation - Paul@clearseassolutions.com
  */
 
+const BRAND_OVERRIDE_EVENT = window.__CLEAR_SEAS_BRAND_OVERRIDE_EVENT || 'clear-seas:brand-overrides-changed';
+
 const VIB34D_BRAND_LIBRARY_DEFAULTS = {
   overlays: [
     'assets/Screenshot_20250430-141821.png',
@@ -31,6 +33,40 @@ const VIB34D_BRAND_LIBRARY_DEFAULTS = {
     'assets/clear-seas-monogram.svg'
   ]
 };
+
+const vibBrandOverrideFallback = {
+  collect: () => null,
+  mergeOverlaySettings: (base) => ({ ...(base || {}) }),
+  mergeCanvasSettings: (base) => ({ ...(base || {}) }),
+  resolveMode: (_overrides, fallback) => fallback,
+  pickAsset: (_overrides, _type, index, fallback) => (typeof fallback === 'function' ? fallback(index) : null),
+  shouldCycle: () => false,
+  nextCycleIndex: (_overrides, current) => (Number.isFinite(current) ? current + 1 : 1),
+  applyPalette: (overrides, fallback) => overrides?.palette || fallback,
+  hasAssetList: (overrides, type) => {
+    const key = type === 'videos' ? 'videos' : 'images';
+    return Array.isArray(overrides?.[key]) && overrides[key].length > 0;
+  },
+  refresh: (detail) => {
+    const eventDetail = {
+      reason: detail && typeof detail === 'object' && detail.reason ? detail.reason : 'manual-refresh',
+      timestamp: Date.now()
+    };
+    if (detail && typeof detail === 'object') {
+      Object.keys(detail).forEach((key) => {
+        if (key === 'reason') {
+          return;
+        }
+        eventDetail[key] = detail[key];
+      });
+    }
+    window.dispatchEvent(new CustomEvent(BRAND_OVERRIDE_EVENT, { detail: eventDetail }));
+    return [];
+  },
+  eventName: BRAND_OVERRIDE_EVENT
+};
+
+const vibBrandOverrideApi = window.__CLEAR_SEAS_BRAND_OVERRIDE_API || vibBrandOverrideFallback;
 
 function ensureVibSharedBrandLibrary() {
   const mergeUnique = (target, source) => {
@@ -102,6 +138,16 @@ class VIB34DContainedCardSystem {
 
     // Import VIB34D systems
     this.engineClasses = {};
+    this.brandOverrideEvent = vibBrandOverrideApi.eventName || BRAND_OVERRIDE_EVENT;
+    this.handleBrandOverridesChanged = () => {
+      this.cardVisualizers.forEach((visualizer) => {
+        if (!visualizer || typeof visualizer.refreshBrandLayer !== 'function') {
+          return;
+        }
+        visualizer.refreshBrandLayer({ recalcOverrides: true, resetCycle: true });
+      });
+    };
+    window.addEventListener(this.brandOverrideEvent, this.handleBrandOverridesChanged);
     this.loadVIB34DSystems();
   }
 
@@ -178,10 +224,12 @@ class VIB34DContainedCardSystem {
   }
 
   destroy() {
+    window.removeEventListener(this.brandOverrideEvent, this.handleBrandOverridesChanged);
     this.cardVisualizers.forEach(visualizer => visualizer.destroy());
     this.cardVisualizers.clear();
     if (this.observer) {
       this.observer.disconnect();
+      this.observer = null;
     }
   }
 }
@@ -220,6 +268,10 @@ class VIB34DContainedVisualizer {
     this.brandMedia = null;
     this.resizeObserver = null;
     this.layerCanvases = [];
+
+    this.brandOverrideApi = vibBrandOverrideApi;
+    this.brandOverrides = this.brandOverrideApi.collect ? this.brandOverrideApi.collect(this.card) : null;
+    this.assetCycle = 0;
 
     // VIB34D Parameters - Rich parameter sets based on Paul Phillips' system configurations
     this.parameters = this.getVIB34DParametersForSystem(systemType);
@@ -261,6 +313,24 @@ class VIB34DContainedVisualizer {
     this.canvasContainer.className = 'visualizer-shell vib34d-card-container';
     this.canvasContainer.setAttribute('aria-hidden', 'true');
     this.canvasContainer.style.pointerEvents = 'none';
+
+    const pageProfile = window.__CLEAR_SEAS_PAGE_PROFILE || {};
+    const overlaySettings = this.brandOverrideApi.mergeOverlaySettings(pageProfile.overlay || {}, this.brandOverrides ? this.brandOverrides.overlay : null);
+    const canvasSettings = this.brandOverrideApi.mergeCanvasSettings(pageProfile.canvas || {}, this.brandOverrides ? this.brandOverrides.canvas : null);
+    const palette = this.brandOverrideApi.applyPalette(this.brandOverrides, pageProfile.palette || 'foundation');
+
+    this.card.dataset.brandPalette = palette;
+    this.card.style.setProperty('--brand-overlay-opacity', overlaySettings.opacity != null ? String(overlaySettings.opacity) : '1');
+    this.card.style.setProperty('--brand-overlay-filter', overlaySettings.filter || 'brightness(1)');
+    this.card.style.setProperty('--brand-overlay-blend', overlaySettings.blend || 'screen');
+    this.card.style.setProperty('--brand-overlay-rotate', overlaySettings.rotate || '0deg');
+    this.card.style.setProperty('--brand-overlay-depth', overlaySettings.depth || '0px');
+    if (canvasSettings.scale != null) {
+      this.card.style.setProperty('--card-canvas-scale', String(canvasSettings.scale));
+    }
+    if (canvasSettings.depth) {
+      this.card.style.setProperty('--card-canvas-depth', canvasSettings.depth);
+    }
 
     const layerNames = ['background', 'shadow', 'content', 'highlight', 'accent'];
     const containerId = `vib34d-card-${Math.random().toString(36).substr(2, 9)}`;
@@ -312,14 +382,41 @@ class VIB34DContainedVisualizer {
       return null;
     }
 
-    const asset = acquireVibBrandAsset(assetPreference);
-    if (!asset || !asset.src) {
-      return null;
+    const pageProfile = window.__CLEAR_SEAS_PAGE_PROFILE || {};
+    const overlaySettings = this.brandOverrideApi.mergeOverlaySettings(pageProfile.overlay || {}, this.brandOverrides ? this.brandOverrides.overlay : null);
+    const palette = this.brandOverrideApi.applyPalette(this.brandOverrides, pageProfile.palette || 'foundation');
+
+    let asset = null;
+    const cycleIndex = this.assetCycle || 0;
+    if (this.brandOverrides && this.brandOverrideApi.hasAssetList(this.brandOverrides, 'videos')) {
+      const overrideVideo = this.brandOverrideApi.pickAsset(this.brandOverrides, 'videos', cycleIndex, () => null);
+      if (overrideVideo) {
+        asset = { type: 'video', src: overrideVideo };
+      }
+    }
+    if (!asset && this.brandOverrides && this.brandOverrideApi.hasAssetList(this.brandOverrides, 'images')) {
+      const overrideImage = this.brandOverrideApi.pickAsset(this.brandOverrides, 'images', cycleIndex, () => null);
+      if (overrideImage) {
+        asset = { type: 'image', src: overrideImage };
+      }
+    }
+    if (!asset) {
+      const fallback = acquireVibBrandAsset(assetPreference);
+      if (!fallback || !fallback.src) {
+        return null;
+      }
+      asset = fallback;
     }
 
     const host = document.createElement('div');
     host.className = 'visualizer-shell__brand';
     host.dataset.brandType = asset.type;
+    host.dataset.brandPalette = palette;
+    host.style.setProperty('--brand-overlay-opacity', overlaySettings.opacity != null ? String(overlaySettings.opacity) : '1');
+    host.style.setProperty('--brand-overlay-filter', overlaySettings.filter || 'brightness(1)');
+    host.style.setProperty('--brand-overlay-blend', overlaySettings.blend || 'screen');
+    host.style.setProperty('--brand-overlay-rotate', overlaySettings.rotate || '0deg');
+    host.style.setProperty('--brand-overlay-depth', overlaySettings.depth || '0px');
 
     if (!this.card.style.getPropertyValue('--brand-rotation')) {
       this.card.style.setProperty('--brand-rotation', `${(Math.random() * 32 - 16).toFixed(2)}deg`);
@@ -329,7 +426,7 @@ class VIB34DContainedVisualizer {
       host.classList.add('visualizer-shell__brand--video');
       const video = document.createElement('video');
       video.className = 'visualizer-shell__brand-media';
-      video.src = asset.src;
+      video.src = this.resolveMediaSource(asset.src);
       video.muted = true;
       video.loop = true;
       video.autoplay = true;
@@ -343,11 +440,59 @@ class VIB34DContainedVisualizer {
       this.brandMedia = video;
     } else {
       host.classList.add('visualizer-shell__brand--image');
-      host.style.setProperty('--brand-image', `url(${asset.src})`);
+      host.style.setProperty('--brand-image', `url(${this.resolveMediaSource(asset.src)})`);
+      this.brandMedia = null;
     }
 
     this.brandHost = host;
     return host;
+  }
+
+  resolveMediaSource(src) {
+    if (!src) {
+      return '';
+    }
+    const trimmed = String(src).trim();
+    if (/^(?:https?:|data:)/i.test(trimmed)) {
+      return trimmed;
+    }
+    if (trimmed.startsWith('assets/') || trimmed.startsWith('./') || trimmed.startsWith('../')) {
+      return trimmed;
+    }
+    return `./${trimmed.replace(/^\.\/?/, '')}`;
+  }
+
+  refreshBrandLayer(options = {}) {
+    const { recalcOverrides = false, resetCycle = false } = options || {};
+    if (recalcOverrides && this.brandOverrideApi && typeof this.brandOverrideApi.collect === 'function') {
+      this.brandOverrides = this.brandOverrideApi.collect(this.card);
+    }
+    if (resetCycle) {
+      this.assetCycle = 0;
+    }
+    if (this.brandHost && this.brandHost.parentNode) {
+      this.brandHost.parentNode.removeChild(this.brandHost);
+    }
+    if (this.brandMedia) {
+      try {
+        this.brandMedia.pause();
+      } catch (error) {
+        // ignore pause errors
+      }
+      this.brandMedia = null;
+    }
+    this.brandHost = this.attachBrandLayer();
+    if (this.brandHost && this.canvasContainer) {
+      this.canvasContainer.appendChild(this.brandHost);
+    }
+  }
+
+  tryCycleBrand(trigger) {
+    if (!this.brandOverrideApi.shouldCycle(this.brandOverrides, trigger)) {
+      return;
+    }
+    this.assetCycle = this.brandOverrideApi.nextCycleIndex(this.brandOverrides, this.assetCycle);
+    this.refreshBrandLayer();
   }
 
   setupUserInteractions() {
@@ -356,6 +501,7 @@ class VIB34DContainedVisualizer {
       this.mouseState.intensity = 1.0;
       this.focusState.target = Math.max(this.focusState.target, 1.05);
       this.updateVIB34DParameters({ intensity: 1.0 });
+      this.tryCycleBrand('focus');
       if (this.brandMedia) {
         this.brandMedia.play().catch(() => {});
       }
@@ -381,12 +527,14 @@ class VIB34DContainedVisualizer {
     this.card.addEventListener('mouseenter', handleEnter);
     this.card.addEventListener('mouseleave', handleLeave);
     this.card.addEventListener('mousemove', handleMove);
-    this.card.addEventListener('pointerdown', () => {
+    const handlePointerDown = () => {
       this.focusState.pulse = 1;
+      this.tryCycleBrand('click');
       if (this.brandMedia) {
         this.brandMedia.play().catch(() => {});
       }
-    });
+    };
+    this.card.addEventListener('pointerdown', handlePointerDown);
     this.card.addEventListener('focusin', handleEnter);
     this.card.addEventListener('focusout', handleLeave);
 

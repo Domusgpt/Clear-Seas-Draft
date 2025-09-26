@@ -4,6 +4,44 @@
  * Manages canvas creation/destruction and performance optimization
  */
 
+const BRAND_OVERRIDE_EVENT = window.__CLEAR_SEAS_BRAND_OVERRIDE_EVENT || 'clear-seas:brand-overrides-changed';
+
+const fallbackBrandOverrideApi = {
+  collect: () => null,
+  mergeOverlaySettings: (base) => ({ ...(base || {}) }),
+  mergeCanvasSettings: (base) => ({ ...(base || {}) }),
+  resolveMode: (_overrides, fallback) => fallback,
+  pickAsset: (_overrides, _type, index, fallback) => (typeof fallback === 'function' ? fallback(index) : null),
+  shouldCycle: () => false,
+  nextCycleIndex: (_overrides, current) => (Number.isFinite(current) ? current + 1 : 1),
+  applyPalette: (overrides, fallback) => (overrides?.palette || fallback || 'foundation'),
+  hasAssetList: (overrides, type) => {
+    const key = type === 'videos' ? 'videos' : 'images';
+    return Array.isArray(overrides?.[key]) && overrides[key].length > 0;
+  },
+  refresh: (detail) => {
+    const eventDetail = {
+      reason: detail && typeof detail === 'object' && detail.reason ? detail.reason : 'manual-refresh',
+      timestamp: Date.now()
+    };
+    if (detail && typeof detail === 'object') {
+      Object.keys(detail).forEach((key) => {
+        if (key === 'reason') {
+          return;
+        }
+        eventDetail[key] = detail[key];
+      });
+    }
+    window.dispatchEvent(new CustomEvent(BRAND_OVERRIDE_EVENT, { detail: eventDetail }));
+    return [];
+  },
+  eventName: BRAND_OVERRIDE_EVENT
+};
+
+function useBrandOverrideApi() {
+  return window.__CLEAR_SEAS_BRAND_OVERRIDE_API || fallbackBrandOverrideApi;
+}
+
 class CardSystemController {
   constructor() {
     this.visualizerManager = null;
@@ -13,6 +51,20 @@ class CardSystemController {
       maxVisualizers: 6,
       performanceMode: 'auto'
     };
+
+    this.brandOverrideEvent = (useBrandOverrideApi().eventName) || BRAND_OVERRIDE_EVENT;
+    this.handleBrandOverridesChanged = () => {
+      const overridesApi = useBrandOverrideApi();
+      this.cards.forEach((cardData) => {
+        if (!cardData || !cardData.element) {
+          return;
+        }
+        cardData.brandOverrides = overridesApi.collect(cardData.element);
+        cardData.assetCycle = 0;
+        this.refreshBrandAssets(cardData, { keepOverrides: true });
+      });
+    };
+    window.addEventListener(this.brandOverrideEvent, this.handleBrandOverridesChanged);
 
     this.pageProfile = window.__CLEAR_SEAS_PAGE_PROFILE || {
       key: 'core-foundation',
@@ -134,7 +186,10 @@ class CardSystemController {
       console.warn(`⚠️ Card element not found: ${cardId}`);
       return;
     }
-    
+
+    const overridesApi = useBrandOverrideApi();
+    const brandOverrides = overridesApi.collect(cardElement);
+
     const cardData = {
       element: cardElement,
       config: config,
@@ -156,7 +211,9 @@ class CardSystemController {
         overlay: null,
         video: null
       },
-      reactiveElements: []
+      reactiveElements: [],
+      brandOverrides,
+      assetCycle: 0
     };
     
     // Create visualizers for each role
@@ -235,18 +292,22 @@ class CardSystemController {
 
     cardElement.dataset.brandDecorated = 'true';
     cardElement.classList.add('card-brand-enhanced');
-    const overlaySettings = this.pageProfile.overlay || {};
-    cardElement.dataset.brandPalette = this.pageProfile.palette || 'foundation';
+    const overridesApi = useBrandOverrideApi();
+    const overrides = cardData.brandOverrides;
+    const overlaySettings = overridesApi.mergeOverlaySettings(this.pageProfile.overlay || {}, overrides ? overrides.overlay : null);
+    const canvasSettings = overridesApi.mergeCanvasSettings(this.pageProfile.canvas || {}, overrides ? overrides.canvas : null);
+    const palette = overridesApi.applyPalette(overrides, this.pageProfile.palette || 'foundation');
+    cardElement.dataset.brandPalette = palette;
     cardElement.style.setProperty('--brand-overlay-opacity', overlaySettings.opacity != null ? String(overlaySettings.opacity) : '1');
     cardElement.style.setProperty('--brand-overlay-filter', overlaySettings.filter || 'brightness(1)');
     cardElement.style.setProperty('--brand-overlay-blend', overlaySettings.blend || 'screen');
     cardElement.style.setProperty('--brand-overlay-rotate', overlaySettings.rotate || '0deg');
     cardElement.style.setProperty('--brand-overlay-depth', overlaySettings.depth || '0px');
-    if (this.pageProfile.canvas?.scale != null) {
-      cardElement.style.setProperty('--card-canvas-scale', String(this.pageProfile.canvas.scale));
+    if (canvasSettings.scale != null) {
+      cardElement.style.setProperty('--card-canvas-scale', String(canvasSettings.scale));
     }
-    if (this.pageProfile.canvas?.depth) {
-      cardElement.style.setProperty('--card-canvas-depth', this.pageProfile.canvas.depth);
+    if (canvasSettings.depth) {
+      cardElement.style.setProperty('--card-canvas-depth', canvasSettings.depth);
     }
     cardElement.dataset.focusState = cardElement.dataset.focusState || 'idle';
     cardElement.style.setProperty('--scroll-tilt', this.scrollTilt.toFixed(4));
@@ -259,6 +320,8 @@ class CardSystemController {
       cardElement.querySelector('.card-preview') ||
       cardElement.querySelector('.card-visual') ||
       cardElement;
+
+    cardData.brandContainer = targetContainer;
 
     if (targetContainer && !['relative', 'absolute', 'fixed'].includes(getComputedStyle(targetContainer).position)) {
       targetContainer.style.position = 'relative';
@@ -309,30 +372,69 @@ class CardSystemController {
     canvas.style.willChange = 'transform, filter';
   }
 
-  insertBrandOverlay(container, cardData) {
+  insertBrandOverlay(container, cardData, options = {}) {
     if (!container) return;
 
-    const hasOverlay = container.querySelector('.card-brand-overlay');
-    const hasVideo = container.querySelector('.card-brand-video');
+    const force = options.force === true;
+    const existingOverlay = container.querySelector('.card-brand-overlay');
+    const existingVideo = container.querySelector('.card-brand-video');
 
-    if (hasOverlay && hasVideo) {
+    if (!force && existingOverlay && existingVideo) {
       return;
     }
 
-    const overlaySettings = this.pageProfile.overlay || {};
-    const imageSrc = hasOverlay ? null : this.selectAssetWithType(this.brandAssets.images, this.brandAssignmentIndex, 'images');
-    const allowVideo = !hasVideo && this.shouldDecorateWithVideo(cardData);
-    const videoSrc = allowVideo ? this.selectAssetWithType(this.brandAssets.videos, this.brandAssignmentIndex, 'videos') : null;
+    const overridesApi = options.overridesApi || useBrandOverrideApi();
+    const overrides = options.overrides !== undefined ? options.overrides : cardData?.brandOverrides;
+    const overlaySettings = overridesApi.mergeOverlaySettings(this.pageProfile.overlay || {}, overrides ? overrides.overlay : null);
+    const palette = overridesApi.applyPalette(overrides, this.pageProfile.palette || 'foundation');
+
+    const baseVideoPreference = this.shouldDecorateWithVideo(cardData);
+    const preferVideo = overridesApi.resolveMode(overrides, baseVideoPreference);
+    const allowOverlay = force || !existingOverlay;
+    const allowVideo = (force || !existingVideo) && (preferVideo || baseVideoPreference);
+    const cycleIndex = this.brandAssignmentIndex + (cardData?.assetCycle || 0);
+
+    let cachedVideo;
+    let cachedImage;
+    const getVideoCandidate = () => {
+      if (cachedVideo === undefined) {
+        cachedVideo = overridesApi.pickAsset(overrides, 'videos', cycleIndex, (index) => this.selectAssetWithType(this.brandAssets.videos, this.brandAssignmentIndex, 'videos'));
+      }
+      return cachedVideo;
+    };
+    const getImageCandidate = () => {
+      if (cachedImage === undefined) {
+        cachedImage = overridesApi.pickAsset(overrides, 'images', cycleIndex, (index) => this.selectAssetWithType(this.brandAssets.images, this.brandAssignmentIndex, 'images'));
+      }
+      return cachedImage;
+    };
+
+    let videoSrc = null;
+    let imageSrc = null;
+
+    if (preferVideo && allowVideo) {
+      videoSrc = getVideoCandidate();
+    }
+    if (!videoSrc && allowOverlay) {
+      imageSrc = getImageCandidate();
+    }
+    if (!videoSrc && allowVideo) {
+      videoSrc = getVideoCandidate();
+    }
+    if (!imageSrc && allowOverlay) {
+      imageSrc = getImageCandidate();
+    }
+
     let assetApplied = false;
 
-    if (!hasOverlay && imageSrc) {
+    if (allowOverlay && imageSrc) {
       const overlay = document.createElement('div');
       overlay.className = 'card-brand-overlay';
       overlay.style.setProperty('--brand-rotation', `${(Math.random() * 12 - 6).toFixed(2)}deg`);
       overlay.style.backgroundImage = `url('${this.getMediaPath(imageSrc)}')`;
       overlay.setAttribute('aria-hidden', 'true');
       overlay.dataset.focusReactive = 'true';
-      overlay.dataset.brandPalette = this.pageProfile.palette || 'foundation';
+      overlay.dataset.brandPalette = palette;
       overlay.style.setProperty('--brand-overlay-opacity', overlaySettings.opacity != null ? String(overlaySettings.opacity) : '1');
       overlay.style.setProperty('--brand-overlay-filter', overlaySettings.filter || 'brightness(1)');
       overlay.style.setProperty('--brand-overlay-blend', overlaySettings.blend || 'screen');
@@ -345,7 +447,7 @@ class CardSystemController {
       assetApplied = true;
     }
 
-    if (videoSrc) {
+    if (allowVideo && videoSrc) {
       const video = document.createElement('video');
       video.className = 'card-brand-video';
       video.muted = true;
@@ -357,10 +459,12 @@ class CardSystemController {
       video.style.setProperty('--brand-rotation', `${(Math.random() * 10 - 5).toFixed(2)}deg`);
       video.setAttribute('aria-hidden', 'true');
       video.dataset.focusReactive = 'true';
-      video.dataset.brandPalette = this.pageProfile.palette || 'foundation';
+      video.dataset.brandPalette = palette;
       video.style.setProperty('--brand-overlay-opacity', overlaySettings.opacity != null ? String(overlaySettings.opacity) : '1');
       video.style.setProperty('--brand-overlay-filter', overlaySettings.filter || 'brightness(1)');
       video.style.setProperty('--brand-overlay-blend', overlaySettings.blend || 'screen');
+      video.style.setProperty('--brand-overlay-rotate', overlaySettings.rotate || '0deg');
+      video.style.setProperty('--brand-overlay-depth', overlaySettings.depth || '0px');
       video.addEventListener('error', () => {
         if (video.parentElement) {
           video.remove();
@@ -379,7 +483,11 @@ class CardSystemController {
           this.registerReactiveElements(cardData);
         }
       });
-      container.appendChild(video);
+      if (existingOverlay && !force) {
+        container.insertBefore(video, existingOverlay);
+      } else {
+        container.appendChild(video);
+      }
 
       if (cardData) {
         cardData.brandVideo = video;
@@ -394,6 +502,51 @@ class CardSystemController {
         this.registerReactiveElements(cardData);
       }
     }
+  }
+
+  refreshBrandAssets(cardData, options = {}) {
+    if (!cardData) return;
+    const { keepOverrides = false } = options || {};
+    const overridesApi = useBrandOverrideApi();
+    if (!keepOverrides) {
+      cardData.brandOverrides = overridesApi.collect(cardData.element);
+    }
+    const overrides = cardData.brandOverrides;
+    const container = cardData.brandContainer ||
+      cardData.element.querySelector('.visualization-container') ||
+      cardData.element.querySelector('.card-preview') ||
+      cardData.element.querySelector('.card-visual') ||
+      cardData.element;
+    if (!container) {
+      return;
+    }
+    if (cardData.layers?.overlay?.parentElement) {
+      cardData.layers.overlay.remove();
+      cardData.layers.overlay = null;
+    }
+    if (cardData.layers?.video?.parentElement) {
+      cardData.layers.video.remove();
+      cardData.layers.video = null;
+    }
+    if (cardData.brandVideo) {
+      try {
+        cardData.brandVideo.pause();
+      } catch (error) {
+        // ignore pause errors
+      }
+      cardData.brandVideo = null;
+    }
+    this.insertBrandOverlay(container, cardData, { force: true, overridesApi, overrides });
+  }
+
+  advanceCardBrandCycle(cardData, trigger) {
+    if (!cardData) return;
+    const overridesApi = useBrandOverrideApi();
+    if (!overridesApi.shouldCycle(cardData.brandOverrides, trigger)) {
+      return;
+    }
+    cardData.assetCycle = overridesApi.nextCycleIndex(cardData.brandOverrides, cardData.assetCycle);
+    this.refreshBrandAssets(cardData);
   }
 
   registerReactiveElements(cardData) {
@@ -871,6 +1024,8 @@ class CardSystemController {
       cardElement.classList.add('visualizer-active');
       cardElement.dataset.focusState = 'active';
 
+      this.advanceCardBrandCycle(cardData, 'focus');
+
       cardData.pointer.bendTarget = Math.max(cardData.pointer.bendTarget || 0, 0.24);
       cardData.pointer.twistTarget = cardData.pointer.twistTarget || 0;
       cardElement.style.setProperty('--bend-intensity', cardData.pointer.bendTarget.toFixed(3));
@@ -917,6 +1072,8 @@ class CardSystemController {
       const rect = cardElement.getBoundingClientRect();
       const clickX = (e.clientX - rect.left) / rect.width;
       const clickY = (e.clientY - rect.top) / rect.height;
+
+      this.advanceCardBrandCycle(cardData, 'click');
 
       // Trigger click effect on all visualizers
       for (const visualizer of cardData.visualizers.values()) {

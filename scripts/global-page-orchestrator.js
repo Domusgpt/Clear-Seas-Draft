@@ -1,3 +1,5 @@
+const BRAND_OVERRIDE_EVENT = window.__CLEAR_SEAS_BRAND_OVERRIDE_EVENT || 'clear-seas:brand-overrides-changed';
+
 const brandAssets = window.__CLEAR_SEAS_BRAND_ASSETS || (window.__CLEAR_SEAS_BRAND_ASSETS = {
   images: [
     'assets/Screenshot_20250430-141821.png',
@@ -20,6 +22,498 @@ const brandAssets = window.__CLEAR_SEAS_BRAND_ASSETS || (window.__CLEAR_SEAS_BRA
     '1746576068221.mp4'
   ]
 });
+
+const brandOverrideApi = (() => {
+  if (window.__CLEAR_SEAS_BRAND_OVERRIDE_API) {
+    return window.__CLEAR_SEAS_BRAND_OVERRIDE_API;
+  }
+
+  const overlayKeys = new Set(['blend', 'filter', 'opacity', 'rotate', 'depth']);
+  const canvasKeys = new Set(['scale', 'depth']);
+
+  const overrideCache = {
+    source: null,
+    version: 0,
+    marker: 0,
+    signature: null,
+    length: 0,
+    list: []
+  };
+
+  const readArrayMeta = (input) => {
+    if (!input || typeof input !== 'object') {
+      return { version: 0, marker: 0, signature: null };
+    }
+    return {
+      version: Number(input.__version ?? input.version ?? input.__CLEAR_SEAS_VERSION ?? input.__clearSeasVersion ?? 0),
+      marker: Number(input.__clearSeasOverrideMarker ?? 0),
+      signature: typeof input.__signature === 'string' ? input.__signature : null
+    };
+  };
+
+  const computeGlobalOverrides = () => {
+    const source = window.__CLEAR_SEAS_CARD_BRAND_OVERRIDES;
+    if (!Array.isArray(source)) {
+      overrideCache.source = null;
+      overrideCache.version = 0;
+      overrideCache.marker = 0;
+      overrideCache.signature = null;
+      overrideCache.length = 0;
+      overrideCache.list = [];
+      return overrideCache.list;
+    }
+
+    const meta = readArrayMeta(source);
+    if (
+      source !== overrideCache.source ||
+      meta.version !== overrideCache.version ||
+      meta.marker !== overrideCache.marker ||
+      meta.signature !== overrideCache.signature ||
+      source.length !== overrideCache.length
+    ) {
+      overrideCache.list = source.map(normaliseOverrideEntry).filter(Boolean);
+      overrideCache.source = source;
+      overrideCache.version = meta.version;
+      overrideCache.marker = meta.marker;
+      overrideCache.signature = meta.signature;
+      overrideCache.length = source.length;
+    }
+
+    return overrideCache.list;
+  };
+
+  const getGlobalOverrides = () => computeGlobalOverrides();
+
+  const dispatchOverrideEvent = (detail) => {
+    const eventDetail = {
+      reason: detail && typeof detail === 'object' && detail.reason ? detail.reason : 'manual-refresh',
+      timestamp: Date.now()
+    };
+    if (detail && typeof detail === 'object') {
+      Object.keys(detail).forEach((key) => {
+        if (key === 'reason') {
+          return;
+        }
+        eventDetail[key] = detail[key];
+      });
+    }
+    window.dispatchEvent(new CustomEvent(BRAND_OVERRIDE_EVENT, { detail: eventDetail }));
+  };
+
+  const refreshGlobalOverrides = (detail) => {
+    overrideCache.source = null;
+    overrideCache.version = 0;
+    overrideCache.marker = 0;
+    overrideCache.signature = null;
+    overrideCache.length = 0;
+    overrideCache.list = [];
+    const overrides = computeGlobalOverrides();
+    dispatchOverrideEvent(detail);
+    return overrides;
+  };
+
+  const parseList = (value) => {
+    if (!value) {
+      return [];
+    }
+    if (Array.isArray(value)) {
+      return value
+        .map((item) => (typeof item === 'string' ? item.trim() : ''))
+        .filter(Boolean);
+    }
+    return String(value)
+      .split(/[\n,]+/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+  };
+
+  const sanitiseOverlay = (input) => {
+    if (!input || typeof input !== 'object') {
+      return null;
+    }
+    const result = {};
+    overlayKeys.forEach((key) => {
+      if (Object.prototype.hasOwnProperty.call(input, key)) {
+        const value = input[key];
+        if (value == null || value === '') {
+          return;
+        }
+        if (key === 'opacity') {
+          const numeric = Number(value);
+          if (Number.isFinite(numeric)) {
+            result.opacity = numeric;
+          }
+        } else {
+          result[key] = String(value);
+        }
+      }
+    });
+    return Object.keys(result).length ? result : null;
+  };
+
+  const sanitiseCanvas = (input) => {
+    if (!input || typeof input !== 'object') {
+      return null;
+    }
+    const result = {};
+    canvasKeys.forEach((key) => {
+      if (Object.prototype.hasOwnProperty.call(input, key)) {
+        const value = input[key];
+        if (value == null || value === '') {
+          return;
+        }
+        if (key === 'scale') {
+          const numeric = Number(value);
+          if (Number.isFinite(numeric)) {
+            result.scale = numeric;
+          }
+        } else {
+          result[key] = String(value);
+        }
+      }
+    });
+    return Object.keys(result).length ? result : null;
+  };
+
+  const normaliseCycleTriggers = (entry) => {
+    const triggers = new Set();
+    const append = (value) => {
+      const key = String(value || '').trim().toLowerCase();
+      if (!key) {
+        return;
+      }
+      if (key === 'focus' || key === 'hover') {
+        triggers.add('focus');
+      } else if (key === 'click' || key === 'press') {
+        triggers.add('click');
+      } else if (key === 'interaction' || key === 'cycle') {
+        triggers.add('interaction');
+      }
+    };
+    if (!entry) {
+      return triggers;
+    }
+    if (Array.isArray(entry)) {
+      entry.forEach(append);
+    } else if (entry instanceof Set) {
+      entry.forEach(append);
+    } else {
+      parseList(entry).forEach(append);
+    }
+    if (entry && typeof entry === 'object') {
+      if (entry.cycleOnFocus) {
+        append('focus');
+      }
+      if (entry.cycleOnClick) {
+        append('click');
+      }
+    }
+    return triggers;
+  };
+
+  const normaliseOverrideEntry = (entry) => {
+    if (!entry || typeof entry !== 'object') {
+      return null;
+    }
+    const normalised = {};
+    if (entry.selector) {
+      normalised.selector = String(entry.selector);
+    }
+    if (entry.exclude || entry.excludes) {
+      normalised.exclude = String(entry.exclude || entry.excludes);
+    }
+    if (typeof entry.mode === 'string') {
+      const mode = entry.mode.trim().toLowerCase();
+      if (mode === 'video' || mode === 'image' || mode === 'auto') {
+        normalised.mode = mode;
+      }
+    }
+    if (entry.palette) {
+      normalised.palette = String(entry.palette);
+    }
+    if (entry.seedOffset != null) {
+      const offset = Number(entry.seedOffset);
+      if (Number.isFinite(offset)) {
+        normalised.seedOffset = Math.trunc(offset);
+      }
+    }
+    const images = parseList(entry.images || entry.image || entry.assets);
+    if (images.length) {
+      normalised.images = images;
+    }
+    const videos = parseList(entry.videos || entry.video);
+    if (videos.length) {
+      normalised.videos = videos;
+    }
+    const overlay = sanitiseOverlay(entry.overlay || entry.brandOverlay);
+    if (overlay) {
+      normalised.overlay = overlay;
+    }
+    const canvas = sanitiseCanvas(entry.canvas || entry.brandCanvas);
+    if (canvas) {
+      normalised.canvas = canvas;
+    }
+    const triggers = normaliseCycleTriggers(entry.cycle || entry.cycles || entry.cycleTriggers);
+    if (triggers.size) {
+      normalised.cycleTriggers = triggers;
+    }
+    if (entry.cycleStep != null) {
+      const step = Number(entry.cycleStep);
+      if (Number.isFinite(step)) {
+        normalised.cycleStep = step;
+      }
+    }
+    return normalised;
+  };
+
+  const mergeOverride = (target, source) => {
+    if (!source) {
+      return target;
+    }
+    if (source.mode) {
+      target.mode = source.mode;
+    }
+    if (source.palette) {
+      target.palette = source.palette;
+    }
+    if (source.seedOffset != null) {
+      target.seedOffset = (target.seedOffset || 0) + source.seedOffset;
+    }
+    if (Array.isArray(source.images) && source.images.length) {
+      target.images = (target.images || []).concat(source.images);
+    }
+    if (Array.isArray(source.videos) && source.videos.length) {
+      target.videos = (target.videos || []).concat(source.videos);
+    }
+    if (source.overlay) {
+      target.overlay = { ...(target.overlay || {}), ...source.overlay };
+    }
+    if (source.canvas) {
+      target.canvas = { ...(target.canvas || {}), ...source.canvas };
+    }
+    if (source.cycleTriggers instanceof Set && source.cycleTriggers.size) {
+      if (!(target.cycleTriggers instanceof Set)) {
+        target.cycleTriggers = new Set();
+      }
+      source.cycleTriggers.forEach((trigger) => target.cycleTriggers.add(trigger));
+    }
+    if (source.cycleStep != null && Number.isFinite(source.cycleStep)) {
+      target.cycleStep = Number(source.cycleStep);
+    }
+    return target;
+  };
+
+  const parseDatasetOverride = (element) => {
+    if (!(element instanceof HTMLElement)) {
+      return null;
+    }
+    const { dataset } = element;
+    if (!dataset) {
+      return null;
+    }
+    const override = {};
+    const modeValue = dataset.brandMode || dataset.brandAssetMode;
+    if (modeValue) {
+      const mode = modeValue.trim().toLowerCase();
+      if (mode === 'video' || mode === 'image' || mode === 'auto') {
+        override.mode = mode;
+      }
+    }
+    if (dataset.brandPalette) {
+      override.palette = dataset.brandPalette.trim();
+    }
+    if (dataset.brandSeedOffset != null || dataset.brandSeed != null) {
+      const offsetValue = dataset.brandSeedOffset ?? dataset.brandSeed;
+      const offset = Number(offsetValue);
+      if (Number.isFinite(offset)) {
+        override.seedOffset = Math.trunc(offset);
+      }
+    }
+    const imageList = parseList(dataset.brandImages || dataset.brandImageSrc || dataset.brandImage);
+    if (imageList.length) {
+      override.images = imageList;
+    }
+    const videoList = parseList(dataset.brandVideos || dataset.brandVideoSrc || dataset.brandVideoUrl);
+    if (videoList.length) {
+      override.videos = videoList;
+    }
+    const overlay = sanitiseOverlay({
+      blend: dataset.brandOverlayBlend,
+      filter: dataset.brandOverlayFilter,
+      opacity: dataset.brandOverlayOpacity,
+      rotate: dataset.brandOverlayRotate,
+      depth: dataset.brandOverlayDepth
+    });
+    if (overlay) {
+      override.overlay = overlay;
+    }
+    const canvas = sanitiseCanvas({
+      scale: dataset.cardCanvasScale,
+      depth: dataset.cardCanvasDepth
+    });
+    if (canvas) {
+      override.canvas = canvas;
+    }
+    const triggers = normaliseCycleTriggers([
+      dataset.brandCycle,
+      dataset.brandCycleOnFocus === 'true' ? 'focus' : '',
+      dataset.brandCycleOnClick === 'true' ? 'click' : ''
+    ]);
+    if (triggers.size) {
+      override.cycleTriggers = triggers;
+    }
+    if (dataset.brandCycleStep != null) {
+      const step = Number(dataset.brandCycleStep);
+      if (Number.isFinite(step)) {
+        override.cycleStep = step;
+      }
+    }
+    const hasContent = Boolean(
+      override.mode ||
+      override.palette ||
+      override.seedOffset != null ||
+      (override.images && override.images.length) ||
+      (override.videos && override.videos.length) ||
+      override.overlay ||
+      override.canvas ||
+      (override.cycleTriggers && override.cycleTriggers.size)
+    );
+    return hasContent ? override : null;
+  };
+
+  const collect = (element) => {
+    if (!(element instanceof HTMLElement)) {
+      return null;
+    }
+    const aggregate = {};
+    const globalOverrides = getGlobalOverrides();
+    globalOverrides.forEach((entry) => {
+      if (entry.selector && !element.matches(entry.selector)) {
+        return;
+      }
+      if (entry.exclude && element.matches(entry.exclude)) {
+        return;
+      }
+      mergeOverride(aggregate, entry);
+    });
+    mergeOverride(aggregate, parseDatasetOverride(element));
+    const hasContent = Boolean(
+      aggregate.mode ||
+      aggregate.palette ||
+      aggregate.seedOffset != null ||
+      (aggregate.images && aggregate.images.length) ||
+      (aggregate.videos && aggregate.videos.length) ||
+      aggregate.overlay ||
+      aggregate.canvas ||
+      (aggregate.cycleTriggers && aggregate.cycleTriggers.size)
+    );
+    if (!hasContent) {
+      return null;
+    }
+    if (aggregate.images) {
+      aggregate.images = Array.from(new Set(aggregate.images));
+    }
+    if (aggregate.videos) {
+      aggregate.videos = Array.from(new Set(aggregate.videos));
+    }
+    return aggregate;
+  };
+
+  const mergeOverlaySettings = (base, override) => {
+    const result = { ...(base || {}) };
+    if (override) {
+      overlayKeys.forEach((key) => {
+        if (Object.prototype.hasOwnProperty.call(override, key) && override[key] != null) {
+          result[key] = override[key];
+        }
+      });
+    }
+    return result;
+  };
+
+  const mergeCanvasSettings = (base, override) => {
+    const result = { ...(base || {}) };
+    if (override) {
+      canvasKeys.forEach((key) => {
+        if (Object.prototype.hasOwnProperty.call(override, key) && override[key] != null) {
+          result[key] = override[key];
+        }
+      });
+    }
+    return result;
+  };
+
+  const resolveMode = (overrides, fallback) => {
+    if (!overrides || !overrides.mode || overrides.mode === 'auto') {
+      return fallback;
+    }
+    if (overrides.mode === 'video') {
+      return true;
+    }
+    if (overrides.mode === 'image') {
+      return false;
+    }
+    return fallback;
+  };
+
+  const applyPalette = (overrides, fallback) => {
+    if (overrides && overrides.palette) {
+      return overrides.palette;
+    }
+    return fallback;
+  };
+
+  const pickAsset = (overrides, type, index, fallback) => {
+    const listKey = type === 'videos' ? 'videos' : 'images';
+    const list = overrides && overrides[listKey];
+    const seedOffset = overrides && overrides.seedOffset ? overrides.seedOffset : 0;
+    const effectiveIndex = Number.isFinite(index) ? index + seedOffset : seedOffset;
+    if (Array.isArray(list) && list.length) {
+      const position = ((effectiveIndex % list.length) + list.length) % list.length;
+      return list[position] || null;
+    }
+    if (typeof fallback === 'function') {
+      return fallback(effectiveIndex);
+    }
+    return null;
+  };
+
+  const shouldCycle = (overrides, trigger) => {
+    if (!overrides || !(overrides.cycleTriggers instanceof Set)) {
+      return false;
+    }
+    const key = trigger === 'hover' ? 'focus' : trigger;
+    return overrides.cycleTriggers.has(key);
+  };
+
+  const nextCycleIndex = (overrides, current) => {
+    const step = overrides && Number.isFinite(overrides.cycleStep) ? overrides.cycleStep : 1;
+    return (Number.isFinite(current) ? current : 0) + step;
+  };
+
+  const hasAssetList = (overrides, type) => {
+    const listKey = type === 'videos' ? 'videos' : 'images';
+    return Array.isArray(overrides?.[listKey]) && overrides[listKey].length > 0;
+  };
+
+  const api = {
+    collect,
+    mergeOverlaySettings,
+    mergeCanvasSettings,
+    resolveMode,
+    pickAsset,
+    shouldCycle,
+    nextCycleIndex,
+    applyPalette,
+    hasAssetList,
+    refresh: refreshGlobalOverrides,
+    eventName: BRAND_OVERRIDE_EVENT
+  };
+
+  window.__CLEAR_SEAS_BRAND_OVERRIDE_EVENT = BRAND_OVERRIDE_EVENT;
+  window.__CLEAR_SEAS_BRAND_OVERRIDE_API = api;
+  return api;
+})();
 
 const pageCollectionProfiles = [
   {
@@ -245,6 +739,24 @@ function preparePageProfile(profile) {
 const stylesLoaded = new Set();
 const scriptsLoaded = new Map();
 const cardStates = new Map();
+
+function refreshAllCardOverrides(options = {}) {
+  const { resetCycle = false } = options || {};
+  cardStates.forEach((state) => {
+    if (!state || !state.element) {
+      return;
+    }
+    state.overrides = brandOverrideApi.collect(state.element);
+    if (resetCycle) {
+      state.assetCycle = 0;
+    }
+    state.overlay = ensureBrandLayer(state);
+  });
+}
+
+window.addEventListener(BRAND_OVERRIDE_EVENT, () => {
+  refreshAllCardOverrides({ resetCycle: true });
+});
 const groupStates = new Map();
 let activeCardState = null;
 let rafId = null;
@@ -496,26 +1008,49 @@ function ensureBrandLayer(state) {
     state.brandVideo = existingVideo;
   }
 
-  const overlaySettings = activePageProfile.overlay || {};
+  const overlaySettings = brandOverrideApi.mergeOverlaySettings(
+    activePageProfile.overlay || {},
+    state.overrides ? state.overrides.overlay : null
+  );
 
-  card.dataset.brandPalette = activePageProfile.palette;
+  const canvasSettings = brandOverrideApi.mergeCanvasSettings(
+    activePageProfile.canvas || {},
+    state.overrides ? state.overrides.canvas : null
+  );
+
+  const palette = brandOverrideApi.applyPalette(state.overrides, activePageProfile.palette);
+  card.dataset.brandPalette = palette;
   card.style.setProperty('--brand-overlay-opacity', overlaySettings.opacity != null ? String(overlaySettings.opacity) : '1');
   card.style.setProperty('--brand-overlay-filter', overlaySettings.filter || 'brightness(1)');
   card.style.setProperty('--brand-overlay-blend', overlaySettings.blend || 'screen');
   card.style.setProperty('--brand-overlay-rotate', overlaySettings.rotate || '0deg');
   card.style.setProperty('--brand-overlay-depth', overlaySettings.depth || '0px');
-  if (activePageProfile.canvas?.scale != null) {
-    card.style.setProperty('--card-canvas-scale', String(activePageProfile.canvas.scale));
+  if (canvasSettings.scale != null) {
+    card.style.setProperty('--card-canvas-scale', String(canvasSettings.scale));
   }
-  if (activePageProfile.canvas?.depth) {
-    card.style.setProperty('--card-canvas-depth', activePageProfile.canvas.depth);
+  if (canvasSettings.depth) {
+    card.style.setProperty('--card-canvas-depth', canvasSettings.depth);
   }
 
-  const preferVideo = shouldPreferVideo(state);
-  const videoSource = preferVideo ? pickBrandVideo(state.index) : null;
+  const preferVideo = brandOverrideApi.resolveMode(state.overrides, shouldPreferVideo(state));
+  const cycleIndex = state.index + (state.assetCycle || 0);
+  let videoSource = null;
+  let imageSource = null;
+
+  if (preferVideo) {
+    videoSource = brandOverrideApi.pickAsset(state.overrides, 'videos', cycleIndex, (index) => pickBrandVideo(index));
+    if (!videoSource) {
+      imageSource = brandOverrideApi.pickAsset(state.overrides, 'images', cycleIndex, (index) => pickBrandImage(index));
+    }
+  } else {
+    imageSource = brandOverrideApi.pickAsset(state.overrides, 'images', cycleIndex, (index) => pickBrandImage(index));
+    if (!imageSource) {
+      videoSource = brandOverrideApi.pickAsset(state.overrides, 'videos', cycleIndex, (index) => pickBrandVideo(index));
+    }
+  }
 
   overlay.dataset.brandIndex = state.index;
-  overlay.dataset.brandPalette = activePageProfile.palette;
+  overlay.dataset.brandPalette = palette;
   overlay.style.setProperty('--brand-overlay-opacity', overlaySettings.opacity != null ? String(overlaySettings.opacity) : '1');
   overlay.style.setProperty('--brand-overlay-filter', overlaySettings.filter || 'brightness(1)');
   overlay.style.setProperty('--brand-overlay-blend', overlaySettings.blend || 'screen');
@@ -561,7 +1096,6 @@ function ensureBrandLayer(state) {
       }
     }
     overlay.innerHTML = '';
-    const imageSource = pickBrandImage(state.index);
     if (imageSource) {
       overlay.style.backgroundImage = `url('${imageSource}')`;
     } else {
@@ -674,9 +1208,12 @@ function syncGroupAssociation(state) {
 function createState(element, index) {
   element.classList.add('global-visualizer-card');
   element.dataset.globalCardSynergy = 'applied';
+  const overrides = brandOverrideApi.collect(element);
   const state = {
     element,
     index,
+    overrides,
+    assetCycle: 0,
     pointer: {
       targetX: 0.5,
       targetY: 0.5,
@@ -832,6 +1369,10 @@ function handlePointerEnter(state, event) {
   state.focus.target = 1;
   state.element.dataset.hasFocus = 'true';
   state.element.dataset.interactionActive = 'true';
+  if (brandOverrideApi.shouldCycle(state.overrides, 'focus')) {
+    state.assetCycle = brandOverrideApi.nextCycleIndex(state.overrides, state.assetCycle);
+    state.overlay = ensureBrandLayer(state);
+  }
   if (state.group) {
     const groupState = groupStates.get(state.group);
     if (groupState) {
@@ -901,6 +1442,10 @@ function handlePointerLeave(state) {
 }
 
 function handleClick(state) {
+  if (brandOverrideApi.shouldCycle(state.overrides, 'click')) {
+    state.assetCycle = brandOverrideApi.nextCycleIndex(state.overrides, state.assetCycle);
+    state.overlay = ensureBrandLayer(state);
+  }
   state.pulse.target = 1;
   requestTick();
 }
