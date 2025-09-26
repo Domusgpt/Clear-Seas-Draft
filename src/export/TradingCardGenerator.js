@@ -365,6 +365,8 @@ export class TradingCardGenerator {
             --mouse-x: 50%;
             --mouse-y: 50%;
             --bend-intensity: 0;
+            --scroll-tilt: 0;
+            --visualizer-scroll-tilt: 0;
         }
         
         .trading-card:hover {
@@ -482,13 +484,13 @@ export class TradingCardGenerator {
         /* GALLERY-STYLE: Card preview expands and tilts based on mouse position */
         .trading-card:hover .card-preview {
             /* Match gallery card preview behavior exactly */
-            transform: 
+            transform:
                 perspective(1000px)
                 translateZ(30px)
                 scale(1.1)
-                rotateY(calc((var(--mouse-x) - 50) * 0.2deg))
-                rotateX(calc((var(--mouse-y) - 50) * 0.15deg));
-            box-shadow: 
+                rotateY(calc((var(--mouse-x) - 50) * 0.2deg + var(--scroll-tilt, var(--visualizer-scroll-tilt, 0)) * 4deg))
+                rotateX(calc((var(--mouse-y) - 50) * 0.15deg - var(--scroll-tilt, var(--visualizer-scroll-tilt, 0)) * 6deg));
+            box-shadow:
                 0 0 50px rgba(0, 255, 255, 0.6),
                 0 0 100px rgba(255, 0, 255, 0.4),
                 inset 0 0 20px rgba(255, 255, 255, 0.1);
@@ -506,15 +508,28 @@ export class TradingCardGenerator {
             height: 100%;
             position: relative;
             border-radius: 12px;
-            overflow: hidden;
+            overflow: visible;
             background: #000;
+            transform-style: preserve-3d;
+            --visualizer-scroll-tilt: var(--scroll-tilt);
         }
-        
+
         .visualizer-canvas {
-            width: 100%;
-            height: 100%;
-            display: block;
-            border-radius: 10px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 130%;
+            height: 130%;
+            transform: translate(-50%, -50%) scale(1.12)
+                rotateX(calc(var(--visualizer-scroll-tilt, var(--scroll-tilt, 0)) * -5deg))
+                rotateY(calc(var(--visualizer-scroll-tilt, var(--scroll-tilt, 0)) * 2.5deg));
+            transform-origin: center;
+            border-radius: 16px;
+            filter: saturate(1.1) brightness(1.05);
+            pointer-events: none;
+            box-shadow:
+                0 0 45px rgba(0, 255, 255, 0.25),
+                0 0 85px rgba(255, 0, 255, 0.18);
         }
         
         .stats-panel {
@@ -805,6 +820,8 @@ export class TradingCardGenerator {
             display: flex;
             box-shadow: 0 0 40px hsla(${state.hue}, 80%, 50%, 0.3);
             animation: cardPulse 4s ease-in-out infinite alternate;
+            --scroll-tilt: 0;
+            --visualizer-scroll-tilt: 0;
         }
         
         @keyframes cardPulse {
@@ -816,20 +833,38 @@ export class TradingCardGenerator {
             flex: 1;
             position: relative;
             background: radial-gradient(ellipse at center, hsla(${state.hue}, 80%, 50%, 0.1), rgba(0, 0, 0, 0.8));
+            overflow: visible;
+            transform-style: preserve-3d;
+            --visualizer-scroll-tilt: var(--scroll-tilt);
         }
-        
+
         .visualizer-canvas {
-            width: 100%;
-            height: 100%;
-            display: block;
-            border-radius: 10px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 135%;
+            height: 135%;
+            transform: translate(-50%, -50%) scale(1.08)
+                rotateX(calc(var(--visualizer-scroll-tilt, var(--scroll-tilt, 0)) * -4deg))
+                rotateY(calc(var(--visualizer-scroll-tilt, var(--scroll-tilt, 0)) * 2deg));
+            transform-origin: center;
+            border-radius: 18px;
+            pointer-events: none;
+            box-shadow:
+                0 0 45px rgba(0, 255, 255, 0.25),
+                0 0 90px rgba(255, 0, 255, 0.18);
         }
         
         .visualizer-container img {
-            width: 100%;
-            height: 100%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 135%;
+            height: 135%;
+            transform: translate(-50%, -50%) scale(1.08);
             object-fit: cover;
-            border-radius: 10px;
+            border-radius: 18px;
+            pointer-events: none;
         }
         
         .card-info {
