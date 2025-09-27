@@ -1,6 +1,7 @@
 /**
- * VIB34D DEVICE TILT TO 4D ROTATION SYSTEM
- * Maps device orientation to 4D rotation parameters for immersive interaction
+ * VIB34D GEOMETRIC TILT WINDOW SYSTEM
+ * Creates "angled window" effect where device tilt matches visual grid rotation
+ * Plus 4D depth changes based on viewing angle through the tilted window
  */
 
 export class DeviceTiltHandler {
@@ -8,25 +9,20 @@ export class DeviceTiltHandler {
         this.isEnabled = false;
         this.isSupported = false;
         this.sensitivity = 1.0;
-        this.smoothing = 0.1; // Smoothing factor (0-1, lower = smoother)
-        this.dramaticMode = false; // 🚀 NEW: Dramatic tilting mode
+        this.smoothing = 0.15; // Slightly more smoothing for geometric effects
         
-        // Current device orientation (radians)
+        // Current device orientation (degrees for easier geometric calculations)
         this.currentTilt = {
             alpha: 0, // Z-axis rotation (compass heading)
             beta: 0,  // X-axis rotation (front-back tilt)  
             gamma: 0  // Y-axis rotation (left-right tilt)
         };
         
-        // 🚀 DRAMATIC TILTING: Track tilt intensity for extreme effects
-        this.tiltIntensity = 0;
-        this.extremeTilt = false;
-        
-        // Smoothed 4D rotation values
-        this.smoothedRotation = {
-            rot4dXW: 0,
-            rot4dYW: 0,
-            rot4dZW: 0
+        // Smoothed values for smooth visual transitions
+        this.smoothedTilt = {
+            alpha: 0,
+            beta: 0,
+            gamma: 0
         };
         
         // Base rotation values (from presets/manual control)
@@ -36,54 +32,176 @@ export class DeviceTiltHandler {
             rot4dZW: 0
         };
         
-        // Mapping configuration
-        this.mapping = {
-            // 🔷 NORMAL MODE: Conservative mapping (original behavior)
-            normal: {
-                // Device beta (front-back tilt) -> 4D XW rotation
-                betaToXW: {
-                    scale: 0.01, // Radians per degree of device tilt
-                    range: [-45, 45], // Degrees of device tilt to use
-                    clamp: [-1.5, 1.5] // 4D rotation limits (radians)
-                },
-                // Device gamma (left-right tilt) -> 4D YW rotation  
-                gammaToYW: {
-                    scale: 0.015,
-                    range: [-30, 30],
-                    clamp: [-1.5, 1.5]
-                },
-                // Device alpha (compass heading) -> 4D ZW rotation
-                alphaToZW: {
-                    scale: 0.008,
-                    range: [-180, 180],
-                    clamp: [-2.0, 2.0]
-                }
-            },
-            
-            // 🚀 DRAMATIC MODE: 8x more sensitive with extended range
-            dramatic: {
-                // Device beta (front-back tilt) -> 4D XW rotation
-                betaToXW: {
-                    scale: 0.08, // 8x more sensitive!
-                    range: [-120, 120], // Extended range for dramatic effects
-                    clamp: [-6.0, 6.0] // Much wider 4D rotation limits
-                },
-                // Device gamma (left-right tilt) -> 4D YW rotation  
-                gammaToYW: {
-                    scale: 0.12, // 8x more sensitive!
-                    range: [-120, 120], // Extended range
-                    clamp: [-6.0, 6.0]
-                },
-                // Device alpha (compass heading) -> 4D ZW rotation
-                alphaToZW: {
-                    scale: 0.064, // 8x more sensitive!
-                    range: [-180, 180],
-                    clamp: [-6.0, 6.0]
-                }
-            }
+        // Base parameters for restoration
+        this.baseParameters = {
+            dimension: 3.5,
+            morphFactor: 1.0,
+            chaos: 0.2,
+            intensity: 0.8,
+            gridDensity: 15
         };
         
         this.boundHandleDeviceOrientation = this.handleDeviceOrientation.bind(this);
+    }
+    
+    /**
+     * 🌐 GEOMETRIC TILT WINDOW SYSTEM
+     * Maps device tilt to visual rotation + 4D depth exploration
+     */
+    calculateGeometricWindow(alpha, beta, gamma) {
+        // Convert to degrees for easier geometric calculations
+        const alphaDeg = alpha;
+        const betaDeg = beta;  
+        const gammaDeg = gamma;
+        
+        // 1. CALCULATE TILT INTENSITY (how far from level)
+        const tiltIntensity = Math.sqrt(betaDeg*betaDeg + gammaDeg*gammaDeg) / 90; // 0-1+ range
+        const extremeTilt = tiltIntensity > 0.7;
+        
+        // 2. VISUAL ROTATION MATCHING (1:1 with device tilt)
+        const visualRotation = {
+            // Device tilts physically match visual grid rotation
+            rotateX: betaDeg * 0.8,  // Front-back tilt → X-axis visual rotation
+            rotateY: alphaDeg * 0.2, // Compass → slight Y-axis rotation  
+            rotateZ: gammaDeg * 0.8  // Left-right tilt → Z-axis visual rotation
+        };
+        
+        // 3. WINDOW DEPTH PROGRESSION (more tilt = deeper into 4D)
+        const windowDepth = {
+            // Tilt intensity determines how "deep" through window you're looking
+            depthMultiplier: 1 + tiltIntensity * 2.5, // 1x to 3.5x depth
+            
+            // 4D parameters based on window depth
+            dimension: this.baseParameters.dimension + tiltIntensity * 1.8, // 3.5 to 5.3
+            morphFactor: this.baseParameters.morphFactor + tiltIntensity * 1.2, // More morph when deeper
+            chaos: Math.min(0.9, this.baseParameters.chaos + (tiltIntensity * tiltIntensity) * 0.6), // Quadratic chaos increase
+            intensity: Math.min(1.0, this.baseParameters.intensity + tiltIntensity * 0.3), // Brighter when deeper
+            gridDensity: this.baseParameters.gridDensity * (1 + tiltIntensity * 0.8) // More detail when deeper
+        };
+        
+        // 4. 4D ROTATION BASED ON VIEWING ANGLE
+        const viewingAngle4D = {
+            // Combine base rotation with tilt-based 4D exploration
+            rot4dXW: this.baseRotation.rot4dXW + (betaDeg * Math.PI / 180) * 0.025 * windowDepth.depthMultiplier,
+            rot4dYW: this.baseRotation.rot4dYW + (gammaDeg * Math.PI / 180) * 0.035 * windowDepth.depthMultiplier,  
+            rot4dZW: this.baseRotation.rot4dZW + (alphaDeg * Math.PI / 180) * 0.015 * windowDepth.depthMultiplier
+        };
+        
+        // 5. PERSPECTIVE DISTORTION EFFECTS
+        const perspectiveEffects = {
+            // Grid scaling based on viewing angle (like looking through thick glass)
+            scaleX: 1 + Math.abs(gammaDeg) / 300, // Horizontal tilt → horizontal stretch
+            scaleY: 1 + Math.abs(betaDeg) / 300,  // Vertical tilt → vertical stretch
+            
+            // Edge complexity (extreme angles show more detail)
+            edgeComplexity: extremeTilt ? 0.4 : 0,
+            
+            // Visual filters for angled viewing
+            brightness: 1 + tiltIntensity * 0.15,
+            contrast: 1 + tiltIntensity * 0.1
+        };
+        
+        return {
+            tiltIntensity,
+            extremeTilt,
+            visualRotation,
+            windowDepth,
+            viewingAngle4D,
+            perspectiveEffects
+        };
+    }
+    
+    /**
+     * Apply geometric window effects to the visualization
+     */
+    applyGeometricWindow(windowData) {
+        const { visualRotation, windowDepth, viewingAngle4D, perspectiveEffects, tiltIntensity } = windowData;
+        
+        // 1. Calculate dynamic scaling to fill perspective view (prevents background showing)
+        const tiltScale = 1 + (tiltIntensity * 0.6); // 1.0x to 1.6x scaling based on tilt intensity
+        const maxTilt = Math.max(Math.abs(visualRotation.rotateX), Math.abs(visualRotation.rotateZ));
+        const clampedScale = Math.min(tiltScale, 1.8); // Cap at 1.8x to avoid too much zoom
+        
+        // 2. Apply visual CSS rotation with dynamic scaling to match device tilt
+        const canvases = document.querySelectorAll('canvas');
+        canvases.forEach(canvas => {
+            if (canvas) {
+                // Limit tilt angles to prevent edge-on view
+                const clampedRotateX = Math.max(-45, Math.min(45, visualRotation.rotateX));
+                const clampedRotateZ = Math.max(-45, Math.min(45, visualRotation.rotateZ));
+                
+                canvas.style.transform = `
+                    perspective(1500px)
+                    rotateX(${clampedRotateX}deg) 
+                    rotateY(${visualRotation.rotateY}deg) 
+                    rotateZ(${clampedRotateZ}deg)
+                    scale3d(${clampedScale * perspectiveEffects.scaleX}, ${clampedScale * perspectiveEffects.scaleY}, 1)
+                `;
+                canvas.style.filter = `
+                    brightness(${perspectiveEffects.brightness}) 
+                    contrast(${perspectiveEffects.contrast})
+                `;
+            }
+        });
+        
+        // 3. Add dark background overlay when tilting to hide any gaps
+        const portalWindow = document.getElementById('portalWindow');
+        if (portalWindow) {
+            if (tiltIntensity > 0.3) {
+                portalWindow.style.backgroundColor = 'rgba(0, 0, 0, 0.1)';
+            } else {
+                portalWindow.style.backgroundColor = 'transparent';
+            }
+        }
+        
+        // 2. Update 4D rotation parameters
+        if (window.updateParameter) {
+            window.updateParameter('rot4dXW', viewingAngle4D.rot4dXW);
+            window.updateParameter('rot4dYW', viewingAngle4D.rot4dYW);
+            window.updateParameter('rot4dZW', viewingAngle4D.rot4dZW);
+        }
+        
+        // 3. Update window depth parameters
+        if (window.updateParameter) {
+            window.updateParameter('dimension', windowDepth.dimension);
+            window.updateParameter('morphFactor', windowDepth.morphFactor);
+            window.updateParameter('chaos', windowDepth.chaos);
+            window.updateParameter('intensity', windowDepth.intensity);
+            window.updateParameter('gridDensity', windowDepth.gridDensity);
+        }
+        
+        // 4. Update body class for CSS effects
+        document.body.classList.toggle('extreme-tilt', windowData.extremeTilt);
+        document.body.classList.toggle('geometric-tilt-active', windowData.tiltIntensity > 0.1);
+    }
+    
+    /**
+     * Reset visual effects to normal
+     */
+    resetGeometricWindow() {
+        // Reset canvas transforms
+        const canvases = document.querySelectorAll('canvas');
+        canvases.forEach(canvas => {
+            if (canvas) {
+                canvas.style.transform = '';
+                canvas.style.filter = '';
+            }
+        });
+        
+        // Reset parameters to base values
+        if (window.updateParameter) {
+            window.updateParameter('rot4dXW', this.baseRotation.rot4dXW);
+            window.updateParameter('rot4dYW', this.baseRotation.rot4dYW);
+            window.updateParameter('rot4dZW', this.baseRotation.rot4dZW);
+            window.updateParameter('dimension', this.baseParameters.dimension);
+            window.updateParameter('morphFactor', this.baseParameters.morphFactor);
+            window.updateParameter('chaos', this.baseParameters.chaos);
+            window.updateParameter('intensity', this.baseParameters.intensity);
+            window.updateParameter('gridDensity', this.baseParameters.gridDensity);
+        }
+        
+        // Remove CSS classes
+        document.body.classList.remove('extreme-tilt', 'geometric-tilt-active');
     }
     
     /**
@@ -93,17 +211,17 @@ export class DeviceTiltHandler {
         this.isSupported = 'DeviceOrientationEvent' in window;
         
         if (!this.isSupported) {
-            console.warn('🎯 DEVICE TILT: Not supported on this device/browser');
+            console.warn('🌐 GEOMETRIC TILT WINDOW: Not supported on this device/browser');
             return false;
         }
         
         // Check for iOS 13+ permission requirement
         if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-            console.log('🎯 DEVICE TILT: iOS device detected - permission required');
+            console.log('🌐 GEOMETRIC TILT WINDOW: iOS device detected - permission required');
             return 'permission-required';
         }
         
-        console.log('🎯 DEVICE TILT: Supported and ready');
+        console.log('🌐 GEOMETRIC TILT WINDOW: Supported and ready');
         return true;
     }
     
@@ -115,14 +233,14 @@ export class DeviceTiltHandler {
             try {
                 const permission = await DeviceOrientationEvent.requestPermission();
                 if (permission === 'granted') {
-                    console.log('🎯 DEVICE TILT: iOS permission granted');
+                    console.log('🌐 GEOMETRIC TILT WINDOW: iOS permission granted');
                     return true;
                 } else {
-                    console.warn('🎯 DEVICE TILT: iOS permission denied');
+                    console.warn('🌐 GEOMETRIC TILT WINDOW: iOS permission denied');
                     return false;
                 }
             } catch (error) {
-                console.error('🎯 DEVICE TILT: Permission request failed:', error);
+                console.error('🌐 GEOMETRIC TILT WINDOW: Permission request failed:', error);
                 return false;
             }
         }
@@ -130,7 +248,7 @@ export class DeviceTiltHandler {
     }
     
     /**
-     * Enable device tilt control
+     * Enable geometric tilt window system
      */
     async enable() {
         if (!this.checkSupport()) {
@@ -148,136 +266,71 @@ export class DeviceTiltHandler {
             this.baseRotation.rot4dXW = window.userParameterState.rot4dXW || 0;
             this.baseRotation.rot4dYW = window.userParameterState.rot4dYW || 0;
             this.baseRotation.rot4dZW = window.userParameterState.rot4dZW || 0;
+            this.baseParameters.dimension = window.userParameterState.dimension || 3.5;
+            this.baseParameters.morphFactor = window.userParameterState.morphFactor || 1.0;
+            this.baseParameters.chaos = window.userParameterState.chaos || 0.2;
+            this.baseParameters.intensity = window.userParameterState.intensity || 0.8;
+            this.baseParameters.gridDensity = window.userParameterState.gridDensity || 15;
         }
         
-        // Initialize smoothed values to current base
-        this.smoothedRotation = { ...this.baseRotation };
+        // Initialize smoothed values
+        this.smoothedTilt = { ...this.currentTilt };
         
         window.addEventListener('deviceorientation', this.boundHandleDeviceOrientation);
         this.isEnabled = true;
         
-        console.log('🎯 DEVICE TILT: Enabled - tilt your device to control 4D rotation!');
-        console.log('🎯 Base rotation values:', this.baseRotation);
-        
-        // Show tilt UI indicator
-        this.showTiltIndicator(true);
+        console.log('🌐 GEOMETRIC TILT WINDOW: Enabled - tilt device to change viewing angle!');
+        console.log('🌐 Physical tilt will match visual rotation + explore 4D depth');
         
         return true;
     }
     
     /**
-     * Disable device tilt control
+     * Disable geometric tilt window system
      */
     disable() {
         window.removeEventListener('deviceorientation', this.boundHandleDeviceOrientation);
         this.isEnabled = false;
         
-        // Reset to base rotation values
-        if (window.updateParameter) {
-            window.updateParameter('rot4dXW', this.baseRotation.rot4dXW);
-            window.updateParameter('rot4dYW', this.baseRotation.rot4dYW);
-            window.updateParameter('rot4dZW', this.baseRotation.rot4dZW);
-        }
+        // Reset all visual effects
+        this.resetGeometricWindow();
         
-        console.log('🎯 DEVICE TILT: Disabled - reset to base rotation');
-        
-        // Hide tilt UI indicator
-        this.showTiltIndicator(false);
+        console.log('🌐 GEOMETRIC TILT WINDOW: Disabled - reset to normal view');
     }
     
     /**
-     * Handle device orientation changes
+     * Handle device orientation changes with geometric window logic
      */
     handleDeviceOrientation(event) {
         if (!this.isEnabled) return;
         
-        // Get raw orientation values (convert to radians)
-        const alpha = (event.alpha || 0) * Math.PI / 180; // Z-axis (compass)
-        const beta = (event.beta || 0) * Math.PI / 180;   // X-axis (front-back)
-        const gamma = (event.gamma || 0) * Math.PI / 180; // Y-axis (left-right)
+        // Get raw orientation values (keep in degrees)
+        const alpha = event.alpha || 0; // Z-axis (compass)
+        const beta = event.beta || 0;   // X-axis (front-back)
+        const gamma = event.gamma || 0; // Y-axis (left-right)
         
         // Update current tilt values
         this.currentTilt = { alpha, beta, gamma };
         
-        // Map device orientation to 4D rotation values
-        const targetRotation = this.mapToRotation(event);
-        
         // Apply smoothing to prevent jittery movement
-        this.smoothedRotation.rot4dXW = this.lerp(
-            this.smoothedRotation.rot4dXW,
-            targetRotation.rot4dXW,
-            this.smoothing
+        this.smoothedTilt.alpha = this.lerp(this.smoothedTilt.alpha, alpha, this.smoothing);
+        this.smoothedTilt.beta = this.lerp(this.smoothedTilt.beta, beta, this.smoothing);
+        this.smoothedTilt.gamma = this.lerp(this.smoothedTilt.gamma, gamma, this.smoothing);
+        
+        // Calculate geometric window effects
+        const windowData = this.calculateGeometricWindow(
+            this.smoothedTilt.alpha,
+            this.smoothedTilt.beta, 
+            this.smoothedTilt.gamma
         );
         
-        this.smoothedRotation.rot4dYW = this.lerp(
-            this.smoothedRotation.rot4dYW,
-            targetRotation.rot4dYW,
-            this.smoothing
-        );
+        // Apply all effects to visualization
+        this.applyGeometricWindow(windowData);
         
-        this.smoothedRotation.rot4dZW = this.lerp(
-            this.smoothedRotation.rot4dZW,
-            targetRotation.rot4dZW,
-            this.smoothing
-        );
-        
-        // Apply to visualization system
-        if (window.updateParameter) {
-            window.updateParameter('rot4dXW', this.smoothedRotation.rot4dXW);
-            window.updateParameter('rot4dYW', this.smoothedRotation.rot4dYW);
-            window.updateParameter('rot4dZW', this.smoothedRotation.rot4dZW);
+        // Debug logging
+        if (Math.random() < 0.02) { // Log occasionally to avoid spam
+            console.log(`🌐 GEOMETRIC WINDOW: Tilt(${beta.toFixed(1)}°, ${gamma.toFixed(1)}°) → Visual(${windowData.visualRotation.rotateX.toFixed(1)}°, ${windowData.visualRotation.rotateZ.toFixed(1)}°) Depth:${windowData.windowDepth.depthMultiplier.toFixed(2)}x`);
         }
-        
-        // Update UI display if available
-        this.updateTiltDisplay();
-    }
-    
-    /**
-     * Map device orientation to 4D rotation parameters
-     */
-    mapToRotation(event) {
-        const betaDeg = event.beta || 0;  // Front-back tilt (-180 to 180)
-        const gammaDeg = event.gamma || 0; // Left-right tilt (-90 to 90)
-        const alphaDeg = event.alpha || 0; // Compass heading (0 to 360)
-        
-        // 🚀 DRAMATIC MODE: Choose mapping configuration
-        const activeMapping = this.dramaticMode ? this.mapping.dramatic : this.mapping.normal;
-        
-        // 🚀 CALCULATE TILT INTENSITY for dramatic effects
-        const betaNorm = Math.max(-120, Math.min(120, betaDeg));
-        const gammaNorm = Math.max(-120, Math.min(120, gammaDeg));
-        this.tiltIntensity = Math.sqrt(betaNorm*betaNorm + gammaNorm*gammaNorm) / 90;
-        this.extremeTilt = this.tiltIntensity > 1.0;
-        
-        // Map beta (front-back tilt) to XW rotation
-        const betaClamped = Math.max(activeMapping.betaToXW.range[0], 
-            Math.min(activeMapping.betaToXW.range[1], betaDeg));
-        const rot4dXW = this.baseRotation.rot4dXW + 
-            (betaClamped * activeMapping.betaToXW.scale * this.sensitivity);
-        
-        // Map gamma (left-right tilt) to YW rotation
-        const gammaClamped = Math.max(activeMapping.gammaToYW.range[0],
-            Math.min(activeMapping.gammaToYW.range[1], gammaDeg));
-        const rot4dYW = this.baseRotation.rot4dYW + 
-            (gammaClamped * activeMapping.gammaToYW.scale * this.sensitivity);
-        
-        // Map alpha (compass) to ZW rotation
-        let alphaNormalized = alphaDeg;
-        if (alphaNormalized > 180) alphaNormalized -= 360; // Normalize to -180 to 180
-        const alphaClamped = Math.max(activeMapping.alphaToZW.range[0],
-            Math.min(activeMapping.alphaToZW.range[1], alphaNormalized));
-        const rot4dZW = this.baseRotation.rot4dZW + 
-            (alphaClamped * activeMapping.alphaToZW.scale * this.sensitivity);
-        
-        // Apply final clamping to prevent extreme values
-        return {
-            rot4dXW: Math.max(activeMapping.betaToXW.clamp[0],
-                Math.min(activeMapping.betaToXW.clamp[1], rot4dXW)),
-            rot4dYW: Math.max(activeMapping.gammaToYW.clamp[0],
-                Math.min(activeMapping.gammaToYW.clamp[1], rot4dYW)),
-            rot4dZW: Math.max(activeMapping.alphaToZW.clamp[0],
-                Math.min(activeMapping.alphaToZW.clamp[1], rot4dZW))
-        };
     }
     
     /**
@@ -288,273 +341,21 @@ export class DeviceTiltHandler {
     }
     
     /**
-     * Update base rotation values (from preset loading or manual adjustment)
+     * Get current tilt status for UI display
      */
-    updateBaseRotation(rot4dXW, rot4dYW, rot4dZW) {
-        this.baseRotation.rot4dXW = rot4dXW || 0;
-        this.baseRotation.rot4dYW = rot4dYW || 0;
-        this.baseRotation.rot4dZW = rot4dZW || 0;
+    getTiltStatus() {
+        if (!this.isEnabled) return { enabled: false };
         
-        console.log('🎯 DEVICE TILT: Base rotation updated:', this.baseRotation);
-    }
-    
-    /**
-     * Set tilt sensitivity (0.1 to 3.0)
-     */
-    setSensitivity(value) {
-        this.sensitivity = Math.max(0.1, Math.min(3.0, value));
-        console.log(`🎯 DEVICE TILT: Sensitivity set to ${this.sensitivity}`);
-    }
-    
-    /**
-     * Set smoothing factor (0.01 to 1.0)
-     */
-    setSmoothing(value) {
-        this.smoothing = Math.max(0.01, Math.min(1.0, value));
-        console.log(`🎯 DEVICE TILT: Smoothing set to ${this.smoothing}`);
-    }
-    
-    /**
-     * 🚀 Enable/disable dramatic tilting mode
-     */
-    setDramaticMode(enabled) {
-        this.dramaticMode = enabled;
-        console.log(`🚀 DEVICE TILT: Dramatic mode ${enabled ? 'ENABLED - 8x more sensitive!' : 'disabled - normal sensitivity'}`);
+        const tiltIntensity = Math.sqrt(
+            this.currentTilt.beta * this.currentTilt.beta + 
+            this.currentTilt.gamma * this.currentTilt.gamma
+        ) / 90;
         
-        // Update UI indicator to show mode
-        this.updateTiltModeDisplay();
-        
-        // If dramatic mode is enabled and tilt is active, show warning about extreme effects
-        if (enabled && this.isEnabled) {
-            console.log('⚠️ DRAMATIC TILTING ACTIVE: Tilt your device carefully - effects are 8x more intense!');
-        }
-    }
-    
-    /**
-     * 🚀 Toggle dramatic tilting mode
-     */
-    toggleDramaticMode() {
-        this.setDramaticMode(!this.dramaticMode);
-        return this.dramaticMode;
-    }
-    
-    /**
-     * Show/hide tilt indicator UI
-     */
-    showTiltIndicator(show) {
-        let indicator = document.getElementById('tilt-indicator');
-        
-        if (show && !indicator) {
-            // Create tilt indicator
-            indicator = document.createElement('div');
-            indicator.id = 'tilt-indicator';
-            indicator.innerHTML = `
-                <div class="tilt-status">
-                    <div class="tilt-icon">📱</div>
-                    <div class="tilt-text">4D Tilt Active</div>
-                    <div class="tilt-mode" id="tilt-mode">NORMAL MODE</div>
-                    <div class="tilt-values">
-                        <span id="tilt-xw">XW: 0.00</span>
-                        <span id="tilt-yw">YW: 0.00</span>
-                        <span id="tilt-zw">ZW: 0.00</span>
-                        <span id="tilt-intensity">Intensity: 0.00</span>
-                    </div>
-                </div>
-            `;
-            
-            indicator.style.cssText = `
-                position: fixed;
-                top: 10px;
-                right: 10px;
-                background: rgba(0, 0, 0, 0.8);
-                color: #0ff;
-                padding: 8px 12px;
-                border-radius: 8px;
-                font-family: 'Orbitron', monospace;
-                font-size: 11px;
-                z-index: 10000;
-                backdrop-filter: blur(10px);
-                border: 1px solid rgba(0, 255, 255, 0.3);
-                box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
-            `;
-            
-            document.body.appendChild(indicator);
-        } else if (!show && indicator) {
-            // Remove tilt indicator
-            indicator.remove();
-        }
-    }
-    
-    /**
-     * Update tilt display values
-     */
-    updateTiltDisplay() {
-        const xwDisplay = document.getElementById('tilt-xw');
-        const ywDisplay = document.getElementById('tilt-yw');
-        const zwDisplay = document.getElementById('tilt-zw');
-        const intensityDisplay = document.getElementById('tilt-intensity');
-        
-        if (xwDisplay) xwDisplay.textContent = `XW: ${this.smoothedRotation.rot4dXW.toFixed(2)}`;
-        if (ywDisplay) ywDisplay.textContent = `YW: ${this.smoothedRotation.rot4dYW.toFixed(2)}`;
-        if (zwDisplay) zwDisplay.textContent = `ZW: ${this.smoothedRotation.rot4dZW.toFixed(2)}`;
-        if (intensityDisplay) {
-            intensityDisplay.textContent = `Intensity: ${this.tiltIntensity.toFixed(2)}`;
-            // 🚀 Color intensity display based on extreme tilt
-            intensityDisplay.style.color = this.extremeTilt ? '#ff4444' : '#0ff';
-        }
-    }
-    
-    /**
-     * 🚀 Update tilt mode display
-     */
-    updateTiltModeDisplay() {
-        const modeDisplay = document.getElementById('tilt-mode');
-        if (modeDisplay) {
-            modeDisplay.textContent = this.dramaticMode ? '🚀 DRAMATIC MODE' : 'NORMAL MODE';
-            modeDisplay.style.color = this.dramaticMode ? '#ff4444' : '#0ff';
-            modeDisplay.style.fontWeight = this.dramaticMode ? 'bold' : 'normal';
-        }
-    }
-    
-    /**
-     * Get current tilt status
-     */
-    getStatus() {
         return {
-            isSupported: this.isSupported,
-            isEnabled: this.isEnabled,
-            sensitivity: this.sensitivity,
-            smoothing: this.smoothing,
-            currentTilt: { ...this.currentTilt },
-            smoothedRotation: { ...this.smoothedRotation },
-            baseRotation: { ...this.baseRotation }
+            enabled: true,
+            tiltIntensity: tiltIntensity,
+            angles: { ...this.currentTilt },
+            extremeTilt: tiltIntensity > 0.7
         };
     }
 }
-
-// Create global instance with enhanced toggle function
-if (typeof window !== 'undefined') {
-    window.deviceTiltHandler = new DeviceTiltHandler();
-    
-    // Add to global functions for UI integration
-    window.enableDeviceTilt = async () => {
-        return await window.deviceTiltHandler.enable();
-    };
-    
-    window.disableDeviceTilt = () => {
-        window.deviceTiltHandler.disable();
-    };
-    
-    // Enhanced toggle function that forces interactivity to mouse movement mode
-    window.toggleDeviceTilt = async () => {
-        const tiltBtn = document.getElementById('tiltBtn');
-        
-        if (window.deviceTiltHandler.isEnabled) {
-            // Disable tilt
-            window.deviceTiltHandler.disable();
-            if (tiltBtn) {
-                tiltBtn.style.background = '';
-                tiltBtn.style.color = '';
-                tiltBtn.title = 'Device Tilt (4D Rotation)';
-            }
-            console.log('🎯 Device tilt disabled');
-            return false;
-        } else {
-            // Enable tilt AND force interactivity to mouse movement mode
-            const enabled = await window.deviceTiltHandler.enable();
-            if (enabled) {
-                // FORCE the interactivity system to mouse movement mode (same as device tilt behavior)
-                if (window.interactivityMenu && window.interactivityMenu.engine) {
-                    // Force to mouse/touch mode since tilt = mouse movement behavior
-                    window.interactivityMenu.engine.setActiveInputMode('mouse/touch');
-                    console.log('🎯 Forced interactivity to mouse/touch mode (matches tilt behavior)');
-                    
-                    // ✅ NEW: Update menu display to show the mode change
-                    setTimeout(() => {
-                        if (window.interactivityMenu.updateInputSources) {
-                            window.interactivityMenu.updateInputSources();
-                        }
-                    }, 100);
-                }
-                
-                // ✅ NEW: Ensure interactivity is enabled when tilt is enabled
-                if (window.interactivityEnabled !== undefined) {
-                    window.interactivityEnabled = true;
-                    const interactBtn = document.querySelector('[onclick="toggleInteractivity()"]');
-                    if (interactBtn) {
-                        interactBtn.style.background = 'rgba(0, 255, 0, 0.3)';
-                        interactBtn.style.borderColor = '#00ff00';
-                        interactBtn.title = 'Mouse/Touch Interactions: ON (Auto-enabled by tilt)';
-                    }
-                }
-                
-                if (tiltBtn) {
-                    tiltBtn.style.background = 'linear-gradient(45deg, #00ffff, #0099ff)';
-                    tiltBtn.style.color = '#000';
-                    tiltBtn.title = 'Device Tilt Active + Mouse Movement Mode - Both work together!';
-                }
-                console.log('🎯 Device tilt enabled');
-                console.log('🖱️ Interactivity forced to mouse movement mode (compatible with tilt)');
-                return true;
-            } else {
-                console.warn('🎯 Device tilt failed to enable - permission may be required');
-                if (tiltBtn) {
-                    tiltBtn.style.background = 'rgba(255, 0, 0, 0.3)';
-                    tiltBtn.title = 'Device Tilt (Permission Required - Click to try again)';
-                }
-                return false;
-            }
-        }
-    };
-    
-    window.setTiltSensitivity = (value) => {
-        window.deviceTiltHandler.setSensitivity(value);
-    };
-    
-    // 🚀 NEW: Dramatic tilting mode functions
-    window.setDramaticTilting = (enabled) => {
-        window.deviceTiltHandler.setDramaticMode(enabled);
-    };
-    
-    window.toggleDramaticTilting = () => {
-        return window.deviceTiltHandler.toggleDramaticMode();
-    };
-    
-    // 🚀 NEW: Enhanced toggle that can enable dramatic mode
-    window.toggleDeviceTiltDramatic = async () => {
-        if (!window.deviceTiltHandler.isEnabled) {
-            // First enable tilt
-            const enabled = await window.toggleDeviceTilt();
-            if (enabled) {
-                // Then enable dramatic mode
-                window.deviceTiltHandler.setDramaticMode(true);
-                console.log('🚀 DRAMATIC TILTING ENABLED: 8x more sensitive! Tilt carefully!');
-                
-                const tiltBtn = document.getElementById('tiltBtn');
-                if (tiltBtn) {
-                    tiltBtn.style.background = 'linear-gradient(45deg, #ff4444, #ff0080)';
-                    tiltBtn.title = '🚀 DRAMATIC 4D Tilt Active - 8x More Sensitive!';
-                }
-            }
-            return enabled;
-        } else {
-            // Toggle dramatic mode if tilt is already enabled
-            const dramatic = window.deviceTiltHandler.toggleDramaticMode();
-            const tiltBtn = document.getElementById('tiltBtn');
-            if (tiltBtn) {
-                if (dramatic) {
-                    tiltBtn.style.background = 'linear-gradient(45deg, #ff4444, #ff0080)';
-                    tiltBtn.title = '🚀 DRAMATIC 4D Tilt Active - 8x More Sensitive!';
-                } else {
-                    tiltBtn.style.background = 'linear-gradient(45deg, #00ffff, #0099ff)';
-                    tiltBtn.title = 'Device Tilt Active - Normal Sensitivity';
-                }
-            }
-            return dramatic;
-        }
-    };
-    
-    console.log('🎯 DEVICE TILT: System loaded with DRAMATIC MODE support! 🚀');
-}
-
-export default DeviceTiltHandler;
