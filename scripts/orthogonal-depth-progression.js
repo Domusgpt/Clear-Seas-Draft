@@ -4,6 +4,317 @@ import { HolographicVisualizer } from '../src/holograms/HolographicVisualizer.js
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
+class ParameterMappingSystem {
+  constructor(baseParameters = {}, interactionProvider = () => ({}), mappings = []) {
+    this.baseParameters = { ...baseParameters };
+    this.interactionProvider = typeof interactionProvider === 'function' ? interactionProvider : () => ({});
+    this.effectiveParameters = { ...this.baseParameters };
+    this.mappings = mappings.length ? mappings : ParameterMappingSystem.createCardMappings();
+  }
+
+  static createCardMappings() {
+    return [
+      {
+        target: 'gridDensity',
+        clamp: { min: 12, max: 110 },
+        compute: (base, state) => {
+          const tilt = state.tilt?.intensity ?? 0;
+          const focus = state.stage?.focus ?? 0;
+          const entry = state.stage?.entry ?? 0;
+          const exit = state.stage?.exit ?? 0;
+          const depth = state.stage?.depth ?? 0;
+          const fold = state.fold ?? 0;
+          const hover = state.hover ?? 0;
+          const forwardPull = focus + entry;
+          return base
+            - forwardPull * 6.5
+            - exit * 18.5
+            - tilt * 12.5
+            - fold * 8
+            - hover * 3
+            + depth * 11;
+        }
+      },
+      {
+        target: 'speed',
+        clamp: { min: 0.35, max: 2.2 },
+        compute: (base, state) => {
+          const tilt = state.tilt?.intensity ?? 0;
+          const focus = state.stage?.focus ?? 0;
+          const entry = state.stage?.entry ?? 0;
+          const exit = state.stage?.exit ?? 0;
+          const fold = state.fold ?? 0;
+          const click = state.click ?? 0;
+          return base
+            + focus * 0.25
+            + entry * 0.35
+            + exit * 0.65
+            + tilt * 0.4
+            + fold * 0.6
+            + click * 0.15;
+        }
+      },
+      {
+        target: 'chaos',
+        clamp: { min: 0, max: 1.4 },
+        compute: (base, state) => {
+          const tilt = state.tilt?.intensity ?? 0;
+          const exit = state.stage?.exit ?? 0;
+          const focus = state.stage?.focus ?? 0;
+          const hover = state.hover ?? 0;
+          const fold = state.fold ?? 0;
+          const click = state.click ?? 0;
+          return base
+            + (tilt * tilt) * 0.45
+            + exit * 0.6
+            + focus * 0.18
+            + hover * 0.12
+            + click * 0.22
+            + fold * 0.55;
+        }
+      },
+      {
+        target: 'morphFactor',
+        clamp: { min: 0.1, max: 2.4 },
+        compute: (base, state) => {
+          const tilt = state.tilt?.intensity ?? 0;
+          const entry = state.stage?.entry ?? 0;
+          const exit = state.stage?.exit ?? 0;
+          const fold = state.fold ?? 0;
+          return base
+            + entry * 0.28
+            + exit * 0.46
+            + tilt * 0.22
+            + fold * 0.52;
+        }
+      },
+      {
+        target: 'intensity',
+        clamp: { min: 0.35, max: 1.6 },
+        compute: (base, state) => {
+          const focus = state.stage?.focus ?? 0;
+          const exit = state.stage?.exit ?? 0;
+          const hover = state.hover ?? 0;
+          const click = state.click ?? 0;
+          const fold = state.fold ?? 0;
+          return base
+            + focus * 0.14
+            + exit * 0.32
+            + hover * 0.12
+            + click * 0.26
+            + fold * 0.34;
+        }
+      },
+      {
+        target: 'hue',
+        clamp: { min: 0, max: 720 },
+        compute: (base, state) => {
+          const tiltX = state.tilt?.x ?? 0;
+          const tiltY = state.tilt?.y ?? 0;
+          const exit = state.stage?.exit ?? 0;
+          const fold = state.fold ?? 0;
+          const hover = state.hover ?? 0;
+          return base
+            + exit * 32
+            + fold * 110
+            + hover * 12
+            + tiltX * 26
+            - tiltY * 18;
+        }
+      },
+      {
+        target: 'saturation',
+        clamp: { min: 0.35, max: 1.1 },
+        compute: (base, state) => {
+          const focus = state.stage?.focus ?? 0;
+          const exit = state.stage?.exit ?? 0;
+          const hover = state.hover ?? 0;
+          const fold = state.fold ?? 0;
+          return base
+            + focus * 0.05
+            + exit * 0.18
+            + hover * 0.08
+            + fold * 0.12;
+        }
+      },
+      {
+        target: 'rot4dXW',
+        clamp: { min: -3, max: 3 },
+        compute: (base, state) => {
+          const tiltY = state.tilt?.y ?? 0;
+          const exit = state.stage?.exit ?? 0;
+          const fold = state.fold ?? 0;
+          return base + tiltY * 2.6 + exit * 0.45 + fold * 0.9;
+        }
+      },
+      {
+        target: 'rot4dYW',
+        clamp: { min: -3, max: 3 },
+        compute: (base, state) => {
+          const tiltX = state.tilt?.x ?? 0;
+          const entry = state.stage?.entry ?? 0;
+          const fold = state.fold ?? 0;
+          return base + tiltX * 2.6 - entry * 0.3 + fold * 0.8;
+        }
+      },
+      {
+        target: 'rot4dZW',
+        clamp: { min: -3, max: 3 },
+        compute: (base, state) => {
+          const tiltX = state.tilt?.x ?? 0;
+          const tiltY = state.tilt?.y ?? 0;
+          const exit = state.stage?.exit ?? 0;
+          const fold = state.fold ?? 0;
+          return base + (tiltX - tiltY) * 1.9 + exit * 0.42 + fold * 1.1;
+        }
+      }
+    ];
+  }
+
+  static createBackdropMappings() {
+    return [
+      {
+        target: 'gridDensity',
+        clamp: { min: 18, max: 120 },
+        compute: (base, state) => {
+          const tilt = state.tilt?.intensity ?? 0;
+          const focus = state.stage?.focus ?? 0;
+          const exit = state.stage?.exit ?? 0;
+          const fold = state.fold ?? 0;
+          return base - focus * 8 - exit * 16 - tilt * 10 - fold * 12;
+        }
+      },
+      {
+        target: 'speed',
+        clamp: { min: 0.25, max: 2.5 },
+        compute: (base, state) => {
+          const tilt = state.tilt?.intensity ?? 0;
+          const focus = state.stage?.focus ?? 0;
+          const exit = state.stage?.exit ?? 0;
+          const fold = state.fold ?? 0;
+          return base + focus * 0.3 + tilt * 0.35 + exit * 0.7 + fold * 0.85;
+        }
+      },
+      {
+        target: 'chaos',
+        clamp: { min: 0, max: 1.2 },
+        compute: (base, state) => {
+          const tilt = state.tilt?.intensity ?? 0;
+          const exit = state.stage?.exit ?? 0;
+          const fold = state.fold ?? 0;
+          return base + (tilt * tilt) * 0.38 + exit * 0.52 + fold * 0.6;
+        }
+      },
+      {
+        target: 'morphFactor',
+        clamp: { min: 0.1, max: 2.1 },
+        compute: (base, state) => {
+          const exit = state.stage?.exit ?? 0;
+          const fold = state.fold ?? 0;
+          return base + exit * 0.32 + fold * 0.48;
+        }
+      },
+      {
+        target: 'intensity',
+        clamp: { min: 0.3, max: 1.4 },
+        compute: (base, state) => {
+          const focus = state.stage?.focus ?? 0;
+          const exit = state.stage?.exit ?? 0;
+          const fold = state.fold ?? 0;
+          return base + focus * 0.1 + exit * 0.22 + fold * 0.28;
+        }
+      },
+      {
+        target: 'hue',
+        clamp: { min: 0, max: 720 },
+        compute: (base, state) => {
+          const exit = state.stage?.exit ?? 0;
+          const fold = state.fold ?? 0;
+          return base + exit * 18 + fold * 140;
+        }
+      },
+      {
+        target: 'saturation',
+        clamp: { min: 0.4, max: 1.05 },
+        compute: (base, state) => {
+          const exit = state.stage?.exit ?? 0;
+          const fold = state.fold ?? 0;
+          return base + exit * 0.12 + fold * 0.14;
+        }
+      },
+      {
+        target: 'rot4dXW',
+        clamp: { min: -2.6, max: 2.6 },
+        compute: (base, state) => {
+          const tiltY = state.tilt?.y ?? 0;
+          const fold = state.fold ?? 0;
+          return base + tiltY * 2.2 + fold * 0.8;
+        }
+      },
+      {
+        target: 'rot4dYW',
+        clamp: { min: -2.6, max: 2.6 },
+        compute: (base, state) => {
+          const tiltX = state.tilt?.x ?? 0;
+          const fold = state.fold ?? 0;
+          return base + tiltX * 2.2 + fold * 0.8;
+        }
+      },
+      {
+        target: 'rot4dZW',
+        clamp: { min: -2.6, max: 2.6 },
+        compute: (base, state) => {
+          const tiltX = state.tilt?.x ?? 0;
+          const tiltY = state.tilt?.y ?? 0;
+          const fold = state.fold ?? 0;
+          return base + (tiltX - tiltY) * 1.4 + fold * 1.0;
+        }
+      }
+    ];
+  }
+
+  setBaseParameters(newBase = {}) {
+    Object.keys(newBase).forEach((key) => {
+      this.baseParameters[key] = newBase[key];
+    });
+    this.effectiveParameters = { ...this.baseParameters };
+  }
+
+  setBaseParameter(key, value) {
+    if (key in this.baseParameters) {
+      this.baseParameters[key] = value;
+    }
+  }
+
+  setMappings(mappings) {
+    if (Array.isArray(mappings) && mappings.length) {
+      this.mappings = mappings;
+    }
+  }
+
+  update() {
+    const state = this.interactionProvider ? this.interactionProvider() : {};
+    this.effectiveParameters = { ...this.baseParameters };
+
+    this.mappings.forEach((mapping) => {
+      const baseValue = this.baseParameters[mapping.target];
+      if (baseValue === undefined) {
+        return;
+      }
+      const value = mapping.compute(baseValue, state, this.baseParameters);
+      const clamped = mapping.clamp
+        ? clamp(value, mapping.clamp.min, mapping.clamp.max)
+        : value;
+      this.effectiveParameters[mapping.target] = clamped;
+    });
+  }
+
+  getEffectiveParameters() {
+    this.update();
+    return { ...this.effectiveParameters };
+  }
+}
+
 const SECTION_PRESETS = {
   quantum: {
     variant: 5,
@@ -74,6 +385,17 @@ class HolographicBackdrop {
     this.system = null;
     this.currentSection = null;
     this.currentParams = new Map();
+    this.baseParameters = { ...DEFAULT_PARAMETER_STATE };
+    this.interactionState = {
+      tilt: { x: 0, y: 0, intensity: 0 },
+      stage: { focus: 0.6, entry: 0, exit: 0, depth: 1 },
+      fold: 0
+    };
+    this.mapper = new ParameterMappingSystem(
+      this.baseParameters,
+      () => this.interactionState,
+      ParameterMappingSystem.createBackdropMappings()
+    );
     this.initialize();
   }
 
@@ -97,6 +419,10 @@ class HolographicBackdrop {
     const prev = this.currentParams.get(param);
     if (prev === undefined || Math.abs(prev - value) >= 0.001) {
       this.currentParams.set(param, value);
+      if (param in this.baseParameters) {
+        this.baseParameters[param] = value;
+        this.mapper.setBaseParameter(param, value);
+      }
       this.system.updateParameter(param, value);
       if (window.userParameterState) {
         window.userParameterState[param] = value;
@@ -114,45 +440,57 @@ class HolographicBackdrop {
       this.system.updateVariant(preset.variant);
     }
     if (preset?.parameters) {
-      Object.entries(preset.parameters).forEach(([param, value]) => {
-        this.applyParameter(param, value);
-      });
+      this.baseParameters = {
+        ...DEFAULT_PARAMETER_STATE,
+        ...preset.parameters
+      };
+      this.mapper.setBaseParameters(this.baseParameters);
+      this.interactionState.stage = { focus: 0.75, entry: 0, exit: 0, depth: 0.2 };
+      this.syncParameters();
     }
   }
 
   updateTilt({ tiltX = 0, tiltY = 0, intensity = 0, rotation } = {}) {
-    const rotationPayload = rotation || {
-      rot4dXW: clamp(tiltY * 2.1, -2.6, 2.6),
-      rot4dYW: clamp(tiltX * 2.1, -2.6, 2.6),
-      rot4dZW: clamp((tiltX - tiltY) * 1.5, -2.3, 2.3)
-    };
-    this.applyParameter('rot4dXW', rotationPayload.rot4dXW);
-    this.applyParameter('rot4dYW', rotationPayload.rot4dYW);
-    this.applyParameter('rot4dZW', rotationPayload.rot4dZW);
-
-    const base = SECTION_PRESETS[this.currentSection]?.parameters || {};
-    const baseSpeed = base.speed ?? DEFAULT_PARAMETER_STATE.speed;
-    this.applyParameter('speed', baseSpeed + intensity * 0.45);
-
-    if (!rotation) {
-      const baseChaos = base.chaos ?? DEFAULT_PARAMETER_STATE.chaos;
-      const baseMorph = base.morphFactor ?? DEFAULT_PARAMETER_STATE.morphFactor;
-      this.applyParameter('chaos', baseChaos + intensity * 0.3);
-      this.applyParameter('morphFactor', baseMorph + intensity * 0.25);
+    this.interactionState.tilt = { x: tiltX, y: tiltY, intensity: clamp(intensity, 0, 1.6) };
+    if (rotation) {
+      this.interactionState.tilt.rotation = rotation;
     }
+    this.syncParameters();
   }
 
   triggerHypercubeFold() {
-    const preset = SECTION_PRESETS[this.currentSection]?.parameters || {};
-    const baseChaos = preset.chaos ?? DEFAULT_PARAMETER_STATE.chaos;
-    const baseSpeed = preset.speed ?? DEFAULT_PARAMETER_STATE.speed;
-    this.applyParameter('chaos', baseChaos + 0.35);
-    this.applyParameter('speed', baseSpeed + 0.6);
+    this.setStageState({ fold: 1 });
+    this.syncParameters();
     setTimeout(() => {
-      if (this.currentSection) {
-        this.applyPreset(this.currentSection);
-      }
+      this.setStageState({ fold: 0, stage: { focus: 0.75, entry: 0, exit: 0, depth: 0.2 } });
+      this.syncParameters();
     }, 900);
+  }
+
+  setStageState({ stage, fold } = {}) {
+    if (stage) {
+      this.interactionState.stage = { ...this.interactionState.stage, ...stage };
+    }
+    if (typeof fold === 'number') {
+      this.interactionState.fold = clamp(fold, 0, 1.2);
+    }
+    this.syncParameters();
+  }
+
+  syncParameters() {
+    if (!this.system) {
+      return;
+    }
+    const effective = this.mapper.getEffectiveParameters();
+    Object.entries(effective).forEach(([param, value]) => {
+      if (param === 'hue') {
+        this.applyParameter(param, ((value % 360) + 360) % 360);
+      } else if (param === 'saturation') {
+        this.applyParameter(param, clamp(value, 0.35, 1.05));
+      } else {
+        this.applyParameter(param, value);
+      }
+    });
   }
 }
 
@@ -163,8 +501,20 @@ class CardVisualizer {
     this.canvas = card.querySelector('canvas');
     const variant = SECTION_PRESETS[this.section]?.variant ?? 0;
     this.visualizer = this.canvas ? new HolographicVisualizer(this.canvas.id, 'content', 1.0, variant) : null;
-    this.currentParams = { ...(SECTION_PRESETS[this.section]?.parameters || {}) };
-    this.tiltState = { tiltX: 0, tiltY: 0, intensity: 0 };
+    this.baseParams = {
+      ...DEFAULT_PARAMETER_STATE,
+      ...(SECTION_PRESETS[this.section]?.parameters || {})
+    };
+    this.interactionState = {
+      tilt: { x: 0, y: 0, intensity: 0 },
+      stage: { focus: 0, entry: 0, exit: 0, depth: 1 },
+      hover: 0,
+      click: 0,
+      fold: 0
+    };
+    this.mapper = new ParameterMappingSystem(this.baseParams, () => this.interactionState);
+    this.stage = 'far-depth';
+    this.hoverTimeout = null;
 
     if (this.visualizer) {
       this.applyPreset();
@@ -180,20 +530,31 @@ class CardVisualizer {
       this.visualizer.variantParams = this.visualizer.generateVariantParams(preset.variant);
       this.visualizer.roleParams = this.visualizer.generateRoleParams(this.visualizer.role);
     }
-    this.applyParameterSet(this.currentParams);
+    this.mapper.setBaseParameters(this.baseParams);
+    this.applyParameterSet(this.baseParams);
+    this.applyDynamicModulation();
   }
 
   applyParameterSet(params = {}) {
     Object.entries(params).forEach(([param, value]) => this.handleParameter(param, value));
+    this.mapper.setBaseParameters({ ...this.baseParams });
   }
 
   updateTilt(tiltX, tiltY, intensity) {
-    this.tiltState = { tiltX, tiltY, intensity };
+    this.interactionState.tilt = {
+      x: tiltX,
+      y: tiltY,
+      intensity: clamp(intensity, 0, 1.5)
+    };
+    this.card.style.setProperty('--card-tilt-x', tiltX.toFixed(4));
+    this.card.style.setProperty('--card-tilt-y', tiltY.toFixed(4));
+    this.card.style.setProperty('--card-tilt-strength', this.interactionState.tilt.intensity.toFixed(3));
   }
 
   handleParameter(param, value) {
     if (!this.visualizer || value === undefined || Number.isNaN(value)) return;
-    this.currentParams[param] = value;
+    this.baseParams[param] = value;
+    this.mapper.setBaseParameter(param, value);
     switch (param) {
       case 'gridDensity':
         this.visualizer.variantParams.density = 0.3 + (value - 5) / 95 * 2.2;
@@ -232,20 +593,51 @@ class CardVisualizer {
 
   applyDynamicModulation() {
     if (!this.visualizer) return;
-    const { tiltX, tiltY, intensity } = this.tiltState;
-    const rotationScale = 2.2;
-    this.visualizer.variantParams.rot4dXW = clamp(tiltY * rotationScale, -2.7, 2.7);
-    this.visualizer.variantParams.rot4dYW = clamp(tiltX * rotationScale, -2.7, 2.7);
-    this.visualizer.variantParams.rot4dZW = clamp((tiltX - tiltY) * 1.6, -2.3, 2.3);
+    const effective = this.mapper.getEffectiveParameters();
+    const convertDensity = (value) => 0.3 + (clamp(value, 5, 110) - 5) / 95 * 2.2;
 
-    const preset = SECTION_PRESETS[this.section]?.parameters || {};
-    const baseSpeed = this.currentParams.speed ?? preset.speed ?? DEFAULT_PARAMETER_STATE.speed;
-    const baseChaos = this.currentParams.chaos ?? preset.chaos ?? DEFAULT_PARAMETER_STATE.chaos;
-    const baseIntensity = this.currentParams.intensity ?? preset.intensity ?? DEFAULT_PARAMETER_STATE.intensity;
+    this.visualizer.variantParams.density = convertDensity(effective.gridDensity ?? this.baseParams.gridDensity);
+    this.visualizer.variantParams.speed = clamp(effective.speed ?? this.baseParams.speed, 0.05, 2.8);
+    this.visualizer.variantParams.chaos = clamp(effective.chaos ?? this.baseParams.chaos, 0, 1.5);
+    this.visualizer.variantParams.morph = clamp(effective.morphFactor ?? this.baseParams.morphFactor, 0.05, 2.5);
+    this.visualizer.variantParams.intensity = clamp(effective.intensity ?? this.baseParams.intensity, 0.25, 1.8);
+    this.visualizer.variantParams.hue = ((effective.hue ?? this.baseParams.hue) % 360 + 360) % 360;
+    this.visualizer.variantParams.saturation = clamp(effective.saturation ?? this.baseParams.saturation, 0.35, 1.1);
+    this.visualizer.variantParams.rot4dXW = clamp(effective.rot4dXW ?? 0, -3, 3);
+    this.visualizer.variantParams.rot4dYW = clamp(effective.rot4dYW ?? 0, -3, 3);
+    this.visualizer.variantParams.rot4dZW = clamp(effective.rot4dZW ?? 0, -3, 3);
+  }
 
-    this.visualizer.variantParams.speed = baseSpeed + intensity * 0.4;
-    this.visualizer.variantParams.chaos = baseChaos + intensity * 0.28;
-    this.visualizer.variantParams.intensity = baseIntensity + intensity * 0.2;
+  setStage(stage) {
+    this.stage = stage;
+    this.card.dataset.cardStage = stage;
+    const stageState = {
+      focus: stage === 'focused' ? 1 : stage === 'approaching' ? 0.6 : 0,
+      entry: stage === 'approaching' ? 1 : 0,
+      exit: stage === 'exiting' || stage === 'destroyed' ? 1 : 0,
+      depth: stage === 'far-depth' ? 1 : stage === 'approaching' ? 0.4 : 0.15
+    };
+    this.interactionState.stage = stageState;
+  }
+
+  setHover(isHovered) {
+    this.interactionState.hover = isHovered ? 1 : 0;
+    this.card.classList.toggle('card-hovered', !!isHovered);
+  }
+
+  pulseClick() {
+    this.interactionState.click = 1;
+    this.card.classList.add('card-clicked');
+    clearTimeout(this.hoverTimeout);
+    this.hoverTimeout = setTimeout(() => {
+      this.interactionState.click = 0;
+      this.card.classList.remove('card-clicked');
+    }, 420);
+  }
+
+  setFoldProgress(value) {
+    this.interactionState.fold = clamp(value, 0, 1.2);
+    this.card.style.setProperty('--card-fold-progress', this.interactionState.fold.toFixed(2));
   }
 
   start() {
@@ -314,6 +706,10 @@ class SectionChoreographer {
         card.style.setProperty('--section-title-to', card.dataset.titleTo);
       }
       const visualizer = new CardVisualizer(card);
+      visualizer.setStage(card.dataset.progressionState || 'far-depth');
+      card.addEventListener('pointerenter', () => visualizer.setHover(true));
+      card.addEventListener('pointerleave', () => visualizer.setHover(false));
+      card.addEventListener('click', () => visualizer.pulseClick());
       this.cardVisualizers.set(card, visualizer);
     });
   }
@@ -350,6 +746,8 @@ class SectionChoreographer {
     this.background?.applyPreset(sectionKey);
     const visualizer = this.cardVisualizers.get(card);
     visualizer?.applyPreset();
+    visualizer?.setStage('focused');
+    this.background?.setStageState({ stage: { focus: 1, entry: 0, exit: 0, depth: 0.05 } });
 
     if (window.userParameterState) {
       const presetParams = SECTION_PRESETS[sectionKey]?.parameters || {};
@@ -363,6 +761,17 @@ class SectionChoreographer {
     if (card) {
       card.dataset.visualizerActive = 'false';
       card.style.removeProperty('--card-visibility');
+      const visualizer = this.cardVisualizers.get(card);
+      visualizer?.setHover(false);
+      if (card.dataset.progressionState !== 'destroyed') {
+        visualizer?.setStage('far-depth');
+      }
+      if (this.activeCard === card) {
+        this.activeCard = null;
+        if (card.dataset.progressionState !== 'destroyed' && card.dataset.progressionState !== 'exiting') {
+          this.background?.setStageState({ stage: { focus: 0, exit: 0, depth: 0.55 } });
+        }
+      }
     }
   }
 
@@ -374,8 +783,6 @@ class SectionChoreographer {
     root.style.setProperty('--global-tilt-strength', intensity.toFixed(3));
 
     if (this.activeCard) {
-      this.activeCard.style.setProperty('--card-tilt-x', tiltX);
-      this.activeCard.style.setProperty('--card-tilt-y', tiltY);
       const visualizer = this.cardVisualizers.get(this.activeCard);
       visualizer?.updateTilt(tiltX, tiltY, intensity);
     }
@@ -394,6 +801,9 @@ class SectionChoreographer {
   pulseExit(card) {
     if (card) {
       card.style.setProperty('--card-visibility', '0.45');
+      const visualizer = this.cardVisualizers.get(card);
+      visualizer?.setStage('exiting');
+      this.background?.setStageState({ stage: { exit: 1, focus: 0 } });
     }
   }
 
@@ -402,21 +812,42 @@ class SectionChoreographer {
       this.container.classList.add('hypercube-folding');
     }
     this.background?.triggerHypercubeFold();
+    this.setFoldProgress(1);
     setTimeout(() => {
       if (this.container) {
         this.container.classList.remove('hypercube-folding');
       }
+      this.setFoldProgress(0);
       if (typeof onComplete === 'function') {
         onComplete();
       }
     }, 900);
   }
+
+  updateStage(card, state) {
+    const visualizer = this.cardVisualizers.get(card);
+    visualizer?.setStage(state);
+    if (card === this.activeCard && state === 'focused') {
+      this.background?.setStageState({ stage: { focus: 1, exit: 0, entry: 0, depth: 0.05 } });
+    } else if (card === this.activeCard && state === 'approaching') {
+      this.background?.setStageState({ stage: { focus: 0.4, entry: 0.8, exit: 0, depth: 0.18 } });
+    } else if (card === this.activeCard && (state === 'exiting' || state === 'destroyed')) {
+      this.background?.setStageState({ stage: { focus: 0, entry: 0, exit: 1, depth: 0 } });
+    } else if (card === this.activeCard && state === 'far-depth') {
+      this.background?.setStageState({ stage: { focus: 0, exit: 0, depth: 0.6 } });
+    }
+  }
+
+  setFoldProgress(value) {
+    this.cardVisualizers.forEach((visualizer) => visualizer.setFoldProgress(value));
+  }
 }
 
 class PointerTiltController {
-  constructor({ onUpdate, indicator } = {}) {
+  constructor({ onUpdate, indicator, getActiveCard } = {}) {
     this.onUpdate = typeof onUpdate === 'function' ? onUpdate : null;
     this.indicator = indicator || null;
+    this.getActiveCard = typeof getActiveCard === 'function' ? getActiveCard : null;
     this.enabled = false;
     this.handlePointerMove = this.handlePointerMove.bind(this);
     this.handlePointerLeave = this.handlePointerLeave.bind(this);
@@ -445,13 +876,34 @@ class PointerTiltController {
     if (!this.enabled) {
       return;
     }
-    const { innerWidth, innerHeight } = window;
-    const x = (event.clientX / innerWidth - 0.5) * 1.4;
-    const y = (event.clientY / innerHeight - 0.5) * 1.4;
-    const tiltX = clamp(x, -0.9, 0.9);
-    const tiltY = clamp(-y, -0.9, 0.9);
-    const intensity = clamp(Math.sqrt(tiltX * tiltX + tiltY * tiltY) * 1.1, 0, 1.5);
-    const payload = { tiltX, tiltY, intensity, source: 'pointer', extreme: intensity > 1.05 };
+    let tiltX;
+    let tiltY;
+    const activeCard = this.getActiveCard ? this.getActiveCard() : null;
+    if (activeCard) {
+      const rect = activeCard.getBoundingClientRect();
+      const relativeX = (event.clientX - rect.left) / rect.width - 0.5;
+      const relativeY = (event.clientY - rect.top) / rect.height - 0.5;
+      tiltX = clamp(relativeX * 1.6, -1, 1);
+      tiltY = clamp(-relativeY * 1.6, -1, 1);
+    } else {
+      const { innerWidth, innerHeight } = window;
+      const x = (event.clientX / innerWidth - 0.5) * 1.4;
+      const y = (event.clientY / innerHeight - 0.5) * 1.4;
+      tiltX = clamp(x, -0.9, 0.9);
+      tiltY = clamp(-y, -0.9, 0.9);
+    }
+    const intensity = clamp(Math.sqrt(tiltX * tiltX + tiltY * tiltY) * 1.05, 0, 1.5);
+    const payload = {
+      tiltX,
+      tiltY,
+      intensity,
+      source: 'pointer',
+      extreme: intensity > 1.05,
+      pointer: {
+        x: event.clientX / window.innerWidth,
+        y: event.clientY / window.innerHeight
+      }
+    };
     this.indicator?.update(payload);
     this.onUpdate?.(payload);
   }
@@ -474,7 +926,19 @@ class TiltVisualizerAdapter extends DeviceTiltHandler {
   }
 
   applyGeometricWindow(windowData) {
-    super.applyGeometricWindow(windowData);
+    const { viewingAngle4D, windowDepth, tiltIntensity, extremeTilt } = windowData;
+    if (window.updateParameter) {
+      window.updateParameter('rot4dXW', viewingAngle4D.rot4dXW);
+      window.updateParameter('rot4dYW', viewingAngle4D.rot4dYW);
+      window.updateParameter('rot4dZW', viewingAngle4D.rot4dZW);
+      window.updateParameter('dimension', windowDepth.dimension);
+      window.updateParameter('morphFactor', windowDepth.morphFactor);
+      window.updateParameter('chaos', windowDepth.chaos);
+      window.updateParameter('intensity', windowDepth.intensity);
+      window.updateParameter('gridDensity', windowDepth.gridDensity);
+    }
+    document.body.classList.toggle('extreme-tilt', extremeTilt);
+    document.body.classList.toggle('geometric-tilt-active', tiltIntensity > 0.1);
     const tiltX = clamp(windowData.visualRotation.rotateZ / 60, -1, 1);
     const tiltY = clamp(windowData.visualRotation.rotateX / 60, -1, 1);
     const payload = {
@@ -543,7 +1007,8 @@ class OrthogonalDepthProgression {
     });
     this.pointerTilt = new PointerTiltController({
       onUpdate: (payload) => this.sectionChoreographer.updateTilt(payload),
-      indicator: this.indicator
+      indicator: this.indicator,
+      getActiveCard: () => this.sectionChoreographer.activeCard
     });
 
     this.init();
@@ -760,9 +1225,9 @@ class OrthogonalDepthProgression {
     }
 
     this.deactivatePortalForCard(currentCard);
-    this.sectionChoreographer.deactivate(currentCard);
     this.sectionChoreographer.pulseExit(currentCard);
     this.setCardState(currentCard, 'exiting');
+    this.sectionChoreographer.deactivate(currentCard);
 
     setTimeout(() => {
       this.setCardState(newCard, 'approaching');
@@ -799,6 +1264,7 @@ class OrthogonalDepthProgression {
     this.progressionStates.forEach((s) => card.classList.remove(s));
     card.classList.add(state);
     card.dataset.progressionState = state;
+    this.sectionChoreographer.updateStage(card, state);
 
     switch (state) {
       case 'focused':
@@ -848,6 +1314,7 @@ class OrthogonalDepthProgression {
     this.setCardState(card, 'destroyed');
     card.classList.add(`destruction-${destructionType}`);
     this.deactivatePortalForCard(card);
+    this.sectionChoreographer.deactivate(card);
 
     setTimeout(() => {
       card.classList.remove(`destruction-${destructionType}`);
