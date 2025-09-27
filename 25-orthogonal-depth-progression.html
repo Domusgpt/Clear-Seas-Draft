@@ -377,6 +377,9 @@
             // Initialize geometric tilt system
             if (window.VIB34DGeometricTiltSystem) {
                 window.geometricTiltSystem = new VIB34DGeometricTiltSystem();
+                if (window.geometricTiltSystem && typeof window.geometricTiltSystem.enable === 'function') {
+                    window.geometricTiltSystem.enable();
+                }
             }
 
             // Initialize orthogonal depth progression
