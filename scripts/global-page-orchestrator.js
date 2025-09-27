@@ -641,6 +641,12 @@ const globalState = {
     targetX: 0,
     targetY: 0
   },
+  layout: {
+    currentX: 0.5,
+    currentY: 0.5,
+    targetX: 0.5,
+    targetY: 0.5
+  },
   bend: { current: 0, target: 0 },
   warp: { current: 0, target: 0 }
 };
@@ -660,9 +666,14 @@ const sharedMotion = window.__CLEAR_SEAS_GLOBAL_MOTION || (window.__CLEAR_SEAS_G
   collection: null,
   family: null,
   layout: null,
+  layoutVector: { x: 0.5, y: 0.5 },
   updatedAt: performance.now(),
   eventName: GLOBAL_MOTION_EVENT
 });
+
+if (!sharedMotion.layoutVector) {
+  sharedMotion.layoutVector = { x: 0.5, y: 0.5 };
+}
 
 const motionEventState = {
   lastDispatch: 0,
@@ -683,6 +694,8 @@ function shouldDispatchMotionEvent(previous, next) {
     tiltY: 0.001,
     tiltStrength: 0.001,
     tiltSkew: 0.001,
+    layoutX: 0.001,
+    layoutY: 0.001,
     bend: 0.001,
     warp: 0.001,
     scrollMomentum: 0.001,
@@ -707,6 +720,8 @@ function maybeDispatchGlobalMotionEvent() {
     tiltY: sharedMotion.tilt.y,
     tiltStrength: sharedMotion.tilt.strength,
     tiltSkew: sharedMotion.tiltSkew,
+    layoutX: sharedMotion.layoutVector ? sharedMotion.layoutVector.x : 0.5,
+    layoutY: sharedMotion.layoutVector ? sharedMotion.layoutVector.y : 0.5,
     bend: sharedMotion.bend,
     warp: sharedMotion.warp,
     scrollMomentum: sharedMotion.scroll,
@@ -1168,6 +1183,7 @@ function createState(element, index) {
     twist: { current: 0, target: 0 },
     pulse: { current: 0, target: 0 },
     scroll: 0,
+    viewport: null,
     overlay: null,
     brandVideo: null,
     group: null,
@@ -1181,6 +1197,7 @@ function createState(element, index) {
   state.element.dataset.globalCardVisible = 'true';
   state.element.style.setProperty('--card-visibility', '1');
   state.group = attachToGroup(state);
+  updateViewportSnapshot(state, true);
   const observer = ensureVisibilityObserver();
   if (observer) {
     observer.observe(element);
@@ -1295,6 +1312,44 @@ function pointerPosition(event, element) {
   return { x, y };
 }
 
+const VIEWPORT_SAMPLE_INTERVAL = 120;
+
+function updateViewportSnapshot(state, force = false) {
+  if (!state || !state.element) {
+    return null;
+  }
+  const now = performance.now();
+  const previous = state.viewport;
+  if (!force && previous && typeof previous.lastUpdate === 'number' && (now - previous.lastUpdate) < VIEWPORT_SAMPLE_INTERVAL) {
+    return previous;
+  }
+  const rect = state.element.getBoundingClientRect();
+  const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 1;
+  const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 1;
+  if (viewportWidth <= 0 || viewportHeight <= 0) {
+    return previous || null;
+  }
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
+  const normalizedX = Math.min(1, Math.max(0, centerX / viewportWidth));
+  const normalizedY = Math.min(1, Math.max(0, centerY / viewportHeight));
+  const coverage = Math.min(1,
+    Math.max(0,
+      Math.max(rect.width / viewportWidth, rect.height / viewportHeight)
+    )
+  );
+  const snapshot = previous || {};
+  snapshot.x = normalizedX;
+  snapshot.y = normalizedY;
+  snapshot.coverage = coverage;
+  snapshot.lastUpdate = now;
+  state.viewport = snapshot;
+  state.element.style.setProperty('--card-viewport-x', normalizedX.toFixed(4));
+  state.element.style.setProperty('--card-viewport-y', normalizedY.toFixed(4));
+  state.element.style.setProperty('--card-viewport-coverage', coverage.toFixed(4));
+  return snapshot;
+}
+
 function handlePointerEnter(state, event) {
   if (!state.isVisible) {
     state.isVisible = true;
@@ -1307,6 +1362,7 @@ function handlePointerEnter(state, event) {
   state.pointer.targetY = y;
   state.pointer.smoothX = x;
   state.pointer.smoothY = y;
+  updateViewportSnapshot(state, true);
   state.focus.target = 1;
   state.element.dataset.hasFocus = 'true';
   state.element.dataset.interactionActive = 'true';
@@ -1509,6 +1565,9 @@ function step() {
   let weightedX = 0;
   let weightedY = 0;
   let totalFocus = 0;
+  let layoutWeightedX = 0;
+  let layoutWeightedY = 0;
+  let layoutWeight = 0;
   const toRemove = [];
 
   cardStates.forEach((state, element) => {
@@ -1563,13 +1622,37 @@ function step() {
     element.style.setProperty('--card-twist', `${twistDeg.toFixed(3)}deg`);
     element.style.setProperty('--card-pulse', pulse.toFixed(4));
     element.style.setProperty('--card-scroll-momentum', state.scroll.toFixed(4));
+    const viewportSnapshot = updateViewportSnapshot(state);
+    let viewportOffsetX = 0;
+    let viewportOffsetY = 0;
+    if (viewportSnapshot) {
+      viewportOffsetX = viewportSnapshot.x - 0.5;
+      viewportOffsetY = 0.5 - viewportSnapshot.y;
+      const layoutContribution = focusStrength > 0.05
+        ? focusStrength * (0.6 + visibilityFactor * 0.4)
+        : visibilityFactor * 0.3;
+      const clampedContribution = Math.max(0, layoutContribution);
+      layoutWeightedX += viewportSnapshot.x * clampedContribution;
+      layoutWeightedY += viewportSnapshot.y * clampedContribution;
+      layoutWeight += clampedContribution;
+      element.style.setProperty('--card-layout-offset-x', viewportOffsetX.toFixed(4));
+      element.style.setProperty('--card-layout-offset-y', viewportOffsetY.toFixed(4));
+      element.style.setProperty('--card-parallax-x', viewportOffsetX.toFixed(4));
+      element.style.setProperty('--card-parallax-y', viewportOffsetY.toFixed(4));
+    } else {
+      element.style.setProperty('--card-layout-offset-x', '0');
+      element.style.setProperty('--card-layout-offset-y', '0');
+      element.style.setProperty('--card-parallax-x', '0');
+      element.style.setProperty('--card-parallax-y', '0');
+    }
     const rotationPhase =
-      ((state.pointer.smoothX - 0.5) * 0.6) -
-      ((state.pointer.smoothY - 0.5) * 0.5) +
-      state.scroll * 0.28 +
-      supportStrength * 0.16 +
-      globalState.tilt.currentX * 0.2 -
-      globalState.tilt.currentY * 0.18;
+      ((state.pointer.smoothX - 0.5) * 0.45) -
+      ((state.pointer.smoothY - 0.5) * 0.35) +
+      viewportOffsetX * 0.5 +
+      viewportOffsetY * 0.4 +
+      supportStrength * 0.12 +
+      globalState.tilt.currentX * 0.1 -
+      globalState.tilt.currentY * 0.08;
     element.style.setProperty('--card-rotation-phase', rotationPhase.toFixed(4));
     if (!supportsVisibilityObserver) {
       element.style.setProperty('--card-visibility', state.isVisible ? '1' : '0');
@@ -1638,6 +1721,17 @@ function step() {
     }
   });
 
+  const nextLayoutX = layoutWeight > 0 ? layoutWeightedX / layoutWeight : 0.5;
+  const nextLayoutY = layoutWeight > 0 ? layoutWeightedY / layoutWeight : 0.5;
+  globalState.layout.targetX = nextLayoutX;
+  globalState.layout.targetY = nextLayoutY;
+  globalState.layout.currentX += (globalState.layout.targetX - globalState.layout.currentX) * 0.12;
+  globalState.layout.currentY += (globalState.layout.targetY - globalState.layout.currentY) * 0.12;
+  if (Math.abs(globalState.layout.currentX - globalState.layout.targetX) > 0.0008 ||
+      Math.abs(globalState.layout.currentY - globalState.layout.targetY) > 0.0008) {
+    continueAnimation = true;
+  }
+
   toRemove.forEach((element) => cardStates.delete(element));
 
   globalState.scroll.current += (globalState.scroll.target - globalState.scroll.current) * 0.12;
@@ -1660,17 +1754,20 @@ function step() {
 
   const focusInfluence = focusAmount * 0.5 + globalState.synergy.current * 0.35;
   const pointerWeight = 0.55 + focusInfluence * 0.45;
-  const scrollInfluence = globalState.scroll.current * (0.12 + globalState.synergy.current * 0.08);
-  const alignmentDriftX = (globalState.focus.currentX - 0.5) * 0.25;
-  const alignmentDriftY = (0.5 - globalState.focus.currentY) * 0.25;
+  const layoutOffsetX = globalState.layout.currentX - 0.5;
+  const layoutOffsetY = 0.5 - globalState.layout.currentY;
+  const alignmentDriftX = (globalState.focus.currentX - 0.5) * 0.18;
+  const alignmentDriftY = (0.5 - globalState.focus.currentY) * 0.18;
+  const layoutInfluence = 0.35 + globalState.synergy.current * 0.25 + focusAmount * 0.2;
 
-  globalState.tilt.targetX = ((focusX - 0.5) * pointerWeight) + scrollInfluence + alignmentDriftX;
-  globalState.tilt.targetY = ((0.5 - focusY) * pointerWeight) - scrollInfluence * 0.65 + alignmentDriftY;
+  globalState.tilt.targetX = ((focusX - 0.5) * pointerWeight) + (layoutOffsetX * layoutInfluence) + alignmentDriftX;
+  globalState.tilt.targetY = ((0.5 - focusY) * pointerWeight) + (layoutOffsetY * layoutInfluence) + alignmentDriftY;
 
-  const synergyWeight = globalState.synergy.current * 0.45 + focusAmount * 0.2;
-  const momentumWeight = Math.min(0.5, Math.abs(globalState.scroll.current) * 0.7);
-  globalState.bend.target = Math.min(1, synergyWeight + momentumWeight);
-  globalState.warp.target = Math.max(-1, Math.min(1, (globalState.tilt.targetX - globalState.tilt.targetY) * 0.4));
+  const synergyWeight = globalState.synergy.current * 0.45 + focusAmount * 0.25;
+  const layoutMomentum = Math.min(0.45, Math.hypot(layoutOffsetX, layoutOffsetY) * 1.6);
+  globalState.bend.target = Math.min(1, synergyWeight + layoutMomentum);
+  const tiltDelta = globalState.tilt.targetX - globalState.tilt.targetY;
+  globalState.warp.target = Math.max(-1, Math.min(1, tiltDelta * 0.35 + (layoutOffsetX - layoutOffsetY) * 0.65));
 
   globalState.focus.currentX += (globalState.focus.targetX - globalState.focus.currentX) * 0.12;
   globalState.focus.currentY += (globalState.focus.targetY - globalState.focus.currentY) * 0.12;
@@ -1717,6 +1814,8 @@ function step() {
   root.style.setProperty('--global-tilt-y', globalState.tilt.currentY.toFixed(4));
   root.style.setProperty('--global-tilt-strength', tiltStrength.toFixed(4));
   root.style.setProperty('--global-tilt-skew', tiltSkew.toFixed(4));
+  root.style.setProperty('--global-layout-x', globalState.layout.currentX.toFixed(4));
+  root.style.setProperty('--global-layout-y', globalState.layout.currentY.toFixed(4));
   root.style.setProperty('--global-warp', globalState.warp.current.toFixed(4));
   root.style.setProperty('--global-focus-trend', focusTrend.toFixed(4));
   root.style.setProperty('--global-scroll-speed', scrollSpeed.toFixed(4));
@@ -1736,6 +1835,8 @@ function step() {
   sharedMotion.synergy = globalState.synergy.current;
   sharedMotion.focusTrend = focusTrend;
   sharedMotion.tiltSkew = tiltSkew;
+  sharedMotion.layoutVector.x = globalState.layout.currentX;
+  sharedMotion.layoutVector.y = globalState.layout.currentY;
   sharedMotion.updatedAt = performance.now();
 
   maybeDispatchGlobalMotionEvent();
@@ -1803,6 +1904,8 @@ function applyStaticMotionSnapshot() {
     '--global-tilt-y': '0',
     '--global-tilt-strength': '0',
     '--global-tilt-skew': '0',
+    '--global-layout-x': '0.5',
+    '--global-layout-y': '0.5',
     '--global-warp': '0',
     '--global-focus-trend': '0',
     '--global-scroll-speed': '0',
@@ -1827,6 +1930,8 @@ function applyStaticMotionSnapshot() {
   sharedMotion.scrollSpeed = 0;
   sharedMotion.scrollDirection = 0;
   sharedMotion.synergy = 0;
+  sharedMotion.layoutVector.x = 0.5;
+  sharedMotion.layoutVector.y = 0.5;
 
   if (activePageProfile) {
     sharedMotion.palette = activePageProfile.palette || null;
