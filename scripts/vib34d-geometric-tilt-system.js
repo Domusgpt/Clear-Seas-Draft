@@ -156,6 +156,7 @@ class VIB34DGeometricTiltSystem {
     createTiltVisualizer(canvas, systemType) {
         const visualizer = new VIB34DTiltVisualizer(canvas, systemType);
         this.visualizers.set(canvas.id, visualizer);
+        canvas.vib34dVisualizer = visualizer;
     }
 
     updateVisualizers() {
@@ -239,10 +240,33 @@ class VIB34DTiltVisualizer {
         this.canvas = canvas;
         this.systemType = systemType;
         this.context = null;
+        this.resizeObserver = null;
         this.rotation4D = { rot4dXW: 0, rot4dYW: 0, rot4dZW: 0 };
 
-        // VIB34D Parameters from Paul Phillips' system
-        this.parameters = this.getVIB34DParametersForSystem(systemType);
+        this.presets = this.getSystemPreset(systemType);
+        this.state = {
+            speed: this.presets.baseSpeed,
+            glitch: this.presets.baseGlitch,
+            density: this.presets.baseDensity,
+            moire: this.presets.baseMoire,
+            hue: this.presets.baseHue,
+            accentHue: this.presets.accentHue,
+            energy: 0.35,
+            geometryVariant: this.presets.geometryCycle[0]
+        };
+        this.targetState = { ...this.state };
+
+        this.variantIndex = 0;
+        this.traitIndex = 0;
+        this.hasBeenFocused = false;
+
+        this.destruction = null;
+        this.traitFlourish = null;
+        this.cardState = 'far-depth';
+        this.activeTrait = null;
+
+        this.lastTimestamp = performance.now();
+        this.time = 0;
 
         this.init();
     }
@@ -256,11 +280,10 @@ class VIB34DTiltVisualizer {
         this.context = this.canvas.getContext('2d');
         this.resizeCanvas();
 
-        // Resize observer
-        const resizeObserver = new ResizeObserver(() => {
+        this.resizeObserver = new ResizeObserver(() => {
             this.resizeCanvas();
         });
-        resizeObserver.observe(this.canvas);
+        this.resizeObserver.observe(this.canvas);
     }
 
     resizeCanvas() {
@@ -269,37 +292,64 @@ class VIB34DTiltVisualizer {
 
         this.canvas.width = rect.width * dpr;
         this.canvas.height = rect.height * dpr;
+
+        this.context.setTransform(1, 0, 0, 1, 0, 0);
         this.context.scale(dpr, dpr);
     }
 
-    getVIB34DParametersForSystem(systemType) {
-        const configs = {
+    getSystemPreset(systemType) {
+        const presets = {
             quantum: {
-                gridDensity: 20,
-                morphFactor: 1.5,
-                chaos: 0.3,
-                hue: 280,
-                intensity: 0.8,
-                geometry: 3
+                baseHue: 278,
+                accentHue: 210,
+                baseSpeed: 1.15,
+                baseGlitch: 0.35,
+                baseDensity: 0.95,
+                baseMoire: 0.35,
+                geometryCycle: ['hypercube', 'wave', 'crystal', 'lattice'],
+                trait: {
+                    hueShiftStep: 38,
+                    accentShiftStep: 24,
+                    moireBoost: 0.25,
+                    glitchBoost: 0.35,
+                    energyBoost: 0.3
+                }
             },
             holographic: {
-                gridDensity: 25,
-                morphFactor: 1.8,
-                chaos: 0.4,
-                hue: 330,
-                intensity: 0.9,
-                geometry: 7
+                baseHue: 330,
+                accentHue: 180,
+                baseSpeed: 1.25,
+                baseGlitch: 0.4,
+                baseDensity: 0.85,
+                baseMoire: 0.45,
+                geometryCycle: ['torus', 'klein', 'ribbon', 'shell'],
+                trait: {
+                    hueShiftStep: 28,
+                    accentShiftStep: 18,
+                    moireBoost: 0.22,
+                    glitchBoost: 0.32,
+                    energyBoost: 0.28
+                }
             },
             faceted: {
-                gridDensity: 15,
-                morphFactor: 1.0,
-                chaos: 0.2,
-                hue: 200,
-                intensity: 0.7,
-                geometry: 0
+                baseHue: 202,
+                accentHue: 150,
+                baseSpeed: 0.95,
+                baseGlitch: 0.25,
+                baseDensity: 1.05,
+                baseMoire: 0.28,
+                geometryCycle: ['prism', 'polytope', 'lattice'],
+                trait: {
+                    hueShiftStep: 32,
+                    accentShiftStep: 20,
+                    moireBoost: 0.18,
+                    glitchBoost: 0.28,
+                    energyBoost: 0.26
+                }
             }
         };
-        return configs[systemType] || configs.faceted;
+
+        return presets[systemType] || presets.faceted;
     }
 
     updateRotation4D(rotation4D) {
@@ -316,27 +366,282 @@ class VIB34DTiltVisualizer {
 
     renderVIB34DVisualization() {
         const ctx = this.context;
+        if (!ctx) return;
+
         const width = this.canvas.width / (window.devicePixelRatio || 1);
         const height = this.canvas.height / (window.devicePixelRatio || 1);
 
-        // Clear canvas
-        ctx.clearRect(0, 0, width, height);
+        const now = performance.now();
+        const delta = (now - this.lastTimestamp) / 1000;
+        this.lastTimestamp = now;
 
-        // Render tilt-responsive VIB34D visualization
-        this.renderTiltResponsiveGeometry(ctx, width, height);
+        this.updateDynamicState(delta);
+
+        ctx.clearRect(0, 0, width, height);
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+
+        this.renderTiltResponsiveGeometry(ctx, width, height, this.time);
+
+        if (this.traitFlourish && this.traitFlourish.active) {
+            this.renderTraitFlourish(ctx, width, height);
+        }
+
+        if (this.destruction && this.destruction.active) {
+            this.renderDestructionChoreography(ctx, width, height);
+        }
+
+        ctx.restore();
     }
 
-    renderTiltResponsiveGeometry(ctx, width, height) {
+    updateDynamicState(delta) {
+        const lerp = (current, target, factor) => current + (target - current) * factor;
+        const factor = Math.min(1, delta * 3.5);
+
+        this.state.speed = this.clamp(lerp(this.state.speed, this.targetState.speed, factor), 0.15, 4.0);
+        this.state.glitch = this.clamp(lerp(this.state.glitch, this.targetState.glitch, factor), 0, 2.5);
+        this.state.density = this.clamp(lerp(this.state.density, this.targetState.density, factor), 0.2, 1.8);
+        this.state.moire = this.clamp(lerp(this.state.moire, this.targetState.moire, factor), 0, 2.0);
+        this.state.hue = lerp(this.state.hue, this.targetState.hue, factor);
+        this.state.accentHue = lerp(this.state.accentHue, this.targetState.accentHue, factor);
+        this.state.energy = this.clamp(lerp(this.state.energy, this.targetState.energy, factor), 0, 2.0);
+        this.state.geometryVariant = this.targetState.geometryVariant;
+
+        this.time += delta * this.state.speed;
+
+        if (this.destruction && this.destruction.active) {
+            const progress = (performance.now() - this.destruction.start) / this.destruction.duration;
+            if (progress >= 1) {
+                this.destruction.active = false;
+            }
+        }
+
+        if (this.traitFlourish && this.traitFlourish.active) {
+            const progress = (performance.now() - this.traitFlourish.start) / this.traitFlourish.duration;
+            if (progress >= 1) {
+                this.traitFlourish.active = false;
+            }
+        }
+    }
+
+    getTargetsForState(state) {
+        const base = this.presets;
+        switch (state) {
+            case 'approaching':
+                return {
+                    speed: base.baseSpeed * 1.1,
+                    glitch: base.baseGlitch * 0.8,
+                    density: base.baseDensity * 0.85,
+                    moire: base.baseMoire * 0.7,
+                    energy: 0.65
+                };
+            case 'focused':
+                return {
+                    speed: base.baseSpeed * 1.75,
+                    glitch: base.baseGlitch * 1.4 + 0.2,
+                    density: base.baseDensity * 0.6,
+                    moire: base.baseMoire * 1.3 + 0.1,
+                    energy: 1.05
+                };
+            case 'exiting':
+                return {
+                    speed: base.baseSpeed * 1.35,
+                    glitch: base.baseGlitch * 1.1,
+                    density: base.baseDensity * 0.75,
+                    moire: base.baseMoire * 0.9,
+                    energy: 0.5
+                };
+            case 'destroyed':
+                return {
+                    speed: base.baseSpeed * 2.1,
+                    glitch: base.baseGlitch * 1.9 + 0.4,
+                    density: base.baseDensity * 0.35,
+                    moire: base.baseMoire * 1.6 + 0.2,
+                    energy: 1.2
+                };
+            case 'far-depth':
+            default:
+                return {
+                    speed: base.baseSpeed * 0.6,
+                    glitch: base.baseGlitch * 0.45,
+                    density: base.baseDensity * 1.25,
+                    moire: base.baseMoire * 0.4,
+                    energy: 0.2
+                };
+        }
+    }
+
+    realignToState(options = {}) {
+        const targets = this.getTargetsForState(this.cardState || 'far-depth');
+        Object.assign(this.targetState, targets);
+        if (this.activeTrait) {
+            this.applyInheritedTrait(this.activeTrait, { ...options, silent: options.silent !== false, immediate: options.immediate || false });
+        }
+    }
+
+    setCardState(state, options = {}) {
+        const inheritedTrait = options.inheritedTrait;
+
+        if (inheritedTrait) {
+            this.applyInheritedTrait(inheritedTrait);
+        }
+
+        const targets = this.getTargetsForState(state);
+        Object.assign(this.targetState, targets);
+
+        if (state === 'focused') {
+            if (!inheritedTrait || !inheritedTrait.geometryVariant) {
+                if (!this.hasBeenFocused) {
+                    this.hasBeenFocused = true;
+                    this.targetState.geometryVariant = this.presets.geometryCycle[this.variantIndex];
+                } else {
+                    this.variantIndex = (this.variantIndex + 1) % this.presets.geometryCycle.length;
+                    this.targetState.geometryVariant = this.presets.geometryCycle[this.variantIndex];
+                }
+            }
+        }
+
+        this.cardState = state;
+    }
+
+    applyInheritedTrait(trait, options = {}) {
+        if (!trait) return;
+
+        const immediate = options.immediate || false;
+        const silent = options.silent || false;
+
+        if (typeof trait.hueShift === 'number') {
+            this.targetState.hue = this.presets.baseHue + trait.hueShift;
+        }
+
+        if (typeof trait.accentShift === 'number') {
+            this.targetState.accentHue = this.presets.accentHue + trait.accentShift;
+        }
+
+        if (typeof trait.moireBoost === 'number') {
+            this.targetState.moire += trait.moireBoost;
+        }
+
+        if (typeof trait.glitchBoost === 'number') {
+            this.targetState.glitch += trait.glitchBoost;
+        }
+
+        if (typeof trait.energyBoost === 'number') {
+            this.targetState.energy += trait.energyBoost;
+        }
+
+        if (trait.geometryVariant) {
+            this.targetState.geometryVariant = trait.geometryVariant;
+            const index = this.presets.geometryCycle.indexOf(trait.geometryVariant);
+            if (index >= 0) {
+                this.variantIndex = index;
+            }
+        }
+
+        this.activeTrait = { ...trait };
+
+        if (!silent) {
+            this.traitFlourish = {
+                active: true,
+                start: performance.now(),
+                duration: 1200,
+                trait
+            };
+        }
+
+        if (immediate) {
+            Object.keys(this.targetState).forEach((key) => {
+                this.state[key] = this.targetState[key];
+            });
+        }
+    }
+
+    applyRelationalResponse(type, payload = {}, context = 'focused') {
+        const intensity = typeof payload.intensity === 'number' ? payload.intensity : 0;
+        const baseTargets = this.getTargetsForState(this.cardState || 'far-depth');
+        const focusFactor = context === 'focused' ? 1 : -0.45;
+
+        switch (type) {
+            case 'pointer-move': {
+                this.targetState.glitch = this.clamp(baseTargets.glitch + intensity * 0.75 * focusFactor, 0, 3);
+                this.targetState.moire = this.clamp(baseTargets.moire + intensity * 0.52 * focusFactor, 0, 3);
+                this.targetState.density = this.clamp(baseTargets.density - intensity * 0.38 * focusFactor, 0.2, 1.8);
+                this.targetState.speed = baseTargets.speed + intensity * (context === 'focused' ? 0.55 : 0.25);
+                this.targetState.energy = this.clamp(baseTargets.energy + intensity * (context === 'focused' ? 0.68 : 0.28), 0, 3);
+                break;
+            }
+            case 'pointer-press': {
+                this.targetState.glitch = this.clamp(baseTargets.glitch + intensity * (context === 'focused' ? 1.05 : 0.4), 0, 3);
+                this.targetState.moire = this.clamp(baseTargets.moire + intensity * (context === 'focused' ? 0.6 : 0.25), 0, 3);
+                this.targetState.energy = this.clamp(baseTargets.energy + intensity * (context === 'focused' ? 0.9 : 0.35), 0, 3);
+                if (context === 'focused') {
+                    this.traitFlourish = {
+                        active: true,
+                        start: performance.now(),
+                        duration: 900,
+                        trait: this.activeTrait
+                    };
+                }
+                break;
+            }
+            case 'pointer-release': {
+                this.targetState.glitch = this.clamp(this.targetState.glitch * 0.92, 0, 3);
+                this.targetState.energy = this.clamp(this.targetState.energy * 0.9 + baseTargets.energy * 0.1, 0, 3);
+                this.targetState.moire = this.clamp(this.targetState.moire * 0.94, 0, 3);
+                break;
+            }
+            case 'pointer-neutral': {
+                this.realignToState({ silent: true });
+                break;
+            }
+        }
+    }
+
+    generateDestructionTrait() {
+        const cycleLength = this.presets.geometryCycle.length;
+        const geometryVariant = this.presets.geometryCycle[(this.traitIndex + 1) % cycleLength];
+
+        const trait = {
+            geometryVariant,
+            hueShift: this.presets.trait.hueShiftStep * (this.traitIndex + 1),
+            accentShift: this.presets.trait.accentShiftStep * (this.traitIndex + 1),
+            moireBoost: this.presets.trait.moireBoost + 0.08 * this.traitIndex,
+            glitchBoost: this.presets.trait.glitchBoost + 0.07 * this.traitIndex,
+            energyBoost: this.presets.trait.energyBoost + 0.05 * this.traitIndex
+        };
+
+        this.traitIndex = (this.traitIndex + 1) % cycleLength;
+
+        return trait;
+    }
+
+    triggerDestructionSequence() {
+        const trait = this.generateDestructionTrait();
+
+        this.destruction = {
+            active: true,
+            start: performance.now(),
+            duration: 1400,
+            trait
+        };
+
+        this.targetState.hue = this.presets.baseHue + trait.hueShift;
+        this.targetState.accentHue = this.presets.accentHue + trait.accentShift;
+        this.targetState.glitch += trait.glitchBoost * 0.5;
+        this.targetState.moire += trait.moireBoost * 0.5;
+        this.targetState.energy += trait.energyBoost * 0.5;
+
+        return trait;
+    }
+
+    renderTiltResponsiveGeometry(ctx, width, height, time) {
         const centerX = width / 2;
         const centerY = height / 2;
-        const time = Date.now() * 0.001;
 
-        // Use 4D rotation for geometric transformation
         const rotX = this.rotation4D.rot4dXW;
         const rotY = this.rotation4D.rot4dYW;
         const rotZ = this.rotation4D.rot4dZW;
 
-        // Create geometric patterns based on system type and tilt
         switch (this.systemType) {
             case 'quantum':
                 this.renderQuantumTiltPattern(ctx, centerX, centerY, rotX, rotY, rotZ, time);
@@ -345,111 +650,328 @@ class VIB34DTiltVisualizer {
                 this.renderHolographicTiltPattern(ctx, centerX, centerY, rotX, rotY, rotZ, time);
                 break;
             case 'faceted':
-                this.renderFacetedTiltPattern(ctx, centerX, centerY, rotX, rotY, rotZ, time);
-                break;
             default:
                 this.renderFacetedTiltPattern(ctx, centerX, centerY, rotX, rotY, rotZ, time);
+                break;
         }
     }
 
     renderQuantumTiltPattern(ctx, centerX, centerY, rotX, rotY, rotZ, time) {
-        const gridSize = 40 - this.parameters.gridDensity;
-        const intensity = this.parameters.intensity;
+        const baseSpacing = 38;
+        const density = this.clamp(this.state.density, 0.2, 1.8);
+        const spacing = baseSpacing * (1 + (1 - density) * 2.6);
+        const extent = 220 + this.state.energy * 140;
+        const hue = this.normalizeHue(this.state.hue);
+        const accentHue = this.normalizeHue(this.state.accentHue);
+        const glitch = this.state.glitch;
+        const energy = this.state.energy;
+        const variant = this.state.geometryVariant;
 
-        ctx.strokeStyle = `hsla(${this.parameters.hue}, 70%, 60%, ${intensity * 0.6})`;
-        ctx.lineWidth = 1 + intensity;
+        ctx.lineWidth = 1.2 + energy * 0.5;
 
-        for (let x = -200; x < 200; x += gridSize) {
-            for (let y = -200; y < 200; y += gridSize) {
-                const px = centerX + x * (1 + rotY * 0.5);
-                const py = centerY + y * (1 + rotX * 0.5);
+        for (let x = -extent; x <= extent; x += spacing) {
+            for (let y = -extent; y <= extent; y += spacing) {
+                const baseX = x * (1 + rotY * 0.35);
+                const baseY = y * (1 + rotX * 0.35);
+
+                let jitterX = Math.sin(time * 4 + y * 0.06) * glitch * 8;
+                let jitterY = Math.cos(time * 4 + x * 0.06) * glitch * 8;
+
+                if (variant === 'wave') {
+                    jitterX += Math.sin(time * 3 + y * 0.09) * 12 * energy;
+                } else if (variant === 'crystal') {
+                    jitterY += Math.cos(time * 3 + x * 0.09) * 12 * energy;
+                } else if (variant === 'lattice') {
+                    jitterX += Math.sin((x + time * 30) * 0.02) * 6;
+                    jitterY += Math.cos((y - time * 30) * 0.02) * 6;
+                }
+
+                const px = centerX + baseX + jitterX;
+                const py = centerY + baseY + jitterY;
 
                 const distance = Math.hypot(px - centerX, py - centerY);
-                const wave = Math.sin(distance * 0.02 + time + rotZ * 2) * 0.5 + 0.5;
-                const alpha = (1 - distance / 300) * wave * intensity;
+                const normalized = Math.max(0, 1 - distance / (extent * 1.2));
+                if (normalized <= 0.01) continue;
 
-                if (alpha > 0.1) {
-                    ctx.globalAlpha = alpha;
+                const wave = (Math.sin(distance * 0.016 + time * 3 + rotZ * 2) + 1) * 0.5;
+                const alpha = Math.pow(normalized, 1.4) * (0.25 + energy * 0.5) * (0.6 + wave * 0.5);
+
+                ctx.strokeStyle = `hsla(${hue}, 72%, ${55 + wave * 18}%, ${alpha})`;
+                ctx.beginPath();
+                ctx.arc(px, py, 2 + wave * 4 + glitch * 1.2, 0, Math.PI * 2);
+                ctx.stroke();
+
+                if (variant === 'crystal' && wave > 0.65) {
+                    ctx.strokeStyle = `hsla(${accentHue}, 88%, 70%, ${alpha * 0.65})`;
                     ctx.beginPath();
-                    ctx.arc(px, py, 2 + wave * 3, 0, Math.PI * 2);
+                    ctx.moveTo(px, py);
+                    ctx.lineTo(
+                        centerX + Math.cos(time + x * 0.015) * distance * 0.25,
+                        centerY + Math.sin(time + y * 0.015) * distance * 0.25
+                    );
                     ctx.stroke();
                 }
             }
         }
 
-        ctx.globalAlpha = 1;
+        this.renderMoireOverlay(ctx, centerX, centerY, this.state.moire, hue, accentHue, energy, time);
     }
 
     renderHolographicTiltPattern(ctx, centerX, centerY, rotX, rotY, rotZ, time) {
-        const layers = 5;
-        const intensity = this.parameters.intensity;
+        const layers = 6 + Math.floor(this.state.energy * 3);
+        const hue = this.normalizeHue(this.state.hue);
+        const accentHue = this.normalizeHue(this.state.accentHue);
+        const glitch = this.state.glitch;
+        const energy = this.state.energy;
+        const density = this.state.density;
+        const variant = this.state.geometryVariant;
 
         for (let i = 0; i < layers; i++) {
-            const radius = 50 + i * 30;
-            const alpha = intensity * (1 - i / layers);
+            const progress = i / layers;
+            let radius = 55 + i * 32 * (1 + (1 - density) * 0.4);
+            let rotation = time * (0.45 + progress * 0.5) + rotZ * 1.2;
+            let offsetX = Math.sin(time * 1.2 + progress * 6) * 18 * glitch;
+            let offsetY = Math.cos(time * 1.1 + progress * 5) * 18 * glitch;
 
-            ctx.strokeStyle = `hsla(${this.parameters.hue + i * 20}, 80%, 70%, ${alpha})`;
-            ctx.lineWidth = 2;
+            if (variant === 'klein') {
+                rotation += Math.sin(time + progress * 2) * 0.8;
+            } else if (variant === 'ribbon') {
+                offsetX += Math.sin(time * 2 + progress * 8) * 36 * energy;
+                offsetY += Math.cos(time * 2 + progress * 8) * 30 * energy;
+            } else if (variant === 'shell') {
+                radius *= 1 + progress * 0.5;
+            } else if (variant === 'torus') {
+                radius *= 1 + Math.sin(time + progress * 3) * 0.12;
+            }
 
-            const offsetX = Math.sin(rotY + time) * 20;
-            const offsetY = Math.cos(rotX + time) * 20;
+            const lineAlpha = 0.55 * (1 - progress) + energy * 0.1;
+            ctx.strokeStyle = `hsla(${(hue + progress * 25) % 360}, 88%, ${70 - progress * 18}%, ${lineAlpha})`;
+            ctx.lineWidth = 1.2 + energy * 0.4;
 
             ctx.beginPath();
             ctx.ellipse(
                 centerX + offsetX,
                 centerY + offsetY,
-                radius * (1 + rotX * 0.2),
-                radius * (1 + rotY * 0.2),
-                rotZ + time,
+                radius * (1 + rotX * 0.25 + energy * 0.1),
+                radius * (1 + rotY * 0.25 + energy * 0.1),
+                rotation,
                 0,
                 Math.PI * 2
             );
             ctx.stroke();
+
+            const shimmer = 0.2 * (1 - progress) + energy * 0.05;
+            ctx.setLineDash([6, 10]);
+            ctx.strokeStyle = `hsla(${accentHue + progress * 30}, 95%, 75%, ${shimmer})`;
+            ctx.beginPath();
+            ctx.ellipse(
+                centerX + offsetX * 0.6,
+                centerY + offsetY * 0.6,
+                radius * 0.85,
+                radius * 0.85 * (variant === 'ribbon' ? 0.7 : 1),
+                -rotation * 0.6,
+                0,
+                Math.PI * 2
+            );
+            ctx.stroke();
+            ctx.setLineDash([]);
         }
+
+        this.renderMoireOverlay(ctx, centerX, centerY, this.state.moire, hue, accentHue, energy, time);
     }
 
     renderFacetedTiltPattern(ctx, centerX, centerY, rotX, rotY, rotZ, time) {
-        const sides = 6;
-        const radius = 80;
-        const intensity = this.parameters.intensity;
+        const hue = this.normalizeHue(this.state.hue);
+        const accentHue = this.normalizeHue(this.state.accentHue);
+        const glitch = this.state.glitch;
+        const energy = this.state.energy;
+        const variant = this.state.geometryVariant;
 
-        ctx.strokeStyle = `hsla(${this.parameters.hue}, 70%, 60%, ${intensity})`;
-        ctx.fillStyle = `hsla(${this.parameters.hue}, 70%, 60%, ${intensity * 0.3})`;
-        ctx.lineWidth = 2;
+        let sides = 6;
+        if (variant === 'polytope') {
+            sides = 8;
+        } else if (variant === 'lattice') {
+            sides = 12;
+        }
 
-        const angle = rotZ + time * 0.5;
-        const scaleX = 1 + rotY * 0.3;
-        const scaleY = 1 + rotX * 0.3;
+        const radius = 70 + energy * 40;
 
         ctx.save();
         ctx.translate(centerX, centerY);
-        ctx.scale(scaleX, scaleY);
-        ctx.rotate(angle);
+        ctx.rotate(time * 0.6 + rotZ);
+        ctx.scale(1 + rotY * 0.35 + energy * 0.12, 1 + rotX * 0.35 + energy * 0.12);
 
         ctx.beginPath();
         for (let i = 0; i <= sides; i++) {
-            const a = (i / sides) * Math.PI * 2;
-            const x = Math.cos(a) * radius;
-            const y = Math.sin(a) * radius;
+            const angle = (i / sides) * Math.PI * 2;
+            let r = radius;
 
-            if (i === 0) {
-                ctx.moveTo(x, y);
-            } else {
-                ctx.lineTo(x, y);
+            if (variant === 'lattice') {
+                r += Math.sin(time * 3 + angle * 4) * 14 * glitch;
+            } else if (variant === 'polytope') {
+                r += Math.cos(time * 2 + angle * 3) * 18 * energy;
             }
+
+            const x = Math.cos(angle) * r;
+            const y = Math.sin(angle) * r;
+
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
         }
+        ctx.closePath();
+
+        ctx.fillStyle = `hsla(${hue}, 65%, ${45 + energy * 18}%, ${0.2 + energy * 0.25})`;
+        ctx.strokeStyle = `hsla(${hue}, 72%, 60%, ${0.75 + energy * 0.18})`;
+        ctx.lineWidth = 2 + glitch * 0.8;
         ctx.fill();
         ctx.stroke();
+
+        ctx.strokeStyle = `hsla(${accentHue}, 95%, 72%, ${0.35 + glitch * 0.1})`;
+        for (let i = 0; i < sides; i++) {
+            const angle = (i / sides) * Math.PI * 2;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(
+                Math.cos(angle) * radius * 1.2,
+                Math.sin(angle) * radius * 1.2
+            );
+            ctx.stroke();
+        }
+
+        ctx.restore();
+
+        this.renderMoireOverlay(ctx, centerX, centerY, this.state.moire, hue, accentHue, energy, time);
+    }
+
+    renderMoireOverlay(ctx, centerX, centerY, moire, hue, accentHue, energy, time) {
+        const intensity = Math.max(0, moire - 0.05);
+        if (intensity <= 0.01) return;
+
+        const layers = 3 + Math.floor(intensity * 2.5);
+
+        for (let i = 0; i < layers; i++) {
+            const radius = (i + 1) * 30 * (1 + energy * 0.35);
+            const alpha = (0.08 + intensity * 0.12) * (1 - i / layers);
+            const angle = time * (0.5 + intensity * 0.4) + i * 0.6;
+
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.rotate(angle);
+
+            ctx.strokeStyle = `hsla(${(accentHue + i * 14) % 360}, 92%, 68%, ${alpha})`;
+            ctx.lineWidth = 1 + intensity * 0.4;
+
+            ctx.beginPath();
+            ctx.ellipse(
+                0,
+                0,
+                radius * (1 + Math.sin(time + i) * 0.12 * energy),
+                radius * (1 + Math.cos(time + i * 0.8) * 0.12 * energy),
+                0,
+                0,
+                Math.PI * 2
+            );
+            ctx.stroke();
+
+            ctx.restore();
+        }
+    }
+
+    renderTraitFlourish(ctx, width, height) {
+        if (!this.traitFlourish) return;
+
+        const now = performance.now();
+        const progress = (now - this.traitFlourish.start) / this.traitFlourish.duration;
+        if (progress >= 1) {
+            this.traitFlourish.active = false;
+            return;
+        }
+
+        const intensity = Math.sin(progress * Math.PI);
+        const hue = this.normalizeHue(this.targetState.accentHue + 24);
+
+        ctx.save();
+        ctx.translate(width / 2, height / 2);
+        ctx.rotate(progress * Math.PI * 2);
+
+        const radius = (width + height) * 0.12 * (0.6 + intensity);
+
+        ctx.lineWidth = 2 + intensity * 3;
+        ctx.strokeStyle = `hsla(${hue}, 96%, 75%, ${0.55 * (1 - progress)})`;
+        ctx.beginPath();
+        ctx.arc(0, 0, radius, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.setLineDash([4, 10]);
+        ctx.strokeStyle = `hsla(${(hue + 40) % 360}, 98%, 72%, ${0.35 * (1 - progress)})`;
+        ctx.beginPath();
+        ctx.arc(0, 0, radius * 1.35, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
 
         ctx.restore();
     }
 
+    renderDestructionChoreography(ctx, width, height) {
+        if (!this.destruction) return;
+
+        const now = performance.now();
+        const progress = (now - this.destruction.start) / this.destruction.duration;
+        if (progress >= 1) {
+            this.destruction.active = false;
+            return;
+        }
+
+        const fade = 1 - progress;
+        const hue = this.normalizeHue(this.targetState.hue + 18);
+        const accentHue = this.normalizeHue(this.targetState.accentHue);
+        const radiusBase = Math.max(width, height) * 0.18;
+        const radius = radiusBase + progress * Math.max(width, height) * 0.35;
+
+        ctx.save();
+        ctx.translate(width / 2, height / 2);
+        ctx.globalCompositeOperation = 'screen';
+
+        const gradient = ctx.createRadialGradient(0, 0, radius * 0.1, 0, 0, radius);
+        gradient.addColorStop(0, `hsla(${accentHue}, 100%, 76%, ${0.45 * fade})`);
+        gradient.addColorStop(0.5, `hsla(${hue}, 100%, 66%, ${0.35 * fade})`);
+        gradient.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(0, 0, radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        const shards = 18;
+        for (let i = 0; i < shards; i++) {
+            const angle = (i / shards) * Math.PI * 2 + progress * Math.PI * 1.5;
+            const shardLength = radius * (0.55 + 0.3 * Math.sin(progress * 6 + i));
+            ctx.strokeStyle = `hsla(${(hue + i * 12) % 360}, 100%, 70%, ${0.6 * fade})`;
+            ctx.lineWidth = 1.5 + this.state.glitch * 0.4;
+            ctx.beginPath();
+            ctx.moveTo(Math.cos(angle) * radius * 0.35, Math.sin(angle) * radius * 0.35);
+            ctx.lineTo(Math.cos(angle) * shardLength, Math.sin(angle) * shardLength);
+            ctx.stroke();
+        }
+
+        ctx.restore();
+    }
+
+    clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
+    normalizeHue(value) {
+        return ((value % 360) + 360) % 360;
+    }
+
     destroy() {
-        // Clean up resources
+        if (this.resizeObserver) {
+            this.resizeObserver.disconnect();
+            this.resizeObserver = null;
+        }
         this.context = null;
     }
 }
-
 // Export for global use
 window.VIB34DGeometricTiltSystem = VIB34DGeometricTiltSystem;
 window.VIB34DTiltVisualizer = VIB34DTiltVisualizer;
