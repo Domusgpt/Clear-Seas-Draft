@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Seas Solutions - Revolutionary VIB34D Technology</title>
+
+    <!-- Professional Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* VIB34D Color System */
+            --clear-seas-primary: #00ffff;
+            --clear-seas-secondary: #ff00ff;
+            --quantum-cyan: #00d4ff;
+            --neural-purple: #8a2be2;
+            --holographic-pink: #ff1493;
+            --glitch-red: #ff0040;
+            --glitch-green: #00ff88;
+            --glitch-blue: #0088ff;
+            --void-black: #0a0a0a;
+
+            /* Depth & Perspective */
+            --depth-perspective: 1800px;
+            --card-depth-offset: 400px;
+            --tilt-sensitivity: 0.05;
+
+            /* Animation Timing */
+            --transition-depth: cubic-bezier(0.23, 1, 0.32, 1);
+            --transition-destruction: cubic-bezier(0.95, 0.05, 0.795, 0.035);
+            --transition-hypercube: cubic-bezier(0.86, 0, 0.07, 1);
+            --duration-card: 1200ms;
+            --duration-section: 2000ms;
+            --duration-destruction: 800ms;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #000;
+            color: white;
+            overflow: hidden;
+            height: 100vh;
+            perspective: var(--depth-perspective);
+            perspective-origin: 50% 50%;
+            position: fixed;
+            width: 100%;
+        }
+
+        /* BLOWN-UP BACKGROUND VISUALIZER */
+        .background-visualizer-container {
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            z-index: 0;
+            transform-style: preserve-3d;
+            pointer-events: none;
+            opacity: 0.15;
+            filter: blur(2px);
+        }
+
+        .background-visualizer {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            transform-origin: center center;
+            transition: transform 2s var(--transition-depth);
+        }
+
+        .bg-visualizer-layer {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            transform-origin: center center;
+        }
+
+        /* MAIN DEPTH CONTAINER */
+        .depth-universe {
+            position: fixed;
+            width: 100%;
+            height: 100vh;
+            transform-style: preserve-3d;
+            transition: transform var(--duration-section) var(--transition-hypercube);
+            z-index: 10;
+        }
+
+        /* CARD PROGRESSION SYSTEM */
+        .card-group {
+            position: absolute;
+            width: 100%;
+            height: 100vh;
+            transform-style: preserve-3d;
+            pointer-events: none;
+        }
+
+        .progression-card {
+            position: absolute;
+            width: 85vw;
+            max-width: 900px;
+            height: 65vh;
+            left: 50%;
+            top: 50%;
+            transform-origin: center center;
+            transform-style: preserve-3d;
+            border-radius: 24px;
+            background: linear-gradient(
+                135deg,
+                rgba(0, 255, 255, 0.08) 0%,
+                rgba(255, 0, 255, 0.04) 50%,
+                rgba(138, 43, 226, 0.06) 100%
+            );
+            border: 2px solid rgba(0, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            transition: all var(--duration-card) var(--transition-depth);
+            cursor: pointer;
+            pointer-events: auto;
+            overflow: hidden;
+        }
+
+        /* 5-LAYER VIB34D CARD STRUCTURE */
+        .card-layer-background {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            opacity: 0.3;
+        }
+
+        .card-layer-shadow {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            background: radial-gradient(ellipse at center, transparent 0%, rgba(0, 0, 0, 0.4) 100%);
+        }
+
+        .card-layer-content {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            z-index: 3;
+            padding: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .card-layer-highlight {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: 4;
+            opacity: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+            transform: translateX(-100%);
+            transition: all 0.6s ease;
+        }
+
+        .card-layer-accent {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: 5;
+            pointer-events: none;
+            mix-blend-mode: screen;
+        }
+
+        /* DEPTH STATES WITH PARAMETER SCALING */
+        .progression-card[data-depth="far"] {
+            transform: translate(-50%, -50%) translateZ(-1200px) scale(0.2);
+            opacity: 0.1;
+            filter: blur(4px) saturate(0.3);
+            --vib34d-density: 4;
+            --vib34d-chaos: 0.05;
+            --vib34d-speed: 0.2;
+            --vib34d-morph: 0.1;
+            --vib34d-brightness: 0.3;
+        }
+
+        .progression-card[data-depth="mid-far"] {
+            transform: translate(-50%, -50%) translateZ(-800px) scale(0.4);
+            opacity: 0.3;
+            filter: blur(2px) saturate(0.5);
+            --vib34d-density: 8;
+            --vib34d-chaos: 0.1;
+            --vib34d-speed: 0.4;
+            --vib34d-morph: 0.3;
+            --vib34d-brightness: 0.5;
+        }
+
+        .progression-card[data-depth="approaching"] {
+            transform: translate(-50%, -50%) translateZ(-400px) scale(0.65);
+            opacity: 0.6;
+            filter: blur(1px) saturate(0.8);
+            --vib34d-density: 15;
+            --vib34d-chaos: 0.2;
+            --vib34d-speed: 0.6;
+            --vib34d-morph: 0.6;
+            --vib34d-brightness: 0.7;
+        }
+
+        .progression-card[data-depth="near"] {
+            transform: translate(-50%, -50%) translateZ(-100px) scale(0.9);
+            opacity: 0.9;
+            filter: blur(0.5px) saturate(1);
+            --vib34d-density: 25;
+            --vib34d-chaos: 0.35;
+            --vib34d-speed: 0.8;
+            --vib34d-morph: 0.8;
+            --vib34d-brightness: 0.9;
+        }
+
+        .progression-card[data-depth="focused"] {
+            transform: translate(-50%, -50%) translateZ(0px) scale(1);
+            opacity: 1;
+            filter: blur(0px) saturate(1.2) brightness(1.1);
+            --vib34d-density: 35;
+            --vib34d-chaos: 0.5;
+            --vib34d-speed: 1;
+            --vib34d-morph: 1;
+            --vib34d-brightness: 1;
+            border-color: var(--clear-seas-primary);
+            box-shadow:
+                0 0 40px rgba(0, 255, 255, 0.4),
+                0 0 80px rgba(0, 255, 255, 0.2),
+                0 0 120px rgba(255, 0, 255, 0.1);
+        }
+
+        .progression-card[data-depth="exiting"] {
+            transform: translate(-50%, -50%) translateZ(400px) scale(1.3);
+            opacity: 0.3;
+            filter: blur(2px) saturate(2) hue-rotate(30deg);
+            --vib34d-density: 40;
+            --vib34d-chaos: 0.8;
+            --vib34d-speed: 1.5;
+            --vib34d-morph: 1.5;
+            --vib34d-brightness: 1.5;
+        }
+
+        /* DESTRUCTION ANIMATION */
+        .progression-card.destroying {
+            animation: cardDestruction var(--duration-destruction) var(--transition-destruction) forwards;
+        }
+
+        @keyframes cardDestruction {
+            0% {
+                transform: translate(-50%, -50%) translateZ(0px) scale(1) rotateY(0deg);
+                opacity: 1;
+                filter: blur(0px) saturate(1.2);
+            }
+            30% {
+                transform: translate(-50%, -50%) translateZ(100px) scale(1.1) rotateY(10deg);
+                opacity: 0.9;
+                filter: blur(0px) saturate(2) brightness(1.5) contrast(1.5);
+                box-shadow:
+                    0 0 60px rgba(255, 0, 64, 0.6),
+                    0 0 120px rgba(0, 255, 136, 0.4);
+            }
+            60% {
+                transform: translate(-50%, -50%) translateZ(200px) scale(0.8) rotateY(-20deg) rotateX(15deg);
+                opacity: 0.5;
+                filter: blur(2px) saturate(3) hue-rotate(180deg);
+            }
+            100% {
+                transform: translate(-50%, -50%) translateZ(800px) scale(0) rotateY(90deg) rotateX(90deg);
+                opacity: 0;
+                filter: blur(10px) saturate(0);
+            }
+        }
+
+        /* JARRING HANDOFF EFFECT */
+        .progression-card.receiving-handoff {
+            animation: handoffReceive 200ms linear;
+        }
+
+        @keyframes handoffReceive {
+            0%, 100% {
+                --vib34d-speed: 1;
+            }
+            50% {
+                --vib34d-speed: 0;
+                filter: contrast(2) brightness(1.3);
+            }
+        }
+
+        /* HOLOGRAPHIC RGB MOIRÉ BORDER SYSTEM */
+        .holographic-border {
+            position: absolute;
+            inset: -2px;
+            border-radius: 24px;
+            background: linear-gradient(
+                45deg,
+                var(--glitch-red),
+                var(--glitch-green),
+                var(--glitch-blue),
+                var(--glitch-red)
+            );
+            background-size: 400% 400%;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            animation: rgbFlow 2s linear infinite;
+        }
+
+        .progression-card[data-depth="focused"] .holographic-border {
+            opacity: 0.8;
+        }
+
+        @keyframes rgbFlow {
+            0% {
+                background-position: 0% 50%;
+                filter: hue-rotate(0deg);
+            }
+            50% {
+                background-position: 100% 50%;
+                filter: hue-rotate(180deg);
+            }
+            100% {
+                background-position: 0% 50%;
+                filter: hue-rotate(360deg);
+            }
+        }
+
+        /* CHAOTIC WAVEFORM BORDER */
+        .waveform-border {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .waveform-line {
+            stroke: var(--clear-seas-primary);
+            stroke-width: 2;
+            fill: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            filter: drop-shadow(0 0 10px var(--clear-seas-primary));
+        }
+
+        .progression-card:hover .waveform-line {
+            opacity: 0.6;
+            animation: waveformChaos 0.5s linear infinite;
+        }
+
+        @keyframes waveformChaos {
+            0%, 100% {
+                d: path("M 0,50 Q 25,30 50,50 T 100,50 T 150,50 T 200,50 T 250,50 T 300,50 T 350,50 T 400,50");
+            }
+            25% {
+                d: path("M 0,50 Q 25,70 50,50 T 100,30 T 150,70 T 200,50 T 250,30 T 300,70 T 350,50 T 400,50");
+            }
+            50% {
+                d: path("M 0,50 Q 25,20 50,50 T 100,80 T 150,20 T 200,50 T 250,80 T 300,20 T 350,50 T 400,50");
+            }
+            75% {
+                d: path("M 0,50 Q 25,60 50,50 T 100,40 T 150,60 T 200,50 T 250,40 T 300,60 T 350,50 T 400,50");
+            }
+        }
+
+        /* SECTION-SPECIFIC GLITCH EFFECTS */
+        .glitch-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 15;
+        }
+
+        /* Scanline Effect */
+        .scanlines {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 255, 255, 0.03) 2px,
+                rgba(0, 255, 255, 0.03) 4px
+            );
+            animation: scanlineMove 8s linear infinite;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        [data-section="technology"] .scanlines {
+            opacity: 0.5;
+        }
+
+        @keyframes scanlineMove {
+            0% {
+                transform: translateY(0);
+            }
+            100% {
+                transform: translateY(10px);
+            }
+        }
+
+        /* CRT Distortion Effect */
+        .crt-distortion {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            animation: crtFlicker 0.15s infinite;
+            opacity: 0;
+            mix-blend-mode: color-dodge;
+        }
+
+        [data-section="portfolio"] .crt-distortion {
+            opacity: 0.3;
+        }
+
+        @keyframes crtFlicker {
+            0%, 100% {
+                filter: brightness(1) contrast(1);
+            }
+            50% {
+                filter: brightness(1.01) contrast(1.02);
+                transform: translateX(0.5px);
+            }
+        }
+
+        /* Chromatic Aberration */
+        .chromatic-aberration {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            mix-blend-mode: screen;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .progression-card:hover .chromatic-aberration {
+            opacity: 0.4;
+            animation: chromaticShift 2s ease-in-out infinite;
+        }
+
+        @keyframes chromaticShift {
+            0%, 100% {
+                filter: hue-rotate(0deg);
+                transform: translateX(0);
+            }
+            33% {
+                filter: hue-rotate(120deg);
+                transform: translateX(-1px);
+            }
+            66% {
+                filter: hue-rotate(240deg);
+                transform: translateX(1px);
+            }
+        }
+
+        /* HYPERCUBE SECTION TRANSITION */
+        .section-transition {
+            position: fixed;
+            width: 100%;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+        }
+
+        .hypercube-transition {
+            width: 400px;
+            height: 400px;
+            transform-style: preserve-3d;
+            animation: hypercubeRotation 2s var(--transition-hypercube);
+        }
+
+        @keyframes hypercubeRotation {
+            0% {
+                transform: scale(0) rotateX(0deg) rotateY(0deg) rotateZ(0deg) rotate3d(1, 1, 1, 0deg);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(2) rotateX(180deg) rotateY(180deg) rotateZ(180deg) rotate3d(1, 1, 1, 180deg);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(0) rotateX(360deg) rotateY(360deg) rotateZ(360deg) rotate3d(1, 1, 1, 360deg);
+                opacity: 0;
+            }
+        }
+
+        /* CARD CONTENT STYLING */
+        .card-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(
+                135deg,
+                var(--clear-seas-primary) 0%,
+                var(--clear-seas-secondary) 50%,
+                var(--neural-purple) 100%
+            );
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: textGradientFlow 3s ease-in-out infinite;
+        }
+
+        @keyframes textGradientFlow {
+            0%, 100% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
+        .card-description {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 2rem;
+            max-width: 600px;
+        }
+
+        .card-meta {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .meta-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--clear-seas-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .meta-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        /* NAVIGATION CONTROLS */
+        .navigation-controls {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 1rem;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            padding: 1rem 2rem;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid var(--clear-seas-primary);
+            border-radius: 12px;
+            color: var(--clear-seas-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-btn:hover {
+            background: rgba(0, 255, 255, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 255, 255, 0.3);
+        }
+
+        /* SECTION INDICATORS */
+        .section-indicators {
+            position: fixed;
+            top: 50%;
+            right: 40px;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            z-index: 100;
+        }
+
+        .indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .indicator.active {
+            background: var(--clear-seas-primary);
+            border-color: var(--clear-seas-primary);
+            box-shadow: 0 0 20px var(--clear-seas-primary);
+        }
+
+        /* RESPONSIVE ADJUSTMENTS */
+        @media (max-width: 768px) {
+            .progression-card {
+                width: 95vw;
+                height: 75vh;
+                padding: 40px 30px;
+            }
+
+            .card-title {
+                font-size: 2rem;
+            }
+
+            .card-description {
+                font-size: 1rem;
+            }
+
+            .section-indicators {
+                right: 20px;
+            }
+        }
+
+        /* PERFORMANCE OPTIMIZATIONS */
+        .progression-card {
+            will-change: transform, opacity, filter;
+            contain: layout style paint;
+        }
+
+        .background-visualizer {
+            will-change: transform;
+            contain: layout style paint;
+        }
+    </style>
+</head>
+<body>
+    <!-- BLOWN-UP BACKGROUND VISUALIZER -->
+    <div class="background-visualizer-container" id="bgVisualizerContainer">
+        <canvas class="background-visualizer" id="bgVisualizer"></canvas>
+        <div class="bg-visualizer-layer" data-layer="1"></div>
+        <div class="bg-visualizer-layer" data-layer="2"></div>
+        <div class="bg-visualizer-layer" data-layer="3"></div>
+    </div>
+
+    <!-- MAIN DEPTH UNIVERSE -->
+    <div class="depth-universe" id="depthUniverse">
+        <!-- Section 1: Technology -->
+        <div class="card-group" data-section="technology">
+            <!-- Card 1 -->
+            <div class="progression-card" data-card-id="tech-1" data-depth="far" data-vib34d="quantum">
+                <div class="holographic-border"></div>
+                <svg class="waveform-border" viewBox="0 0 400 100">
+                    <path class="waveform-line" d="M 0,50 Q 25,30 50,50 T 100,50 T 150,50 T 200,50 T 250,50 T 300,50 T 350,50 T 400,50"/>
+                </svg>
+                <div class="glitch-container">
+                    <div class="scanlines"></div>
+                    <div class="chromatic-aberration"></div>
+                </div>
+                <div class="card-layer-background">
+                    <canvas class="vib34d-canvas" data-system="quantum"></canvas>
+                </div>
+                <div class="card-layer-shadow"></div>
+                <div class="card-layer-content">
+                    <h2 class="card-title">Quantum Lattice Processing</h2>
+                    <p class="card-description">
+                        Revolutionary quantum-inspired lattice algorithms that process multi-dimensional data
+                        through advanced geometric transformations, achieving unprecedented computational efficiency.
+                    </p>
+                    <div class="card-meta">
+                        <div class="meta-item">
+                            <span class="meta-label">Performance</span>
+                            <span class="meta-value">60+ FPS</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Dimensions</span>
+                            <span class="meta-value">4D Native</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Architecture</span>
+                            <span class="meta-value">GPU Accelerated</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-layer-highlight"></div>
+                <div class="card-layer-accent"></div>
+            </div>
+
+            <!-- Card 2 -->
+            <div class="progression-card" data-card-id="tech-2" data-depth="mid-far" data-vib34d="holographic">
+                <div class="holographic-border"></div>
+                <svg class="waveform-border" viewBox="0 0 400 100">
+                    <path class="waveform-line" d="M 0,50 Q 25,30 50,50 T 100,50 T 150,50 T 200,50 T 250,50 T 300,50 T 350,50 T 400,50"/>
+                </svg>
+                <div class="glitch-container">
+                    <div class="scanlines"></div>
+                    <div class="chromatic-aberration"></div>
+                </div>
+                <div class="card-layer-background">
+                    <canvas class="vib34d-canvas" data-system="holographic"></canvas>
+                </div>
+                <div class="card-layer-shadow"></div>
+                <div class="card-layer-content">
+                    <h2 class="card-title">Holographic Projections</h2>
+                    <p class="card-description">
+                        Audio-reactive volumetric visualization systems that create immersive holographic
+                        experiences through real-time parameter modulation and spatial mapping.
+                    </p>
+                    <div class="card-meta">
+                        <div class="meta-item">
+                            <span class="meta-label">Reactivity</span>
+                            <span class="meta-value">Real-time</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Layers</span>
+                            <span class="meta-value">5-Layer System</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Integration</span>
+                            <span class="meta-value">WebGL/WebGPU</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-layer-highlight"></div>
+                <div class="card-layer-accent"></div>
+            </div>
+
+            <!-- Card 3 (Pair Group) -->
+            <div class="progression-card" data-card-id="tech-3" data-depth="approaching" data-vib34d="faceted">
+                <div class="holographic-border"></div>
+                <svg class="waveform-border" viewBox="0 0 400 100">
+                    <path class="waveform-line" d="M 0,50 Q 25,30 50,50 T 100,50 T 150,50 T 200,50 T 250,50 T 300,50 T 350,50 T 400,50"/>
+                </svg>
+                <div class="glitch-container">
+                    <div class="scanlines"></div>
+                    <div class="chromatic-aberration"></div>
+                </div>
+                <div class="card-layer-background">
+                    <canvas class="vib34d-canvas" data-system="faceted"></canvas>
+                </div>
+                <div class="card-layer-shadow"></div>
+                <div class="card-layer-content">
+                    <h2 class="card-title">Faceted Geometry Engine</h2>
+                    <p class="card-description">
+                        Crystalline geometric patterns that adapt and morph based on data input,
+                        creating dynamic visualizations that respond to user interaction and system state.
+                    </p>
+                    <div class="card-meta">
+                        <div class="meta-item">
+                            <span class="meta-label">Precision</span>
+                            <span class="meta-value">Sub-pixel</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Patterns</span>
+                            <span class="meta-value">Adaptive</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Response</span>
+                            <span class="meta-value"><16ms</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-layer-highlight"></div>
+                <div class="card-layer-accent"></div>
+            </div>
+        </div>
+
+        <!-- Section 2: Portfolio (will be added dynamically) -->
+        <div class="card-group" data-section="portfolio" style="display: none;">
+            <!-- Portfolio cards with different glitch effects -->
+        </div>
+
+        <!-- Section 3: Research (will be added dynamically) -->
+        <div class="card-group" data-section="research" style="display: none;">
+            <!-- Research cards with unique visualizers -->
+        </div>
+    </div>
+
+    <!-- SECTION TRANSITION OVERLAY -->
+    <div class="section-transition" id="sectionTransition">
+        <div class="hypercube-transition">
+            <canvas id="hypercubeCanvas"></canvas>
+        </div>
+    </div>
+
+    <!-- NAVIGATION CONTROLS -->
+    <div class="navigation-controls">
+        <button class="nav-btn" id="prevBtn">Previous</button>
+        <button class="nav-btn" id="nextBtn">Next</button>
+        <button class="nav-btn" id="sectionBtn">Change Section</button>
+    </div>
+
+    <!-- SECTION INDICATORS -->
+    <div class="section-indicators">
+        <div class="indicator active" data-section="technology"></div>
+        <div class="indicator" data-section="portfolio"></div>
+        <div class="indicator" data-section="research"></div>
+    </div>
+
+    <script src="scripts/final-depth-progression-engine.js" defer></script>
+    <script src="scripts/vib34d-parameter-controller.js" defer></script>
+    <script src="scripts/holographic-border-system.js" defer></script>
+</body>
+</html>
