@@ -31,6 +31,13 @@
             --holographic-pink: #ff1493;
             --void-black: #0a0a0a;
             --depth-perspective: 1200px;
+
+            /* Ambient reactivity channels */
+            --bg-parallax-x: 0px;
+            --bg-parallax-y: 0px;
+            --bg-scale: 1;
+            --bg-sheen: 0.32;
+            --bg-twist: 0deg;
         }
 
         body {
@@ -41,6 +48,24 @@
             height: 100vh;
             perspective: var(--depth-perspective);
             perspective-origin: center center;
+            position: relative;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: -20%;
+            background: radial-gradient(circle at 50% 40%, rgba(0, 255, 255, 0.22), rgba(255, 0, 255, 0.08) 45%, transparent 75%);
+            mix-blend-mode: screen;
+            opacity: var(--bg-sheen);
+            transform: translate3d(var(--bg-parallax-x), var(--bg-parallax-y), 0) scale(var(--bg-scale)) rotate(var(--bg-twist));
+            filter: saturate(1.1);
+            pointer-events: none;
+            transition:
+                transform 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+                opacity 0.6s ease,
+                filter 0.6s ease;
+            z-index: 0;
         }
 
         /* ORTHOGONAL PROGRESSION CONTAINER */
@@ -70,6 +95,29 @@
             backdrop-filter: blur(10px);
             transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             cursor: pointer;
+            overflow: hidden;
+            isolation: isolate;
+            --card-glow-shift-x: 0px;
+            --card-glow-shift-y: 0px;
+            --card-glow-scale: 1;
+            --card-glow-opacity: 0.18;
+        }
+
+        .progression-card::after {
+            content: "";
+            position: absolute;
+            inset: -18%;
+            background: radial-gradient(circle at 50% 50%, rgba(0, 255, 255, 0.25), rgba(255, 0, 255, 0.12) 45%, transparent 70%);
+            border-radius: inherit;
+            pointer-events: none;
+            opacity: var(--card-glow-opacity);
+            transform: translate3d(var(--card-glow-shift-x), var(--card-glow-shift-y), 0) scale(var(--card-glow-scale));
+            filter: blur(calc(18px * var(--card-glow-scale)));
+            transition:
+                opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+                transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+                filter 0.45s ease;
+            z-index: 0;
         }
 
         /* DEPTH PROGRESSION STATES */
@@ -308,7 +356,7 @@
     <div class="depth-progression-container" id="progressionContainer">
 
         <!-- CARD 1: QUANTUM SYSTEMS -->
-        <div class="progression-card far-depth" data-vib34d="quantum" data-destruction="quantum">
+        <div class="progression-card far-depth" data-vib34d="quantum" data-destruction="quantum" data-reactive-profile="quantum-hyperglass" data-portal-variant="spiral">
             <canvas class="vib34d-tilt-canvas" id="quantum-tilt-canvas"></canvas>
             <div class="portal-text-visualizer" id="quantum-portal"></div>
             <div class="card-header">
@@ -321,7 +369,7 @@
         </div>
 
         <!-- CARD 2: HOLOGRAPHIC SYSTEMS -->
-        <div class="progression-card far-depth" data-vib34d="holographic" data-destruction="holographic">
+        <div class="progression-card far-depth" data-vib34d="holographic" data-destruction="holographic" data-reactive-profile="holo-ribbon-surge" data-portal-variant="filament">
             <canvas class="vib34d-tilt-canvas" id="holographic-tilt-canvas"></canvas>
             <div class="portal-text-visualizer" id="holographic-portal"></div>
             <div class="card-header">
@@ -334,7 +382,7 @@
         </div>
 
         <!-- CARD 3: FACETED SYSTEMS -->
-        <div class="progression-card far-depth" data-vib34d="faceted" data-destruction="faceted">
+        <div class="progression-card far-depth" data-vib34d="faceted" data-destruction="faceted" data-reactive-profile="faceted-orbital-forge" data-portal-variant="prism">
             <canvas class="vib34d-tilt-canvas" id="faceted-tilt-canvas"></canvas>
             <div class="portal-text-visualizer" id="faceted-portal"></div>
             <div class="card-header">
@@ -347,7 +395,7 @@
         </div>
 
         <!-- CARD 4: NEURAL SYSTEMS -->
-        <div class="progression-card far-depth" data-vib34d="quantum" data-destruction="quantum">
+        <div class="progression-card far-depth" data-vib34d="quantum" data-destruction="quantum" data-reactive-profile="neural-lumen-exchange" data-portal-variant="axon">
             <canvas class="vib34d-tilt-canvas" id="neural-tilt-canvas"></canvas>
             <div class="portal-text-visualizer" id="neural-portal"></div>
             <div class="card-header">
@@ -382,6 +430,12 @@
             // Initialize orthogonal depth progression
             if (window.OrthogonalDepthProgression) {
                 window.progressionSystem = new OrthogonalDepthProgression();
+            }
+
+            if (window.progressionSystem && window.OrthogonalDepthReactivityOrchestrator) {
+                window.progressionReactivity = new OrthogonalDepthReactivityOrchestrator(window.progressionSystem, {
+                    tiltSystem: window.geometricTiltSystem
+                });
             }
 
             console.log('✅ VIB34D Systems initialized - Professional Avant-garde Mode Active');
