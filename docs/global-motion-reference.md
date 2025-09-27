@@ -27,6 +27,10 @@ following properties:
 | `scrollSpeed` | Smoothed absolute scroll magnitude (0–1). |
 | `scrollDirection` | Directional indicator: `-1` up, `0` idle, `1` down. |
 | `synergy` | Global cohesion score derived from active card groups. |
+| `partnerFocus` | Focus weighting of the currently emphasised partner cluster. |
+| `partnerFocusX`, `partnerFocusY` | Normalised centroid for the partner cluster (0–1). |
+| `partnerSynergy` | Cohesion score for the partner cluster that is steering tilt. |
+| `partnerActive` | `1` when a partner cluster is selected, otherwise `0`. |
 | `palette`, `collection` | Active page palette token and collection key. |
 | `timestamp` | High-resolution timestamp for the snapshot. |
 
@@ -44,7 +48,7 @@ window.addEventListener(window.__CSS_WEB_MASTER_GLOBAL_MOTION_EVENT, (event) => 
 ## CSS variables
 
 `global-page-orchestrator.js` mirrors the snapshot as root-level CSS custom properties.
-The latest release adds four directional helpers:
+The latest release adds four directional helpers and a partner alignment quartet:
 
 | CSS variable | Meaning |
 |--------------|---------|
@@ -52,6 +56,13 @@ The latest release adds four directional helpers:
 | `--global-scroll-speed` | Absolute scroll momentum for blur/glow amplification. |
 | `--global-scroll-direction` | Direction multiplier for directional shadows and parallax. |
 | `--global-tilt-skew` | Horizontal vs. vertical tilt imbalance for twist treatments. |
+| `--global-partner-focus` | Magnitude of the highlighted partner cluster. |
+| `--global-partner-synergy` | Cohesion for the partner cluster (drives bend/tilt bias). |
+| `--global-partner-x`, `--global-partner-y` | Normalised centroid used to steer shared tilt/bend vectors. |
+
+In addition, the active group element receives `data-global-partner="true"` while the
+document root exposes `data-global-partner-active`/`data-global-partner-mode` so layouts
+can gate section-level treatments when no partner group is emphasised.
 
 The shared `global-card-synergy.css` stylesheet consumes these properties so primary and
 support cards can react together. Cards that opt into the motion feed can also copy the

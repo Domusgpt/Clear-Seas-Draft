@@ -71,6 +71,220 @@ const updateManifestSnapshot = () => {
 
 updateManifestSnapshot();
 
+const vib34dIntegration = (() => {
+  const pendingObservations = new Map();
+  const resizeObservers = new Map();
+  const heuristics = [
+    { type: 'quantum', patterns: ['quantum', 'qbit', 'ion', 'tachyon', 'ai', 'neutrino'] },
+    { type: 'holographic', patterns: ['holographic', 'neural', 'spectral', 'prism', 'noir', 'aurora'] },
+    { type: 'polychora', patterns: ['polychora', 'polytopal', 'tetra', 'hyper', 'orbital', 'lattice'] },
+    { type: 'faceted', patterns: ['faceted', 'portfolio', 'gallery', 'research', 'story', 'foundation'] }
+  ];
+
+  let controller = window.vib34dCardSystem || null;
+
+  const elementTokenString = (element) => {
+    if (!(element instanceof HTMLElement)) {
+      return '';
+    }
+    const tokens = [];
+    if (element.id) {
+      tokens.push(element.id);
+    }
+    element.classList.forEach((value) => tokens.push(value));
+    Object.keys(element.dataset || {}).forEach((key) => {
+      const raw = element.dataset[key];
+      if (raw) {
+        tokens.push(String(raw));
+      }
+    });
+    const label = element.getAttribute('aria-label');
+    if (label) {
+      tokens.push(label);
+    }
+    return tokens
+      .join(' ')
+      .toLowerCase();
+  };
+
+  const elementIsInViewport = (element, margin = 96) => {
+    if (!(element instanceof HTMLElement)) {
+      return false;
+    }
+    const rect = element.getBoundingClientRect();
+    const width = window.innerWidth || document.documentElement.clientWidth || 0;
+    const height = window.innerHeight || document.documentElement.clientHeight || 0;
+    return (
+      rect.bottom >= -margin &&
+      rect.top <= height + margin &&
+      rect.right >= -margin &&
+      rect.left <= width + margin
+    );
+  };
+
+  const computeWeight = (element) => {
+    if (!(element instanceof HTMLElement)) {
+      return null;
+    }
+    const rect = element.getBoundingClientRect();
+    if (!rect.width || !rect.height) {
+      return null;
+    }
+    const baseArea = 320 * 220;
+    const area = rect.width * rect.height;
+    const scale = Math.sqrt(area / baseArea);
+    const weight = Math.min(1.9, Math.max(1.05, scale));
+    return Number(weight.toFixed(3));
+  };
+
+  const resolveConfig = (element, overrides = {}) => {
+    const baseType = (overrides.systemType || element.dataset.vib34d || element.dataset.system || '').toLowerCase();
+    const tokenString = elementTokenString(element);
+    let systemType = baseType;
+    if (!systemType) {
+      for (const entry of heuristics) {
+        if (entry.patterns.some((pattern) => tokenString.includes(pattern))) {
+          systemType = entry.type;
+          break;
+        }
+      }
+    }
+    if (!systemType) {
+      systemType = tokenString.includes('polychora') ? 'polychora' : 'faceted';
+    }
+    const assetPreference = overrides.assetPreference || element.dataset.visualizerAsset || systemType;
+    const weight = overrides.weight ?? computeWeight(element);
+    const immediate = overrides.immediate ?? elementIsInViewport(element);
+    return { systemType, assetPreference, weight, immediate };
+  };
+
+  const updateDimensions = (element, config) => {
+    if (!(element instanceof HTMLElement)) {
+      return;
+    }
+    const weight = typeof config?.weight === 'number' ? config.weight : computeWeight(element);
+    if (typeof weight !== 'number' || Number.isNaN(weight)) {
+      return;
+    }
+    element.dataset.visualizerWeight = weight.toFixed(3);
+    const bleed = Math.max(1.22, weight + 0.18);
+    element.style.setProperty('--visualizer-bleed', bleed.toFixed(3));
+    element.style.setProperty('--visualizer-scale', (bleed + 0.14).toFixed(3));
+    if (controller && typeof controller.refreshCard === 'function') {
+      controller.refreshCard(element, { systemType: element.dataset.vib34d });
+    }
+  };
+
+  const ensureResizeObserver = (element) => {
+    if (typeof ResizeObserver === 'undefined' || !(element instanceof HTMLElement)) {
+      return;
+    }
+    if (resizeObservers.has(element)) {
+      return;
+    }
+    const observer = new ResizeObserver(() => {
+      updateDimensions(element, { systemType: element.dataset.vib34d });
+    });
+    observer.observe(element);
+    resizeObservers.set(element, observer);
+  };
+
+  const flushPending = () => {
+    if (!controller) {
+      return;
+    }
+    if (typeof controller.scanForCards === 'function') {
+      controller.scanForCards();
+    }
+    if (!pendingObservations.size) {
+      return;
+    }
+    const entries = Array.from(pendingObservations.entries());
+    pendingObservations.clear();
+    entries.forEach(([element, options]) => {
+      if (!element || !element.isConnected) {
+        return;
+      }
+      controller.observeCard(element, { ...options, immediate: true });
+      controller.refreshCard(element, { systemType: element.dataset.vib34d });
+    });
+  };
+
+  const apply = (element, overrides = {}) => {
+    if (!(element instanceof HTMLElement)) {
+      return null;
+    }
+    const config = resolveConfig(element, overrides);
+    if (config.systemType) {
+      element.dataset.vib34d = config.systemType;
+    }
+    element.dataset.visualizerCard = 'true';
+    element.setAttribute('data-visualizer-card', 'true');
+    if (config.assetPreference) {
+      element.dataset.visualizerAsset = config.assetPreference;
+    }
+    updateDimensions(element, config);
+    ensureResizeObserver(element);
+
+    const observeOptions = { systemType: config.systemType, immediate: config.immediate };
+    if (controller && typeof controller.observeCard === 'function') {
+      controller.observeCard(element, observeOptions);
+    } else {
+      pendingObservations.set(element, observeOptions);
+    }
+
+    return config;
+  };
+
+  const release = (element) => {
+    if (!(element instanceof HTMLElement)) {
+      return;
+    }
+    pendingObservations.delete(element);
+    const observer = resizeObservers.get(element);
+    if (observer) {
+      observer.disconnect();
+      resizeObservers.delete(element);
+    }
+    if (controller && typeof controller.unobserveCard === 'function') {
+      controller.unobserveCard(element);
+    }
+  };
+
+  const connect = (instance) => {
+    if (!instance || controller === instance) {
+      if (!controller && instance) {
+        controller = instance;
+        flushPending();
+      }
+      return;
+    }
+    controller = instance;
+    flushPending();
+  };
+
+  window.addEventListener('vib34d-card-system:ready', (event) => {
+    const instance = event?.detail?.controller || window.vib34dCardSystem || null;
+    connect(instance);
+  });
+
+  if (controller) {
+    flushPending();
+  }
+
+  return {
+    apply,
+    release,
+    resolveConfig,
+    computeWeight,
+    connect,
+    elementIsInViewport
+  };
+})();
+
+cssWebMasterGlobals.vib34dIntegration = vib34dIntegration;
+window.__CSS_WEB_MASTER_VIB34D_INTEGRATION__ = vib34dIntegration;
+
 const syncBrandAssets = (siteCode) => {
   const resolved = resolveBrandAssets(siteCode);
   const meta =
@@ -733,6 +947,7 @@ BRAND_OVERRIDE_EVENTS.forEach((eventName) => {
 const groupStates = new Map();
 let activeCardState = null;
 let rafId = null;
+let partnerGroupElement = null;
 
 const globalState = {
   scroll: {
@@ -775,6 +990,7 @@ const DEFAULT_MOTION_STATE = {
   focusTrend: 0,
   tiltSkew: 0,
   synergy: 0,
+  partner: { focus: 0, synergy: 0, hasPartner: false, x: 0.5, y: 0.5 },
   palette: null,
   collection: null,
   family: null,
@@ -802,6 +1018,7 @@ sharedMotion.focusTrend = Number.isFinite(sharedMotion.focusTrend)
   : DEFAULT_MOTION_STATE.focusTrend;
 sharedMotion.tiltSkew = Number.isFinite(sharedMotion.tiltSkew) ? sharedMotion.tiltSkew : DEFAULT_MOTION_STATE.tiltSkew;
 sharedMotion.synergy = Number.isFinite(sharedMotion.synergy) ? sharedMotion.synergy : DEFAULT_MOTION_STATE.synergy;
+sharedMotion.partner = { ...DEFAULT_MOTION_STATE.partner, ...(sharedMotion.partner || {}) };
 sharedMotion.palette = sharedMotion.palette ?? DEFAULT_MOTION_STATE.palette;
 sharedMotion.collection = sharedMotion.collection ?? DEFAULT_MOTION_STATE.collection;
 sharedMotion.family = sharedMotion.family ?? DEFAULT_MOTION_STATE.family;
@@ -837,7 +1054,12 @@ function shouldDispatchMotionEvent(previous, next) {
     scrollMomentum: 0.001,
     scrollSpeed: 0.001,
     scrollDirection: 0.51,
-    synergy: 0.001
+    synergy: 0.001,
+    partnerFocus: 0.0012,
+    partnerSynergy: 0.001,
+    partnerFocusX: 0.0012,
+    partnerFocusY: 0.0012,
+    partnerActive: 0.51
   };
 
   return Object.keys(thresholds).some((key) => {
@@ -862,6 +1084,11 @@ function maybeDispatchGlobalMotionEvent() {
     scrollSpeed: sharedMotion.scrollSpeed,
     scrollDirection: sharedMotion.scrollDirection,
     synergy: sharedMotion.synergy,
+    partnerFocus: sharedMotion.partner?.focus || 0,
+    partnerSynergy: sharedMotion.partner?.synergy || 0,
+    partnerFocusX: sharedMotion.partner?.x ?? 0.5,
+    partnerFocusY: sharedMotion.partner?.y ?? 0.5,
+    partnerActive: sharedMotion.partner?.hasPartner ? 1 : 0,
     palette: sharedMotion.palette,
     collection: sharedMotion.collection,
     timestamp: sharedMotion.updatedAt
@@ -1271,10 +1498,14 @@ function detachFromGroup(state) {
     const { element, section } = groupState;
     element.removeAttribute('data-global-card-group');
     element.removeAttribute('data-global-group-active');
+    element.removeAttribute('data-global-partner');
     element.style.removeProperty('--group-focus-amount');
     element.style.removeProperty('--group-focus-x');
     element.style.removeProperty('--group-focus-y');
     element.style.removeProperty('--group-synergy');
+    if (partnerGroupElement === element) {
+      partnerGroupElement = null;
+    }
     if (section) {
       section.removeAttribute('data-global-group-active');
       section.style.removeProperty('--section-focus-amount');
@@ -1331,6 +1562,16 @@ function createState(element, index) {
   state.element.dataset.supportDistance = 'far';
   state.element.dataset.globalCardVisible = 'true';
   state.element.style.setProperty('--card-visibility', '1');
+
+  if (vib34dIntegration && typeof vib34dIntegration.apply === 'function') {
+    try {
+      vib34dIntegration.apply(element);
+      state.cleanupCallbacks.push(() => vib34dIntegration.release(element));
+    } catch (error) {
+      console.warn('⚠️ Failed to attach VIB34D integration to card', error);
+    }
+  }
+
   state.group = attachToGroup(state);
   const observer = ensureVisibilityObserver();
   if (observer) {
@@ -1660,6 +1901,7 @@ function step() {
   let weightedX = 0;
   let weightedY = 0;
   let totalFocus = 0;
+  const groupFocusContributions = new Map();
   const toRemove = [];
 
   cardStates.forEach((state, element) => {
@@ -1725,6 +1967,16 @@ function step() {
       weightedX += state.pointer.smoothX * weighting;
       weightedY += state.pointer.smoothY * weighting;
       totalFocus += weighting;
+      if (state.group) {
+        let contribution = groupFocusContributions.get(state.group);
+        if (!contribution) {
+          contribution = { focus: 0, weightedX: 0, weightedY: 0 };
+          groupFocusContributions.set(state.group, contribution);
+        }
+        contribution.focus += weighting;
+        contribution.weightedX += state.pointer.smoothX * weighting;
+        contribution.weightedY += state.pointer.smoothY * weighting;
+      }
     }
 
     if (Math.abs(state.pointer.targetX - state.pointer.smoothX) > 0.001 ||
@@ -1785,6 +2037,61 @@ function step() {
 
   toRemove.forEach((element) => cardStates.delete(element));
 
+  const activeGroupElement = activeCardState && activeCardState.group ? activeCardState.group : null;
+  let partnerGroupState = activeGroupElement ? groupStates.get(activeGroupElement) : null;
+  let partnerScore = 0;
+
+  if (partnerGroupState) {
+    const entry = groupFocusContributions.get(partnerGroupState.element);
+    const focusShare = entry ? entry.focus : 0;
+    partnerScore = focusShare * 0.65 + partnerGroupState.synergy.current * 0.35;
+  } else {
+    groupStates.forEach((groupState) => {
+      const entry = groupFocusContributions.get(groupState.element);
+      const focusShare = entry ? entry.focus : 0;
+      const score = focusShare * 0.65 + groupState.synergy.current * 0.35;
+      if (score > partnerScore) {
+        partnerScore = score;
+        partnerGroupState = groupState;
+      }
+    });
+  }
+
+  let focusX = 0.5;
+  let focusY = 0.5;
+  let focusAmount = 0;
+
+  if (partnerGroupState) {
+    const entry = groupFocusContributions.get(partnerGroupState.element);
+    if (entry && entry.focus > 0.01) {
+      focusX = entry.weightedX / entry.focus;
+      focusY = entry.weightedY / entry.focus;
+      focusAmount = Math.min(1, entry.focus);
+    } else {
+      focusX = partnerGroupState.pointer.currentX;
+      focusY = partnerGroupState.pointer.currentY;
+      focusAmount = Math.min(1, partnerGroupState.focus.current);
+    }
+  } else if (totalFocus > 0) {
+    focusX = weightedX / totalFocus;
+    focusY = weightedY / totalFocus;
+    focusAmount = Math.min(1, totalFocus);
+  }
+
+  const partnerFocusLevel = partnerGroupState ? Math.min(1, partnerGroupState.focus.current) : focusAmount;
+  const partnerSynergyLevel = partnerGroupState ? Math.min(1, partnerGroupState.synergy.current) : globalState.synergy.current;
+
+  const nextPartnerElement = partnerGroupState ? partnerGroupState.element : null;
+  if (partnerGroupElement !== nextPartnerElement) {
+    if (partnerGroupElement && partnerGroupElement instanceof HTMLElement) {
+      partnerGroupElement.removeAttribute('data-global-partner');
+    }
+    partnerGroupElement = nextPartnerElement instanceof HTMLElement ? nextPartnerElement : null;
+    if (partnerGroupElement) {
+      partnerGroupElement.setAttribute('data-global-partner', 'true');
+    }
+  }
+
   globalState.scroll.current += (globalState.scroll.target - globalState.scroll.current) * 0.12;
   globalState.scroll.target *= 0.9;
   if (Math.abs(globalState.scroll.current) > 0.0001 || Math.abs(globalState.scroll.target) > 0.0001) {
@@ -1796,19 +2103,18 @@ function step() {
     continueAnimation = true;
   }
 
-  const focusX = totalFocus > 0 ? weightedX / totalFocus : 0.5;
-  const focusY = totalFocus > 0 ? weightedY / totalFocus : 0.5;
-  const focusAmount = Math.min(1, totalFocus);
   globalState.focus.targetX = focusX;
   globalState.focus.targetY = focusY;
   globalState.focus.targetAmount = focusAmount;
 
   const focusPresence = focusAmount > 0.08;
   const scrollEnergy = Math.abs(globalState.scroll.current);
-  const tiltBase = focusPresence ? 0.35 + globalState.synergy.current * 0.2 : 0;
-  const scrollInfluence = focusPresence ? globalState.scroll.current * 0.06 : 0;
+  const partnerPresence = partnerFocusLevel > 0.05 || partnerSynergyLevel > 0.05 || partnerScore > 0.05;
+  const tiltPresence = focusPresence || partnerPresence;
+  const tiltBase = tiltPresence ? 0.18 + partnerFocusLevel * 0.22 + partnerSynergyLevel * 0.25 : 0;
+  const scrollInfluence = tiltPresence ? globalState.scroll.current * 0.04 : 0;
 
-  if (focusPresence || scrollEnergy > 0.08) {
+  if (tiltPresence || scrollEnergy > 0.08) {
     globalState.tilt.targetX = (focusX - 0.5) * tiltBase + scrollInfluence;
     globalState.tilt.targetY = (0.5 - focusY) * tiltBase - scrollInfluence * 0.6;
   } else {
@@ -1816,10 +2122,10 @@ function step() {
     globalState.tilt.targetY = 0;
   }
 
-  const synergyWeight = globalState.synergy.current * 0.35;
-  const momentumWeight = Math.min(0.3, scrollEnergy * 0.5);
-  const bendBase = focusPresence ? focusAmount * 0.45 : 0;
-  globalState.bend.target = Math.min(0.6, bendBase + synergyWeight + momentumWeight);
+  const synergyWeight = partnerSynergyLevel * 0.4;
+  const momentumWeight = Math.min(0.25, scrollEnergy * 0.45);
+  const bendBase = partnerPresence ? partnerFocusLevel * 0.38 : focusPresence ? focusAmount * 0.3 : 0;
+  globalState.bend.target = Math.min(0.55, bendBase + synergyWeight + momentumWeight);
 
   const tiltDelta = (globalState.tilt.targetX - globalState.tilt.targetY) * 0.22;
   globalState.warp.target = Math.max(-0.35, Math.min(0.35, tiltDelta));
@@ -1874,6 +2180,12 @@ function step() {
   root.style.setProperty('--global-focus-trend', focusTrend.toFixed(4));
   root.style.setProperty('--global-scroll-speed', scrollSpeed.toFixed(4));
   root.style.setProperty('--global-scroll-direction', scrollDirection.toFixed(0));
+  root.style.setProperty('--global-partner-focus', partnerFocusLevel.toFixed(4));
+  root.style.setProperty('--global-partner-synergy', partnerSynergyLevel.toFixed(4));
+  root.style.setProperty('--global-partner-x', focusX.toFixed(4));
+  root.style.setProperty('--global-partner-y', focusY.toFixed(4));
+  root.dataset.globalPartnerMode = partnerGroupElement ? 'group' : 'ambient';
+  root.dataset.globalPartnerActive = partnerGroupElement ? 'true' : 'false';
 
   sharedMotion.focus.x = globalState.focus.currentX;
   sharedMotion.focus.y = globalState.focus.currentY;
@@ -1889,6 +2201,13 @@ function step() {
   sharedMotion.synergy = globalState.synergy.current;
   sharedMotion.focusTrend = focusTrend;
   sharedMotion.tiltSkew = tiltSkew;
+  sharedMotion.partner = {
+    focus: partnerFocusLevel,
+    synergy: partnerSynergyLevel,
+    hasPartner: Boolean(partnerGroupState),
+    x: focusX,
+    y: focusY
+  };
   sharedMotion.updatedAt = performance.now();
 
   maybeDispatchGlobalMotionEvent();
@@ -1933,6 +2252,56 @@ function observeMutations() {
   observer.observe(document.body, { childList: true, subtree: true });
 }
 
+const GLOBAL_CARD_MOTION_ENABLE_ATTRIBUTE = 'data-enable-global-card-motion';
+const GLOBAL_CARD_MOTION_DISABLE_ATTRIBUTE = 'data-disable-global-card-motion';
+let hasLoggedGlobalMotionDisabled = false;
+
+function elementHasTruthyDataAttribute(element, attribute) {
+  if (!element || !element.hasAttribute(attribute)) {
+    return false;
+  }
+  const rawValue = element.getAttribute(attribute);
+  if (rawValue === null) {
+    return false;
+  }
+  const value = rawValue.trim().toLowerCase();
+  return value === '' || value === 'true' || value === '1' || value === attribute;
+}
+
+function resolveCardMotionGateElements() {
+  const elements = [document.documentElement];
+  if (document.body) {
+    elements.push(document.body);
+  }
+  return elements.filter(Boolean);
+}
+
+function isGlobalCardMotionOptedIn() {
+  const gateElements = resolveCardMotionGateElements();
+  const hasOptOut = gateElements.some((element) =>
+    elementHasTruthyDataAttribute(element, GLOBAL_CARD_MOTION_DISABLE_ATTRIBUTE)
+  );
+  if (hasOptOut) {
+    return false;
+  }
+  return gateElements.some((element) =>
+    elementHasTruthyDataAttribute(element, GLOBAL_CARD_MOTION_ENABLE_ATTRIBUTE)
+  );
+}
+
+function logGlobalMotionDisabled(reason) {
+  if (hasLoggedGlobalMotionDisabled) {
+    return;
+  }
+  hasLoggedGlobalMotionDisabled = true;
+  try {
+    console.info(`⏸️ Global card orchestrator disabled: ${reason}`);
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.log('Global card orchestrator disabled.');
+  }
+}
+
 async function initialise() {
   preparePageProfile(activePageProfile);
   ensureStylesheet('styles/global-card-synergy.css', 'global-card-synergy');
@@ -1951,8 +2320,18 @@ async function initialise() {
   await ensureCardSystem();
 }
 
+const maybeInitialise = () => {
+  if (isGlobalCardMotionOptedIn()) {
+    initialise();
+  } else {
+    logGlobalMotionDisabled(
+      `add ${GLOBAL_CARD_MOTION_ENABLE_ATTRIBUTE} to <html> or <body> to opt in.`
+    );
+  }
+};
+
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initialise, { once: true });
+  document.addEventListener('DOMContentLoaded', maybeInitialise, { once: true });
 } else {
-  initialise();
+  maybeInitialise();
 }
