@@ -32,6 +32,13 @@ class VIB34DGeometricTiltSystem {
         this.smoothing = 0.15;
         this.visualizers = new Map();
         this.isSupported = this.checkDeviceOrientationSupport();
+        this.eventTarget = typeof EventTarget !== 'undefined' ? new EventTarget() : null;
+        this.lastTiltSnapshot = {
+            alpha: 0,
+            beta: 0,
+            gamma: 0,
+            time: performance.now()
+        };
 
         this.init();
     }
@@ -67,6 +74,9 @@ class VIB34DGeometricTiltSystem {
 
         this.setupTiltListeners();
         this.findTiltCanvases();
+        if (this.hasPermission) {
+            this.enable();
+        }
         console.log('✅ VIB34D Geometric Tilt System initialized');
     }
 
@@ -76,9 +86,7 @@ class VIB34DGeometricTiltSystem {
             if (!this.isEnabled) return;
 
             this.updateTiltData(event);
-            this.calculateVIB34DRotation();
-            this.updateVisualizers();
-            this.updateTiltUI();
+            this.processTiltUpdate();
         });
 
         // Fallback: Mouse movement for desktop testing
@@ -121,6 +129,13 @@ class VIB34DGeometricTiltSystem {
         this.rotation4D.rot4dZW = Math.max(-2.0, Math.min(2.0, this.rotation4D.rot4dZW));
     }
 
+    processTiltUpdate() {
+        this.calculateVIB34DRotation();
+        this.updateVisualizers();
+        this.updateTiltUI();
+        this.emitTiltMetrics();
+    }
+
     simulateTiltFromMouse(event) {
         // Desktop fallback: simulate tilt from mouse position
         const centerX = window.innerWidth / 2;
@@ -133,9 +148,7 @@ class VIB34DGeometricTiltSystem {
         this.tiltData.beta = deltaY * 45;  // Up-down
         this.tiltData.alpha += 0.5;       // Slow rotation
 
-        this.calculateVIB34DRotation();
-        this.updateVisualizers();
-        this.updateTiltUI();
+        this.processTiltUpdate();
     }
 
     findTiltCanvases() {
@@ -184,9 +197,56 @@ class VIB34DGeometricTiltSystem {
         if (rot4d) rot4d.textContent = this.isEnabled ? 'Active' : 'Inactive';
     }
 
+    emitTiltMetrics() {
+        if (!this.eventTarget || !this.isEnabled) return;
+
+        const now = performance.now();
+        const previous = this.lastTiltSnapshot || { alpha: 0, beta: 0, gamma: 0, time: now - 16 };
+        const dt = Math.max(0.016, (now - previous.time) / 1000);
+
+        const deltaAlpha = this.normalizeAngleDelta(this.tiltData.alpha, previous.alpha);
+        const deltaBeta = this.tiltData.beta - previous.beta;
+        const deltaGamma = this.tiltData.gamma - previous.gamma;
+
+        const velocity = {
+            alpha: deltaAlpha / dt,
+            beta: deltaBeta / dt,
+            gamma: deltaGamma / dt
+        };
+
+        const normalized = {
+            alpha: this.tiltData.alpha / 180,
+            beta: this.tiltData.beta / 90,
+            gamma: this.tiltData.gamma / 90
+        };
+
+        const planarMagnitude = Math.sqrt((normalized.beta ** 2) + (normalized.gamma ** 2));
+        const velocityMagnitude = Math.min(1.4, Math.sqrt(((velocity.beta / 120) ** 2) + ((velocity.gamma / 120) ** 2)));
+        const intensity = Math.max(0, Math.min(1.2, planarMagnitude * 0.85 + velocityMagnitude * 0.45));
+
+        const detail = {
+            timestamp: now,
+            raw: { ...this.tiltData },
+            normalized,
+            velocity,
+            intensity,
+            rotation4D: { ...this.rotation4D }
+        };
+
+        this.emit('tilt-vector', detail);
+        this.lastTiltSnapshot = { ...this.tiltData, time: now };
+    }
+
     clampAngle(angle, min = -180, max = 180) {
         if (angle === null || angle === undefined) return 0;
         return Math.max(min, Math.min(max, angle));
+    }
+
+    normalizeAngleDelta(current, previous) {
+        let delta = current - previous;
+        while (delta > 180) delta -= 360;
+        while (delta < -180) delta += 360;
+        return delta;
     }
 
     createFallbackSystem() {
@@ -195,21 +255,30 @@ class VIB34DGeometricTiltSystem {
         this.hasPermission = true;
         this.setupTiltListeners();
         this.findTiltCanvases();
+        this.enable();
     }
 
     enable() {
+        if (!this.hasPermission) {
+            console.warn('⚠️ Cannot enable tilt system without permission');
+            return false;
+        }
+        if (this.isEnabled) return true;
+
         this.isEnabled = true;
         console.log('✅ VIB34D Geometric Tilt System ENABLED');
+        this.emitTiltMetrics();
+        return true;
     }
 
     disable() {
+        if (!this.isEnabled) return;
         this.isEnabled = false;
         console.log('⏸️ VIB34D Geometric Tilt System DISABLED');
     }
 
     toggle() {
-        this.isEnabled ? this.disable() : this.enable();
-        return this.isEnabled;
+        return this.isEnabled ? (this.disable(), false) : this.enable();
     }
 
     setSensitivity(rot4dXW, rot4dYW, rot4dZW) {
@@ -228,6 +297,25 @@ class VIB34DGeometricTiltSystem {
         this.visualizers.clear();
         this.isEnabled = false;
         console.log('🗑️ VIB34D Geometric Tilt System destroyed');
+    }
+
+    on(eventName, handler) {
+        if (!this.eventTarget || typeof handler !== 'function') {
+            return () => {};
+        }
+        const listener = (event) => handler(event.detail, event);
+        this.eventTarget.addEventListener(eventName, listener);
+        return () => this.eventTarget.removeEventListener(eventName, listener);
+    }
+
+    off(eventName, handler) {
+        if (!this.eventTarget || typeof handler !== 'function') return;
+        this.eventTarget.removeEventListener(eventName, handler);
+    }
+
+    emit(eventName, detail = {}) {
+        if (!this.eventTarget) return;
+        this.eventTarget.dispatchEvent(new CustomEvent(eventName, { detail }));
     }
 }
 
@@ -444,6 +532,45 @@ class VIB34DTiltVisualizer {
 
         if (this.audioPeak > 0) {
             this.audioPeak = Math.max(0, this.audioPeak - delta * 2.2);
+        }
+    }
+
+    applyTiltVector(tilt = {}) {
+        const normalized = tilt.normalized || {};
+        const velocity = tilt.velocity || {};
+        const rotation4D = tilt.rotation4D || this.rotation4D;
+        const intensity = typeof tilt.intensity === 'number'
+            ? this.clamp(tilt.intensity, 0, 1.2)
+            : Math.min(1.2, Math.sqrt(((normalized.beta || 0) ** 2) + ((normalized.gamma || 0) ** 2)));
+
+        const forward = this.clamp(normalized.beta || 0, -1.3, 1.3);
+        const lateral = this.clamp(normalized.gamma || 0, -1.3, 1.3);
+        const swirl = this.clamp(normalized.alpha || 0, -1.3, 1.3);
+
+        const velocityAlpha = velocity.alpha || 0;
+        const velocityBeta = velocity.beta || 0;
+        const velocityGamma = velocity.gamma || 0;
+
+        this.targetState.speed = this.presets.baseSpeed + Math.abs(lateral) * 0.35 + intensity * 0.55 + Math.abs(velocityGamma) * 0.012;
+        this.targetState.glitch = this.presets.baseGlitch + Math.abs(velocityBeta) * 0.018 + Math.abs(rotation4D.rot4dZW || 0) * 0.45 + intensity * 0.2;
+        this.targetState.moire = this.presets.baseMoire + Math.abs(forward) * 0.42 + Math.abs(swirl) * 0.18;
+        this.targetState.density = this.presets.baseDensity + lateral * 0.22 - forward * 0.3;
+        this.targetState.energy = Math.max(this.targetState.energy, 0.4 + intensity * 0.6 + Math.abs(velocityAlpha) * 0.002);
+        this.pulseStrength = Math.max(this.pulseStrength, intensity * 0.55);
+
+        if (Math.abs(velocityAlpha) > 35) {
+            const polarity = velocityAlpha > 0 ? 1 : -1;
+            this.applyInteractionResponse({
+                intensity: 0.28 + intensity * 0.5,
+                polarity,
+                hueSpin: swirl * 1.1,
+                densityBias: -forward * 0.5,
+                geometryAdvance: polarity,
+                duration: 680
+            });
+        } else {
+            this.targetState.hue += swirl * 6;
+            this.targetState.accentHue += swirl * 4;
         }
     }
 

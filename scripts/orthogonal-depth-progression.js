@@ -734,6 +734,33 @@ class PortalTextVisualizer {
         };
     }
 
+    applyTiltVector(tilt = {}) {
+        const normalized = tilt.normalized || {};
+        const velocity = tilt.velocity || {};
+        const intensity = typeof tilt.intensity === 'number'
+            ? Math.max(0, Math.min(1.2, tilt.intensity))
+            : Math.min(1.2, Math.sqrt(((normalized.beta || 0) ** 2) + ((normalized.gamma || 0) ** 2)));
+
+        const forward = this.clamp(normalized.beta || 0, -1.2, 1.2);
+        const lateral = this.clamp(normalized.gamma || 0, -1.2, 1.2);
+        const swirl = this.clamp(normalized.alpha || 0, -1.2, 1.2);
+
+        this.targetDepth = this.clamp(this.targetDepth + forward * 0.22, 0.35, 1.35);
+        this.portalRotation += lateral * 0.28 + swirl * 0.22;
+
+        const magnitude = Math.max(Math.abs(forward), Math.abs(lateral));
+
+        this.reactiveBurst = {
+            active: true,
+            start: performance.now(),
+            duration: 680 + intensity * 420,
+            magnitude: Math.max(this.reactiveBurst.magnitude || 0, magnitude * 0.55 + Math.abs(velocity.gamma || 0) * 0.0025),
+            polarity: lateral >= 0 ? 1 : -1
+        };
+
+        this.audioEnergy = Math.max(this.audioEnergy, intensity * 0.4 + Math.abs(velocity.beta || 0) * 0.0018);
+    }
+
     applyAudioEnergy(level, meta = {}) {
         if (typeof level !== 'number') return;
 
@@ -1013,6 +1040,10 @@ class PortalTextVisualizer {
         return ((value % 360) + 360) % 360;
     }
 
+    clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
     destroy() {
         this.stopRenderLoop();
         if (this.resizeObserver) {
@@ -1092,6 +1123,7 @@ class OrthogonalDepthReactivityOrchestrator {
         this.syncEntities();
         this.bindProgressionEvents();
         this.bindPointerEvents();
+        this.bindTiltSystem();
     }
 
     syncEntities() {
@@ -1144,6 +1176,16 @@ class OrthogonalDepthReactivityOrchestrator {
         window.addEventListener('pointerdown', this.handlePointerDown, { passive: true });
         window.addEventListener('pointerup', this.handlePointerUp, { passive: true });
         window.addEventListener('pointerleave', this.handlePointerLeave, { passive: true });
+    }
+
+    bindTiltSystem() {
+        if (!this.tiltSystem || typeof this.tiltSystem.on !== 'function') return;
+        const dispose = this.tiltSystem.on('tilt-vector', (detail) => this.handleTiltVector(detail));
+        this.cleanupHandlers.push(dispose);
+
+        if (typeof this.tiltSystem.enable === 'function') {
+            this.tiltSystem.enable();
+        }
     }
 
     handleCardState(detail = {}) {
@@ -1432,6 +1474,89 @@ class OrthogonalDepthReactivityOrchestrator {
             }
         }
         this.backgroundField.reset(0.2);
+    }
+
+    handleTiltVector(detail = {}) {
+        if (!this.activeCard) return;
+        const entity = this.getEntity(this.activeCard);
+        if (!entity) return;
+
+        const normalized = detail.normalized || {};
+        const velocity = detail.velocity || {};
+        const intensity = typeof detail.intensity === 'number'
+            ? Math.max(0, Math.min(1.2, detail.intensity))
+            : Math.min(1.2, Math.sqrt(((normalized.beta || 0) ** 2) + ((normalized.gamma || 0) ** 2)));
+
+        const forward = normalized.beta || 0;
+        const lateral = normalized.gamma || 0;
+        const swirl = normalized.alpha || 0;
+        const polarity = lateral >= 0 ? 1 : -1;
+
+        if (entity.visualizer && typeof entity.visualizer.applyTiltVector === 'function') {
+            entity.visualizer.applyTiltVector(detail);
+        }
+
+        if (entity.portal && typeof entity.portal.applyTiltVector === 'function') {
+            entity.portal.applyTiltVector(detail);
+        }
+
+        const partner = this.getPartnerCard(polarity);
+        if (partner && partner.visualizer && typeof partner.visualizer.applyTiltVector === 'function') {
+            partner.visualizer.applyTiltVector({
+                normalized: {
+                    beta: -forward * 0.7,
+                    gamma: -lateral * 0.75,
+                    alpha: -swirl * 0.6
+                },
+                velocity: {
+                    beta: (velocity.beta || 0) * -0.7,
+                    gamma: (velocity.gamma || 0) * -0.75,
+                    alpha: (velocity.alpha || 0) * -0.6
+                },
+                intensity: Math.min(1, (intensity || 0) * 0.65),
+                rotation4D: detail.rotation4D
+            });
+        }
+
+        if (partner && partner.portal && typeof partner.portal.applyTiltVector === 'function') {
+            partner.portal.applyTiltVector({
+                normalized: {
+                    beta: -forward * 0.5,
+                    gamma: -lateral * 0.6,
+                    alpha: -swirl * 0.5
+                },
+                velocity: {
+                    beta: (velocity.beta || 0) * -0.5,
+                    gamma: (velocity.gamma || 0) * -0.6,
+                    alpha: (velocity.alpha || 0) * -0.5
+                },
+                intensity: Math.min(1, (intensity || 0) * 0.55),
+                rotation4D: detail.rotation4D
+            });
+        }
+
+        this.applyCardGlow(entity.card, {
+            shiftX: lateral * 34,
+            shiftY: -forward * 30,
+            intensity: 0.24 + intensity * 0.4,
+            scale: 1.05 + intensity * 0.14
+        });
+
+        if (partner) {
+            this.applyCardGlow(partner.card, {
+                shiftX: -lateral * 18,
+                shiftY: forward * 16,
+                intensity: 0.18 + intensity * 0.25,
+                scale: 1.02 + intensity * 0.09
+            });
+        }
+
+        this.backgroundField.applyImpulse({
+            offsetX: lateral * 0.55,
+            offsetY: -forward * 0.4,
+            energy: 0.28 + intensity * 0.45,
+            twist: swirl * 0.35
+        });
     }
 
     getPartnerCard(direction = 1) {
