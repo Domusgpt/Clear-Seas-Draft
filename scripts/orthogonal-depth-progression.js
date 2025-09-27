@@ -26,6 +26,8 @@ class OrthogonalDepthProgression {
         this.scrollThreshold = 100;
         this.isScrollProgression = true;
 
+        this.pendingInheritedTrait = null;
+
         this.init();
     }
 
@@ -160,6 +162,25 @@ class OrthogonalDepthProgression {
         portalElement.portalVisualizer = portalVisualizer;
     }
 
+    getVisualizerForCard(card) {
+        const canvas = card.querySelector('.vib34d-tilt-canvas');
+        if (canvas && canvas.vib34dVisualizer) {
+            return canvas.vib34dVisualizer;
+        }
+        return null;
+    }
+
+    updateVisualizerState(card, state, options = {}) {
+        const visualizer = this.getVisualizerForCard(card);
+        if (!visualizer) return;
+
+        if (state === 'destroyed') {
+            visualizer.setCardState(state);
+        } else {
+            visualizer.setCardState(state, { inheritedTrait: options.inheritedTrait });
+        }
+    }
+
     setInitialPositions() {
         this.cards.forEach((card, index) => {
             card.style.zIndex = this.cards.length - index;
@@ -178,8 +199,9 @@ class OrthogonalDepthProgression {
         if (this.currentIndex >= this.cards.length - 1) {
             // Loop to beginning with destruction animation
             this.destroyCurrentCard(() => {
+                const inheritedTrait = this.pendingInheritedTrait;
                 this.currentIndex = 0;
-                this.progressToCurrentCard();
+                this.progressToCurrentCard(inheritedTrait);
             });
             return;
         }
@@ -206,6 +228,8 @@ class OrthogonalDepthProgression {
     progressToCard(newIndex) {
         const currentCard = this.cards[this.currentIndex];
         const newCard = this.cards[newIndex];
+        const inheritedTrait = this.pendingInheritedTrait;
+        this.pendingInheritedTrait = null;
 
         // Deactivate current card portal
         this.deactivatePortalForCard(currentCard);
@@ -215,12 +239,12 @@ class OrthogonalDepthProgression {
 
         // Bring new card forward through progression states
         setTimeout(() => {
-            this.setCardState(newCard, 'approaching');
+            this.setCardState(newCard, 'approaching', { inheritedTrait });
 
             setTimeout(() => {
-                this.setCardState(newCard, 'focused');
+                this.setCardState(newCard, 'focused', { inheritedTrait });
                 this.currentIndex = newIndex;
-                this.activatePortalForCard(newCard);
+                this.activatePortalForCard(newCard, inheritedTrait);
 
                 // Move old card to far depth
                 setTimeout(() => {
@@ -232,11 +256,11 @@ class OrthogonalDepthProgression {
         }, this.timings.cardTransition / 4);
     }
 
-    progressToCurrentCard() {
+    progressToCurrentCard(inheritedTrait = null) {
         this.cards.forEach((card, index) => {
             if (index === this.currentIndex) {
-                this.setCardState(card, 'focused');
-                this.activatePortalForCard(card);
+                this.setCardState(card, 'focused', { inheritedTrait });
+                this.activatePortalForCard(card, inheritedTrait);
             } else if (index < this.currentIndex) {
                 this.setCardState(card, 'far-depth');
                 this.deactivatePortalForCard(card);
@@ -245,19 +269,30 @@ class OrthogonalDepthProgression {
                 this.deactivatePortalForCard(card);
             }
         });
+
+        this.pendingInheritedTrait = null;
     }
 
-    setCardState(card, state) {
-        // Remove all progression state classes
-        this.progressionStates.forEach(s => card.classList.remove(s));
+    setCardState(card, state, options = {}) {
+        const inheritedTrait = options.inheritedTrait;
 
-        // Add new state
+        if (inheritedTrait) {
+            card._pendingTrait = inheritedTrait;
+        }
+
+        const traitForVisualizer = inheritedTrait || card._pendingTrait || card._activeTrait || null;
+        this.updateVisualizerState(card, state, { inheritedTrait: traitForVisualizer });
+
+        this.progressionStates.forEach(s => card.classList.remove(s));
         card.classList.add(state);
 
-        // Update card z-index based on state
         switch (state) {
             case 'focused':
                 card.style.zIndex = 1000;
+                if (card._pendingTrait) {
+                    card._activeTrait = card._pendingTrait;
+                    card._pendingTrait = null;
+                }
                 break;
             case 'approaching':
                 card.style.zIndex = 900;
@@ -274,9 +309,13 @@ class OrthogonalDepthProgression {
         }
     }
 
-    activatePortalForCard(card) {
+    activatePortalForCard(card, inheritedTrait = null) {
         const portal = card.querySelector('.portal-text-visualizer');
         if (portal && portal.portalVisualizer) {
+            const trait = inheritedTrait || card._pendingTrait || card._activeTrait || null;
+            if (trait && portal.portalVisualizer.applyInheritedTrait) {
+                portal.portalVisualizer.applyInheritedTrait(trait);
+            }
             portal.portalVisualizer.activate();
         }
 
@@ -306,14 +345,16 @@ class OrthogonalDepthProgression {
         const currentCard = this.cards[this.currentIndex];
         const destructionType = currentCard.dataset.destruction || 'quantum';
 
-        // Apply unique destruction animation
-        this.setCardState(currentCard, 'destroyed');
-        currentCard.classList.add(`destruction-${destructionType}`);
-
-        // Deactivate portal
         this.deactivatePortalForCard(currentCard);
 
-        // Reset card after destruction animation
+        this.setCardState(currentCard, 'destroyed');
+
+        const visualizer = this.getVisualizerForCard(currentCard);
+        const inheritedTrait = visualizer ? visualizer.triggerDestructionSequence() : null;
+        this.pendingInheritedTrait = inheritedTrait;
+
+        currentCard.classList.add(`destruction-${destructionType}`);
+
         setTimeout(() => {
             currentCard.classList.remove(`destruction-${destructionType}`);
             this.setCardState(currentCard, 'far-depth');
@@ -381,6 +422,16 @@ class PortalTextVisualizer {
         this.portalRotation = 0;
         this.portalPulse = 0;
 
+        this.inheritedTrait = null;
+        this.traitFlourish = null;
+        this.resizeObserver = null;
+
+        this.basePalettes = {
+            quantum: { hue: 280, accent: 220 },
+            holographic: { hue: 330, accent: 190 },
+            faceted: { hue: 200, accent: 150 }
+        };
+
         this.init();
     }
 
@@ -395,13 +446,14 @@ class PortalTextVisualizer {
 
             this.canvas.width = rect.width * dpr;
             this.canvas.height = rect.height * dpr;
+            this.context.setTransform(1, 0, 0, 1, 0, 0);
             this.context.scale(dpr, dpr);
         };
 
         resizeCanvas();
 
-        const resizeObserver = new ResizeObserver(resizeCanvas);
-        resizeObserver.observe(this.canvas);
+        this.resizeObserver = new ResizeObserver(resizeCanvas);
+        this.resizeObserver.observe(this.canvas);
     }
 
     activate() {
@@ -443,13 +495,47 @@ class PortalTextVisualizer {
         }
     }
 
-    update() {
-        // Smooth portal depth transition
-        this.portalDepth += (this.targetDepth - this.portalDepth) * 0.08;
+    applyInheritedTrait(trait) {
+        if (!trait) return;
+        this.inheritedTrait = { ...trait };
+        this.traitFlourish = {
+            active: true,
+            start: performance.now(),
+            duration: 1200
+        };
+        this.targetDepth = Math.max(this.targetDepth, 0.9);
+    }
 
-        // Portal animation
+    update() {
+        this.portalDepth += (this.targetDepth - this.portalDepth) * 0.08;
         this.portalRotation += 0.02;
         this.portalPulse = Math.sin(Date.now() * 0.003) * 0.5 + 0.5;
+
+        if (this.traitFlourish && this.traitFlourish.active) {
+            const progress = (performance.now() - this.traitFlourish.start) / this.traitFlourish.duration;
+            if (progress >= 1) {
+                this.traitFlourish.active = false;
+            }
+        }
+    }
+
+    getPalette() {
+        const palette = this.basePalettes[this.systemType] || this.basePalettes.faceted;
+        const trait = this.inheritedTrait || {};
+        return {
+            hue: this.normalizeHue(palette.hue + (trait.hueShift || 0)),
+            accent: this.normalizeHue(palette.accent + (trait.accentShift || 0))
+        };
+    }
+
+    getTraitFlourishIntensity() {
+        if (!this.traitFlourish || !this.traitFlourish.active) return 0;
+        const progress = (performance.now() - this.traitFlourish.start) / this.traitFlourish.duration;
+        if (progress >= 1) {
+            this.traitFlourish.active = false;
+            return 0;
+        }
+        return Math.sin(progress * Math.PI);
     }
 
     renderPortal() {
@@ -457,7 +543,6 @@ class PortalTextVisualizer {
         const width = this.canvas.width / (window.devicePixelRatio || 1);
         const height = this.canvas.height / (window.devicePixelRatio || 1);
 
-        // Clear canvas
         ctx.clearRect(0, 0, width, height);
 
         if (this.portalDepth < 0.01) return;
@@ -465,72 +550,85 @@ class PortalTextVisualizer {
         const centerX = width / 2;
         const centerY = height / 2;
         const intensity = this.portalDepth;
+        const palette = this.getPalette();
+        const trait = this.inheritedTrait || {};
+        const flourish = this.getTraitFlourishIntensity();
+        const moireBoost = trait.moireBoost || 0;
+        const glitchBoost = trait.glitchBoost || 0;
 
-        // Render portal based on system type
         switch (this.systemType) {
             case 'quantum':
-                this.renderQuantumPortal(ctx, centerX, centerY, intensity);
+                this.renderQuantumPortal(ctx, centerX, centerY, intensity, palette, moireBoost, glitchBoost, flourish);
                 break;
             case 'holographic':
-                this.renderHolographicPortal(ctx, centerX, centerY, intensity);
+                this.renderHolographicPortal(ctx, centerX, centerY, intensity, palette, moireBoost, glitchBoost, flourish);
                 break;
             case 'faceted':
-                this.renderFacetedPortal(ctx, centerX, centerY, intensity);
+            default:
+                this.renderFacetedPortal(ctx, centerX, centerY, intensity, palette, moireBoost, glitchBoost, flourish);
                 break;
+        }
+
+        if (flourish > 0.01) {
+            this.renderTraitFlourish(ctx, centerX, centerY, intensity, palette, flourish);
         }
     }
 
-    renderQuantumPortal(ctx, centerX, centerY, intensity) {
-        const rings = 8;
-        const maxRadius = Math.min(centerX, centerY) * 0.8;
+    renderQuantumPortal(ctx, centerX, centerY, intensity, palette, moireBoost, glitchBoost, flourish) {
+        const rings = 8 + Math.round((moireBoost + flourish) * 4);
+        const maxRadius = Math.min(centerX, centerY) * (0.75 + flourish * 0.2);
 
         for (let i = 0; i < rings; i++) {
             const progress = i / rings;
             const radius = maxRadius * (1 - progress) * intensity;
-            const alpha = intensity * (1 - progress) * this.portalPulse;
+            const alpha = intensity * (1 - progress) * (0.6 + flourish * 0.2);
+            const hue = this.normalizeHue(palette.hue + progress * 16);
+            const offset = Math.sin(this.portalRotation * 2 + i) * glitchBoost * 6;
 
             if (alpha > 0.05) {
-                ctx.strokeStyle = `hsla(280, 70%, ${60 + progress * 20}%, ${alpha})`;
+                ctx.save();
                 ctx.lineWidth = 2 + progress * 3;
-
+                ctx.strokeStyle = `hsla(${hue}, 72%, ${60 + progress * 18}%, ${alpha})`;
                 ctx.beginPath();
-                ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                ctx.arc(centerX, centerY, radius + offset, 0, Math.PI * 2);
                 ctx.stroke();
+                ctx.restore();
             }
         }
 
-        // Central quantum glow
-        const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 50 * intensity);
-        gradient.addColorStop(0, `rgba(138, 43, 226, ${intensity * 0.5})`);
+        const glowRadius = 60 * intensity * (1 + flourish * 0.4);
+        const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, glowRadius);
+        gradient.addColorStop(0, `hsla(${palette.accent}, 95%, 72%, ${0.35 + flourish * 0.3})`);
         gradient.addColorStop(1, 'transparent');
 
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, centerX * 2, centerY * 2);
     }
 
-    renderHolographicPortal(ctx, centerX, centerY, intensity) {
-        const layers = 6;
-        const maxRadius = Math.min(centerX, centerY) * 0.9;
+    renderHolographicPortal(ctx, centerX, centerY, intensity, palette, moireBoost, glitchBoost, flourish) {
+        const layers = 6 + Math.floor((moireBoost + flourish) * 3);
+        const maxRadius = Math.min(centerX, centerY) * (0.85 + flourish * 0.15);
 
         ctx.save();
         ctx.translate(centerX, centerY);
-        ctx.rotate(this.portalRotation);
+        ctx.rotate(this.portalRotation * (1 + flourish * 0.5));
 
         for (let i = 0; i < layers; i++) {
             const progress = i / layers;
-            const radius = maxRadius * (1 - progress * 0.8) * intensity;
-            const alpha = intensity * (1 - progress) * 0.6;
+            const radius = maxRadius * (1 - progress * 0.7) * intensity;
+            const alpha = intensity * (1 - progress) * (0.5 + flourish * 0.2);
+            const hue = this.normalizeHue(palette.hue + progress * 20);
 
-            ctx.strokeStyle = `hsla(${330 + i * 15}, 80%, 70%, ${alpha})`;
-            ctx.lineWidth = 1 + progress * 2;
+            ctx.strokeStyle = `hsla(${hue}, 90%, ${72 - progress * 18}%, ${alpha})`;
+            ctx.lineWidth = 1.2 + progress * 2;
 
-            // Create holographic interference pattern
             const sides = 8 + i * 2;
             ctx.beginPath();
             for (let j = 0; j <= sides; j++) {
                 const angle = (j / sides) * Math.PI * 2;
-                const x = Math.cos(angle) * radius * (1 + Math.sin(angle * 3) * 0.1);
-                const y = Math.sin(angle) * radius * (1 + Math.cos(angle * 3) * 0.1);
+                const distortion = 1 + Math.sin(angle * 3 + this.portalRotation * 4) * (0.08 + glitchBoost * 0.05);
+                const x = Math.cos(angle) * radius * distortion;
+                const y = Math.sin(angle) * radius * distortion;
 
                 if (j === 0) {
                     ctx.moveTo(x, y);
@@ -544,26 +642,28 @@ class PortalTextVisualizer {
         ctx.restore();
     }
 
-    renderFacetedPortal(ctx, centerX, centerY, intensity) {
-        const facets = 12;
-        const maxRadius = Math.min(centerX, centerY) * 0.7;
+    renderFacetedPortal(ctx, centerX, centerY, intensity, palette, moireBoost, glitchBoost, flourish) {
+        const facets = 10 + Math.round((moireBoost + flourish) * 4);
+        const maxRadius = Math.min(centerX, centerY) * (0.7 + flourish * 0.2);
 
         ctx.save();
         ctx.translate(centerX, centerY);
+        ctx.rotate(this.portalRotation * (0.8 + flourish * 0.4));
 
         for (let i = 0; i < facets; i++) {
-            const angle = (i / facets) * Math.PI * 2 + this.portalRotation;
-            const radius = maxRadius * intensity * (0.5 + this.portalPulse * 0.3);
+            const angle = (i / facets) * Math.PI * 2;
+            const radius = maxRadius * intensity * (0.5 + this.portalPulse * 0.3 + flourish * 0.2);
+            const hue = this.normalizeHue(palette.hue + i * 6);
 
-            ctx.strokeStyle = `hsla(200, 70%, 60%, ${intensity * 0.8})`;
-            ctx.fillStyle = `hsla(200, 70%, 60%, ${intensity * 0.2})`;
-            ctx.lineWidth = 2;
+            ctx.strokeStyle = `hsla(${hue}, 80%, 66%, ${0.6 + flourish * 0.2})`;
+            ctx.fillStyle = `hsla(${palette.accent}, 85%, 68%, ${0.18 + flourish * 0.1})`;
+            ctx.lineWidth = 1.8 + glitchBoost * 0.6;
 
             ctx.beginPath();
             ctx.moveTo(0, 0);
             ctx.lineTo(
-                Math.cos(angle) * radius,
-                Math.sin(angle) * radius
+                Math.cos(angle) * radius * (1 + glitchBoost * 0.1),
+                Math.sin(angle) * radius * (1 + glitchBoost * 0.1)
             );
             ctx.lineTo(
                 Math.cos(angle + Math.PI / facets) * radius,
@@ -578,12 +678,42 @@ class PortalTextVisualizer {
         ctx.restore();
     }
 
+    renderTraitFlourish(ctx, centerX, centerY, intensity, palette, flourish) {
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.rotate(this.portalRotation * 1.5);
+
+        const radius = Math.min(centerX, centerY) * (0.9 + flourish * 0.3) * intensity;
+        ctx.lineWidth = 2 + flourish * 3;
+        ctx.strokeStyle = `hsla(${palette.accent}, 100%, 75%, ${0.4 + flourish * 0.4})`;
+        ctx.beginPath();
+        ctx.arc(0, 0, radius, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.setLineDash([6, 12]);
+        ctx.strokeStyle = `hsla(${this.normalizeHue(palette.accent + 40)}, 100%, 70%, ${0.3 + flourish * 0.3})`;
+        ctx.beginPath();
+        ctx.arc(0, 0, radius * 0.7, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.restore();
+    }
+
+    normalizeHue(value) {
+        return ((value % 360) + 360) % 360;
+    }
+
     destroy() {
         this.stopRenderLoop();
+        if (this.resizeObserver) {
+            this.resizeObserver.disconnect();
+            this.resizeObserver = null;
+        }
         this.context = null;
+        this.inheritedTrait = null;
     }
 }
-
 // Export for global use
 window.OrthogonalDepthProgression = OrthogonalDepthProgression;
 window.PortalTextVisualizer = PortalTextVisualizer;
