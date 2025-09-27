@@ -5,6 +5,9 @@
  * A Paul Phillips Manifestation - Paul@clearseassolutions.com
  */
 
+const ROTATION_EVENT = window.__VIB34D_ROTATION_EVENT || 'vib34d:rotation';
+window.__VIB34D_ROTATION_EVENT = ROTATION_EVENT;
+
 class VIB34DGeometricTiltSystem {
     constructor() {
         this.isEnabled = false;
@@ -170,6 +173,30 @@ class VIB34DGeometricTiltSystem {
             window.updateParameter('rot4dYW', this.rotation4D.rot4dYW);
             window.updateParameter('rot4dZW', this.rotation4D.rot4dZW);
         }
+
+        const normalized = {
+            x: this.rotation4D.rot4dYW,
+            y: this.rotation4D.rot4dXW,
+            z: this.rotation4D.rot4dZW
+        };
+        const magnitude = Math.min(1, Math.hypot(normalized.x, normalized.y, normalized.z));
+
+        window.__VIB34D_LAST_ROTATION = {
+            timestamp: Date.now(),
+            rotation4D: { ...this.rotation4D },
+            tilt: { ...this.tiltData },
+            normalized,
+            magnitude
+        };
+
+        window.dispatchEvent(new CustomEvent(ROTATION_EVENT, {
+            detail: {
+                rotation4D: { ...this.rotation4D },
+                tilt: { ...this.tiltData },
+                normalized,
+                magnitude
+            }
+        }));
     }
 
     updateTiltUI() {
@@ -453,3 +480,8 @@ class VIB34DTiltVisualizer {
 // Export for global use
 window.VIB34DGeometricTiltSystem = VIB34DGeometricTiltSystem;
 window.VIB34DTiltVisualizer = VIB34DTiltVisualizer;
+
+if (!window.__CLEAR_SEAS_TILT_SYSTEM) {
+    window.__CLEAR_SEAS_TILT_SYSTEM = new VIB34DGeometricTiltSystem();
+    window.__CLEAR_SEAS_TILT_SYSTEM.enable();
+}
