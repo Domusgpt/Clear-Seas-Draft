@@ -10,11 +10,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
-    <!-- VIB34D GEOMETRIC TILT SYSTEM -->
-    <script src="scripts/vib34d-geometric-tilt-system.js" defer></script>
-
     <!-- ORTHOGONAL DEPTH PROGRESSION ENGINE -->
-    <script src="scripts/orthogonal-depth-progression.js" defer></script>
+    <script type="module" src="scripts/orthogonal-depth-progression.js"></script>
 
     <style>
         * {
@@ -31,16 +28,46 @@
             --holographic-pink: #ff1493;
             --void-black: #0a0a0a;
             --depth-perspective: 1200px;
+            --visualizer-bg-primary: #020617;
+            --visualizer-bg-secondary: #0b193c;
+            --visualizer-bg-glow: rgba(0, 255, 255, 0.12);
+            --visualizer-grid-color: rgba(0, 255, 255, 0.1);
+            --visualizer-pulse-color: rgba(255, 0, 255, 0.18);
+            --section-title-from: var(--clear-seas-primary);
+            --section-title-to: var(--clear-seas-secondary);
+            --global-tilt-x: 0;
+            --global-tilt-y: 0;
+            --global-tilt-strength: 0;
+            --hypercube-fold-progress: 0;
         }
 
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(180deg, #000 0%, #0a0a0a 50%, #000 100%);
             color: white;
             overflow: hidden; /* NO TRADITIONAL SCROLLING */
             height: 100vh;
             perspective: var(--depth-perspective);
             perspective-origin: center center;
+            background: radial-gradient(circle at 50% 50%, var(--visualizer-bg-glow), transparent 70%),
+                linear-gradient(180deg, var(--visualizer-bg-primary), var(--visualizer-bg-secondary));
+            transition: background 1.2s ease;
+        }
+
+        .holographic-backdrop {
+            position: fixed;
+            inset: 0;
+            overflow: hidden;
+            z-index: -2;
+        }
+
+        .holographic-backdrop canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            pointer-events: none;
+            mix-blend-mode: screen;
         }
 
         /* ORTHOGONAL PROGRESSION CONTAINER */
@@ -52,6 +79,26 @@
             height: 100vh;
             transform-style: preserve-3d;
             perspective: var(--depth-perspective);
+            transition: transform 1.3s cubic-bezier(0.35, 0, 0.25, 1);
+        }
+
+        .depth-progression-container.hypercube-folding {
+            animation: hypercubeFold 1.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes hypercubeFold {
+            0% {
+                transform: scale(1) rotate3d(0, 0, 0, 0deg);
+            }
+            35% {
+                transform: scale(0.92) rotate3d(1, 1, 0, 12deg);
+            }
+            70% {
+                transform: scale(0.4) rotate3d(1, -1, 0, 120deg);
+            }
+            100% {
+                transform: scale(1) rotate3d(0, 0, 0, 0deg);
+            }
         }
 
         /* DEPTH PROGRESSION CARD SYSTEM */
@@ -65,47 +112,164 @@
             transform-origin: center center;
             transform-style: preserve-3d;
             border-radius: 20px;
-            background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(255, 0, 255, 0.05));
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.08), rgba(255, 0, 255, 0.05));
             border: 2px solid rgba(0, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(12px);
             transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             cursor: pointer;
+            --card-depth: -800px;
+            --card-scale: 0.3;
+            --card-opacity: 0.2;
+            --card-blur: 3px;
+            --card-glow: rgba(0, 255, 255, 0.16);
+            --card-glow-radius: 30px;
+            --card-tilt-x: var(--global-tilt-x);
+            --card-tilt-y: var(--global-tilt-y);
+            --card-fold-progress: 0;
+            --card-moire-shift: 0;
+            --card-spectrum-boost: 0;
+            transform: translate(-50%, -50%)
+                translateZ(var(--card-depth))
+                scale(calc(var(--card-scale) * (1 + var(--card-fold-progress) * 0.06)))
+                rotateX(calc(var(--card-tilt-y) * 12deg))
+                rotateY(calc(var(--card-tilt-x) * 14deg));
+            opacity: var(--card-opacity);
+            filter: blur(var(--card-blur))
+                saturate(calc(0.9 + var(--card-spectrum-boost) + var(--card-fold-progress) * 0.45))
+                hue-rotate(calc((var(--card-moire-shift) + var(--card-fold-progress) * 0.25) * 120deg));
+            box-shadow: 0 0 var(--card-glow-radius) var(--card-glow);
         }
 
         /* DEPTH PROGRESSION STATES */
         .progression-card.far-depth {
-            transform: translate(-50%, -50%) translateZ(-800px) scale(0.3);
-            opacity: 0.1;
-            filter: blur(3px);
+            --card-depth: -820px;
+            --card-scale: 0.28;
+            --card-opacity: 0.1;
+            --card-blur: 4px;
         }
 
         .progression-card.approaching {
-            transform: translate(-50%, -50%) translateZ(-400px) scale(0.6);
-            opacity: 0.4;
-            filter: blur(1px);
+            --card-depth: -420px;
+            --card-scale: 0.6;
+            --card-opacity: 0.45;
+            --card-blur: 1.2px;
+            --card-spectrum-boost: 0.18;
+            --card-moire-shift: 0.08;
         }
 
         .progression-card.focused {
-            transform: translate(-50%, -50%) translateZ(0px) scale(1.0);
-            opacity: 1.0;
-            filter: blur(0px);
-            border-color: var(--clear-seas-primary);
+            --card-depth: 0px;
+            --card-scale: 1;
+            --card-opacity: 1;
+            --card-blur: 0px;
+            --card-glow-radius: clamp(40px, 8vw, 80px);
+            --card-spectrum-boost: 0.3;
+            --card-moire-shift: 0.12;
+            border-color: rgba(0, 255, 255, 0.4);
             box-shadow:
-                0 0 30px rgba(0, 255, 255, 0.3),
-                0 0 60px rgba(0, 255, 255, 0.1);
+                0 0 clamp(30px, 6vw, 60px) rgba(0, 255, 255, 0.35),
+                0 0 clamp(60px, 10vw, 120px) rgba(255, 0, 255, 0.15);
+        }
+
+        .progression-card.far-depth {
+            --card-spectrum-boost: 0.02;
+            --card-moire-shift: 0.0;
+        }
+
+        .progression-card.card-hovered {
+            --card-spectrum-boost: 0.28;
+            --card-moire-shift: 0.18;
+            border-color: rgba(255, 255, 255, 0.45);
+            box-shadow:
+                0 0 42px rgba(0, 255, 255, 0.4),
+                0 0 90px rgba(255, 0, 255, 0.22);
+        }
+
+        .progression-card.card-clicked {
+            --card-spectrum-boost: 0.45;
+            --card-moire-shift: 0.32;
+            animation: cardClickPulse 0.6s ease;
+        }
+
+        @keyframes cardClickPulse {
+            0% { box-shadow: 0 0 18px rgba(255, 255, 255, 0.25); }
+            50% { box-shadow: 0 0 80px rgba(255, 64, 255, 0.55); }
+            100% { box-shadow: 0 0 26px rgba(0, 255, 255, 0.35); }
+        }
+
+        @keyframes cardMoireShift {
+            0% { filter: hue-rotate(-20deg); }
+            50% { filter: hue-rotate(20deg) saturate(1.3); }
+            100% { filter: hue-rotate(-12deg); }
+        }
+
+        .progression-card[data-card-stage="exiting"] {
+            --card-spectrum-boost: 0.6;
+            --card-moire-shift: 0.42;
+            animation: cardMoireShift 1s ease-in-out infinite alternate;
+            box-shadow:
+                0 0 clamp(40px, 7vw, 90px) rgba(255, 255, 255, 0.35),
+                0 0 clamp(120px, 15vw, 180px) rgba(255, 0, 255, 0.28);
+        }
+
+        .progression-card[data-card-stage="destroyed"] {
+            --card-spectrum-boost: 0.72;
+            --card-moire-shift: 0.5;
+        }
+
+        .progression-card[data-section="quantum"].focused {
+            --card-glow: rgba(96, 255, 255, 0.36);
+        }
+
+        .progression-card[data-section="holographic"].focused {
+            --card-glow: rgba(255, 110, 255, 0.28);
+        }
+
+        .progression-card[data-section="faceted"].focused {
+            --card-glow: rgba(120, 255, 180, 0.32);
+        }
+
+        .progression-card[data-section="neural"].focused {
+            --card-glow: rgba(176, 129, 255, 0.32);
         }
 
         .progression-card.exiting {
-            transform: translate(-50%, -50%) translateZ(400px) scale(1.5);
-            opacity: 0.2;
-            filter: blur(2px);
+            --card-depth: 420px;
+            --card-scale: 1.45;
+            --card-opacity: 0.28;
+            --card-blur: 2px;
         }
 
         .progression-card.destroyed {
-            transform: translate(-50%, -50%) translateZ(800px) scale(2.0) rotateX(45deg) rotateY(45deg);
-            opacity: 0;
-            filter: blur(5px);
             pointer-events: none;
+        }
+
+        .progression-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            opacity: 0;
+            transform: translateZ(2px);
+            transition: opacity 0.6s ease, filter 0.6s ease, border-color 0.6s ease;
+            pointer-events: none;
+        }
+
+        .progression-card.focused::after {
+            opacity: 1;
+            border-color: rgba(255, 255, 255, 0.25);
+            filter: drop-shadow(0 0 35px rgba(0, 255, 255, 0.4));
+        }
+
+        .progression-card[data-visualizer-state="ascend"].focused::after {
+            filter: drop-shadow(0 0 25px rgba(255, 140, 255, 0.45));
+        }
+
+        .progression-card[data-card-stage="exiting"]::after {
+            opacity: 1;
+            border-color: rgba(255, 255, 255, 0.4);
+            filter: drop-shadow(0 0 45px rgba(255, 255, 255, 0.55));
         }
 
         /* CARD CONTENT SYSTEM */
@@ -117,9 +281,9 @@
         }
 
         .card-title {
-            font-size: 2.5rem;
+            font-size: clamp(1.8rem, 2.6vw, 2.8rem);
             font-weight: 700;
-            background: linear-gradient(135deg, var(--clear-seas-primary), var(--clear-seas-secondary));
+            background: linear-gradient(135deg, var(--section-title-from, var(--clear-seas-primary)), var(--section-title-to, var(--clear-seas-secondary)));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -132,6 +296,28 @@
             color: rgba(255, 255, 255, 0.8);
             line-height: 1.6;
             margin-bottom: 30px;
+            transition: color 0.6s ease, filter 0.6s ease;
+        }
+
+        .progression-card.focused .card-title {
+            text-shadow: 0 0 20px var(--clear-seas-primary);
+            transform: scale(calc(1.05 + var(--card-tilt-strength, 0) * 0.06)) translateZ(16px);
+        }
+
+        .progression-card.focused .card-description {
+            color: rgba(255, 255, 255, 0.92);
+            filter: drop-shadow(0 0 calc(18px + var(--card-tilt-strength, 0) * 12px) rgba(0, 255, 255, 0.18));
+        }
+
+        @keyframes textMoire {
+            0% { text-shadow: 0 0 12px rgba(255, 255, 255, 0.35), 0 0 24px rgba(0, 255, 255, 0.25); }
+            50% { text-shadow: 0 0 18px rgba(255, 0, 255, 0.55), 0 0 36px rgba(0, 255, 255, 0.45); }
+            100% { text-shadow: 0 0 14px rgba(0, 255, 255, 0.4), 0 0 28px rgba(255, 255, 255, 0.32); }
+        }
+
+        .progression-card[data-card-stage="exiting"] .card-title,
+        .progression-card[data-card-stage="exiting"] .card-description {
+            animation: textMoire 1.1s ease-in-out infinite;
         }
 
         /* PORTAL-STYLE TEXT VISUALIZERS */
@@ -148,12 +334,7 @@
         }
 
         .progression-card.focused .portal-text-visualizer {
-            opacity: 0.8;
-        }
-
-        .progression-card.focused .card-title {
-            text-shadow: 0 0 20px var(--clear-seas-primary);
-            transform: scale(1.05);
+            opacity: 0.85;
         }
 
         /* VIB34D TILT CANVAS SYSTEM */
@@ -174,12 +355,35 @@
             top: 20px;
             right: 20px;
             padding: 10px 15px;
-            background: rgba(0, 255, 255, 0.1);
+            background: rgba(2, 24, 36, 0.65);
             border: 1px solid rgba(0, 255, 255, 0.3);
             border-radius: 10px;
             font-family: 'JetBrains Mono', monospace;
             font-size: 0.9rem;
             z-index: 1000;
+            color: rgba(171, 244, 255, 0.95);
+            box-shadow: 0 0 18px rgba(0, 255, 255, 0.18);
+            transition: border-color 0.4s ease, box-shadow 0.4s ease, color 0.4s ease;
+        }
+
+        .tilt-indicator[data-mode="pointer"] {
+            border-color: rgba(255, 255, 255, 0.35);
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+        .tilt-indicator[data-mode="dramatic"] {
+            border-color: rgba(255, 94, 188, 0.8);
+            color: rgba(255, 182, 255, 0.95);
+            box-shadow: 0 0 22px rgba(255, 94, 188, 0.55);
+        }
+
+        .tilt-indicator.extreme {
+            animation: tiltIndicatorPulse 1.4s ease-in-out infinite;
+        }
+
+        @keyframes tiltIndicatorPulse {
+            0%, 100% { box-shadow: 0 0 18px rgba(255, 94, 188, 0.45); }
+            50% { box-shadow: 0 0 32px rgba(255, 189, 94, 0.65); }
         }
 
         /* PROGRESSION CONTROLS */
@@ -219,14 +423,14 @@
                 filter: blur(0px);
             }
             50% {
-                transform: translate(-50%, -50%) translateZ(200px) scale(1.3) rotateY(180deg);
-                opacity: 0.5;
-                filter: blur(1px) hue-rotate(60deg);
+                transform: translate(-50%, -50%) translateZ(260px) scale(1.25) rotateX(18deg) rotateY(-14deg);
+                opacity: 0.48;
+                filter: blur(1.2px) hue-rotate(45deg);
             }
             100% {
-                transform: translate(-50%, -50%) translateZ(600px) scale(0.1) rotateX(90deg) rotateY(360deg);
+                transform: translate(-50%, -50%) translateZ(640px) scale(0.2) rotateX(32deg) rotateY(-24deg);
                 opacity: 0;
-                filter: blur(8px) hue-rotate(120deg);
+                filter: blur(7px) hue-rotate(120deg);
             }
         }
 
@@ -241,19 +445,19 @@
                 filter: blur(0px);
             }
             25% {
-                transform: translate(-50%, -50%) translateZ(100px) scale(1.1);
-                opacity: 0.8;
+                transform: translate(-50%, -50%) translateZ(140px) scale(1.18) rotateX(12deg);
+                opacity: 0.82;
                 filter: blur(0px) saturate(2);
             }
             75% {
-                transform: translate(-50%, -50%) translateZ(400px) scale(2.0) rotateZ(45deg);
-                opacity: 0.2;
+                transform: translate(-50%, -50%) translateZ(420px) scale(1.85) rotateX(-10deg) rotateY(18deg);
+                opacity: 0.24;
                 filter: blur(3px) saturate(3) hue-rotate(180deg);
             }
             100% {
-                transform: translate(-50%, -50%) translateZ(800px) scale(0.05) rotateZ(180deg);
+                transform: translate(-50%, -50%) translateZ(780px) scale(0.18) rotateX(-16deg) rotateY(26deg);
                 opacity: 0;
-                filter: blur(10px) saturate(5);
+                filter: blur(9px) saturate(5);
             }
         }
 
@@ -263,12 +467,12 @@
 
         @keyframes cardDestructionFaceted {
             0% {
-                transform: translate(-50%, -50%) translateZ(0px) scale(1.0) rotateX(0deg);
+                transform: translate(-50%, -50%) translateZ(0px) scale(1.0) rotateX(0deg) rotateY(0deg);
                 opacity: 1;
                 filter: blur(0px);
             }
             100% {
-                transform: translate(-50%, -50%) translateZ(-600px) scale(3.0) rotateX(-90deg);
+                transform: translate(-50%, -50%) translateZ(-520px) scale(2.4) rotateX(-34deg) rotateY(18deg);
                 opacity: 0;
                 filter: blur(5px) brightness(3);
             }
@@ -297,18 +501,32 @@
 </head>
 <body>
 
+    <div class="holographic-backdrop">
+        <canvas id="holo-background-canvas" class="holo-layer"></canvas>
+        <canvas id="holo-shadow-canvas" class="holo-layer"></canvas>
+        <canvas id="holo-content-canvas" class="holo-layer"></canvas>
+        <canvas id="holo-highlight-canvas" class="holo-layer"></canvas>
+        <canvas id="holo-accent-canvas" class="holo-layer"></canvas>
+    </div>
+
     <!-- GEOMETRIC TILT INDICATOR -->
     <div class="tilt-indicator">
         <div>Tilt X: <span id="tilt-x">0</span>°</div>
         <div>Tilt Y: <span id="tilt-y">0</span>°</div>
-        <div>4D Rotation: <span id="rot4d">Active</span></div>
+        <div>4D Rotation: <span id="rot4d">Device</span></div>
     </div>
 
     <!-- ORTHOGONAL DEPTH PROGRESSION CONTAINER -->
     <div class="depth-progression-container" id="progressionContainer">
 
         <!-- CARD 1: QUANTUM SYSTEMS -->
-        <div class="progression-card far-depth" data-vib34d="quantum" data-destruction="quantum">
+        <div class="progression-card far-depth" data-section="quantum"
+            data-vib34d="quantum" data-destruction="quantum"
+            data-title-from="#6ff9ff" data-title-to="#5f6fff"
+            data-bg-primary="#030d1f" data-bg-secondary="#001a33"
+            data-bg-glow="rgba(0, 255, 255, 0.16)"
+            data-visualizer-density="0.75" data-visualizer-speed="0.6"
+            data-visualizer-geometry="lattice" data-visualizer-state="emerge">
             <canvas class="vib34d-tilt-canvas" id="quantum-tilt-canvas"></canvas>
             <div class="portal-text-visualizer" id="quantum-portal"></div>
             <div class="card-header">
@@ -321,7 +539,13 @@
         </div>
 
         <!-- CARD 2: HOLOGRAPHIC SYSTEMS -->
-        <div class="progression-card far-depth" data-vib34d="holographic" data-destruction="holographic">
+        <div class="progression-card far-depth" data-section="holographic"
+            data-vib34d="holographic" data-destruction="holographic"
+            data-title-from="#ff7bf9" data-title-to="#7fdbff"
+            data-bg-primary="#140022" data-bg-secondary="#32004f"
+            data-bg-glow="rgba(255, 0, 255, 0.2)"
+            data-visualizer-density="0.65" data-visualizer-speed="0.8"
+            data-visualizer-geometry="hologram" data-visualizer-state="ripple">
             <canvas class="vib34d-tilt-canvas" id="holographic-tilt-canvas"></canvas>
             <div class="portal-text-visualizer" id="holographic-portal"></div>
             <div class="card-header">
@@ -334,7 +558,13 @@
         </div>
 
         <!-- CARD 3: FACETED SYSTEMS -->
-        <div class="progression-card far-depth" data-vib34d="faceted" data-destruction="faceted">
+        <div class="progression-card far-depth" data-section="faceted"
+            data-vib34d="faceted" data-destruction="faceted"
+            data-title-from="#f6ff8a" data-title-to="#00ffd5"
+            data-bg-primary="#061400" data-bg-secondary="#033b1a"
+            data-bg-glow="rgba(102, 255, 204, 0.18)"
+            data-visualizer-density="0.85" data-visualizer-speed="0.5"
+            data-visualizer-geometry="facets" data-visualizer-state="ascend">
             <canvas class="vib34d-tilt-canvas" id="faceted-tilt-canvas"></canvas>
             <div class="portal-text-visualizer" id="faceted-portal"></div>
             <div class="card-header">
@@ -347,7 +577,13 @@
         </div>
 
         <!-- CARD 4: NEURAL SYSTEMS -->
-        <div class="progression-card far-depth" data-vib34d="quantum" data-destruction="quantum">
+        <div class="progression-card far-depth" data-section="neural"
+            data-vib34d="quantum" data-destruction="quantum"
+            data-title-from="#a0fffb" data-title-to="#ff87f3"
+            data-bg-primary="#040013" data-bg-secondary="#130044"
+            data-bg-glow="rgba(160, 255, 251, 0.2)"
+            data-visualizer-density="0.6" data-visualizer-speed="1.1"
+            data-visualizer-geometry="neural" data-visualizer-state="eclipse">
             <canvas class="vib34d-tilt-canvas" id="neural-tilt-canvas"></canvas>
             <div class="portal-text-visualizer" id="neural-portal"></div>
             <div class="card-header">
@@ -369,23 +605,32 @@
     </div>
 
     <!-- INITIALIZATION SCRIPT -->
-    <script>
-        // Initialize VIB34D Geometric Tilt + Orthogonal Depth Progression System
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('🎯 Initializing VIB34D Orthogonal Depth Progression System...');
+    <script type="module">
+        import OrthogonalDepthProgression from './scripts/orthogonal-depth-progression.js';
 
-            // Initialize geometric tilt system
-            if (window.VIB34DGeometricTiltSystem) {
+        const boot = () => {
+            console.log('🎯 Initializing Orthogonal Depth Progression with holographic choreography...');
+
+            if (window.VIB34DGeometricTiltSystem && !window.geometricTiltSystem) {
                 window.geometricTiltSystem = new VIB34DGeometricTiltSystem();
             }
 
-            // Initialize orthogonal depth progression
-            if (window.OrthogonalDepthProgression) {
-                window.progressionSystem = new OrthogonalDepthProgression();
-            }
+            const progression = new OrthogonalDepthProgression({
+                container: document.getElementById('progressionContainer'),
+                backgroundCanvas: document.getElementById('section-background'),
+                tiltIndicator: document.querySelector('.tilt-indicator')
+            });
 
-            console.log('✅ VIB34D Systems initialized - Professional Avant-garde Mode Active');
-        });
+            window.progressionSystem = progression;
+
+            console.log('✅ VIB34D Orthogonal progression + holographic visualizers ready.');
+        };
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', boot);
+        } else {
+            boot();
+        }
     </script>
 
 

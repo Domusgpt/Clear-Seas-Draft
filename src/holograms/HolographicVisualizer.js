@@ -64,16 +64,11 @@ export class HolographicVisualizer {
         this.parallaxDepth = 0.0;
         this.gridDensityShift = 0.0;
         this.colorScrollShift = 0.0;
-        this.scrollTilt = 0.0;
-        this.scrollTiltTarget = 0.0;
-        this.scrollRotationXW = 0.0;
-        this.scrollRotationYW = 0.0;
-        this.scrollRotationZW = 0.0;
-
+        
         // Density system
         this.densityVariation = 0.0;
         this.densityTarget = 0.0;
-
+        
         // Audio reactivity
         this.audioData = { bass: 0, mid: 0, high: 0 };
         this.audioDensityBoost = 0.0;
@@ -81,13 +76,7 @@ export class HolographicVisualizer {
         this.audioSpeedBoost = 0.0;
         this.audioChaosBoost = 0.0;
         this.audioColorShift = 0.0;
-
-        this.externalRotations = {
-            xw: this.variantParams.rot4dXW || 0.0,
-            yw: this.variantParams.rot4dYW || 0.0,
-            zw: this.variantParams.rot4dZW || 0.0
-        };
-
+        
         this.startTime = Date.now();
         this.initShaders();
         this.initBuffers();
@@ -662,9 +651,6 @@ export class HolographicVisualizer {
     updateScroll(deltaY) {
         this.scrollVelocity += deltaY * 0.001;
         this.scrollVelocity = Math.max(-2.0, Math.min(2.0, this.scrollVelocity));
-        const normalized = Math.max(-1.2, Math.min(1.2, deltaY * 0.0025));
-        this.scrollTiltTarget += normalized;
-        this.scrollTiltTarget = Math.max(-2.0, Math.min(2.0, this.scrollTiltTarget));
     }
     
     // Audio reactivity now handled directly in render() loop
@@ -722,14 +708,6 @@ export class HolographicVisualizer {
         this.parallaxDepth = Math.sin(this.scrollPosition * 0.1) * 0.5;
         this.gridDensityShift = Math.sin(this.scrollPosition * 0.05) * 0.3;
         this.colorScrollShift = (this.scrollPosition * 0.02) % (Math.PI * 2);
-        this.scrollTilt += (this.scrollTiltTarget - this.scrollTilt) * 0.12;
-        this.scrollTiltTarget *= 0.88;
-        if (Math.abs(this.scrollTilt) < 0.0005) {
-            this.scrollTilt = 0;
-        }
-        this.scrollRotationXW = this.scrollTilt * 0.48;
-        this.scrollRotationYW = this.scrollTilt * -0.32;
-        this.scrollRotationZW = this.scrollTilt * 0.22;
     }
     
     render() {
@@ -828,16 +806,9 @@ export class HolographicVisualizer {
         this.gl.uniform1f(this.uniforms.audioColorShift, audioColor);
         
         // 4D rotation uniforms
-        const baseRotXW = this.externalRotations.xw ?? (this.variantParams.rot4dXW || 0.0);
-        const baseRotYW = this.externalRotations.yw ?? (this.variantParams.rot4dYW || 0.0);
-        const baseRotZW = this.externalRotations.zw ?? (this.variantParams.rot4dZW || 0.0);
-        const dynamicRotXW = baseRotXW + this.scrollRotationXW;
-        const dynamicRotYW = baseRotYW + this.scrollRotationYW;
-        const dynamicRotZW = baseRotZW + this.scrollRotationZW;
-
-        this.gl.uniform1f(this.uniforms.rot4dXW, dynamicRotXW);
-        this.gl.uniform1f(this.uniforms.rot4dYW, dynamicRotYW);
-        this.gl.uniform1f(this.uniforms.rot4dZW, dynamicRotZW);
+        this.gl.uniform1f(this.uniforms.rot4dXW, this.variantParams.rot4dXW || 0.0);
+        this.gl.uniform1f(this.uniforms.rot4dYW, this.variantParams.rot4dYW || 0.0);
+        this.gl.uniform1f(this.uniforms.rot4dZW, this.variantParams.rot4dZW || 0.0);
         
         this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
     }
@@ -903,17 +874,9 @@ export class HolographicVisualizer {
                         scaledValue = 0.3 + (parseFloat(params[param]) - 5) / 95 * 2.2;
                         console.log(`🔧 Density scaling: gridDensity=${params[param]} → density=${scaledValue.toFixed(3)} (normal range)`);
                     }
-
+                    
                     this.variantParams[mappedParam] = scaledValue;
-
-                    if (mappedParam === 'rot4dXW') {
-                        this.externalRotations.xw = scaledValue;
-                    } else if (mappedParam === 'rot4dYW') {
-                        this.externalRotations.yw = scaledValue;
-                    } else if (mappedParam === 'rot4dZW') {
-                        this.externalRotations.zw = scaledValue;
-                    }
-
+                    
                     // Handle special parameter types
                     if (mappedParam === 'geometryType') {
                         // Regenerate role params with new geometry
