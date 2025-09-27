@@ -71,6 +71,220 @@ const updateManifestSnapshot = () => {
 
 updateManifestSnapshot();
 
+const vib34dIntegration = (() => {
+  const pendingObservations = new Map();
+  const resizeObservers = new Map();
+  const heuristics = [
+    { type: 'quantum', patterns: ['quantum', 'qbit', 'ion', 'tachyon', 'ai', 'neutrino'] },
+    { type: 'holographic', patterns: ['holographic', 'neural', 'spectral', 'prism', 'noir', 'aurora'] },
+    { type: 'polychora', patterns: ['polychora', 'polytopal', 'tetra', 'hyper', 'orbital', 'lattice'] },
+    { type: 'faceted', patterns: ['faceted', 'portfolio', 'gallery', 'research', 'story', 'foundation'] }
+  ];
+
+  let controller = window.vib34dCardSystem || null;
+
+  const elementTokenString = (element) => {
+    if (!(element instanceof HTMLElement)) {
+      return '';
+    }
+    const tokens = [];
+    if (element.id) {
+      tokens.push(element.id);
+    }
+    element.classList.forEach((value) => tokens.push(value));
+    Object.keys(element.dataset || {}).forEach((key) => {
+      const raw = element.dataset[key];
+      if (raw) {
+        tokens.push(String(raw));
+      }
+    });
+    const label = element.getAttribute('aria-label');
+    if (label) {
+      tokens.push(label);
+    }
+    return tokens
+      .join(' ')
+      .toLowerCase();
+  };
+
+  const elementIsInViewport = (element, margin = 96) => {
+    if (!(element instanceof HTMLElement)) {
+      return false;
+    }
+    const rect = element.getBoundingClientRect();
+    const width = window.innerWidth || document.documentElement.clientWidth || 0;
+    const height = window.innerHeight || document.documentElement.clientHeight || 0;
+    return (
+      rect.bottom >= -margin &&
+      rect.top <= height + margin &&
+      rect.right >= -margin &&
+      rect.left <= width + margin
+    );
+  };
+
+  const computeWeight = (element) => {
+    if (!(element instanceof HTMLElement)) {
+      return null;
+    }
+    const rect = element.getBoundingClientRect();
+    if (!rect.width || !rect.height) {
+      return null;
+    }
+    const baseArea = 320 * 220;
+    const area = rect.width * rect.height;
+    const scale = Math.sqrt(area / baseArea);
+    const weight = Math.min(1.9, Math.max(1.05, scale));
+    return Number(weight.toFixed(3));
+  };
+
+  const resolveConfig = (element, overrides = {}) => {
+    const baseType = (overrides.systemType || element.dataset.vib34d || element.dataset.system || '').toLowerCase();
+    const tokenString = elementTokenString(element);
+    let systemType = baseType;
+    if (!systemType) {
+      for (const entry of heuristics) {
+        if (entry.patterns.some((pattern) => tokenString.includes(pattern))) {
+          systemType = entry.type;
+          break;
+        }
+      }
+    }
+    if (!systemType) {
+      systemType = tokenString.includes('polychora') ? 'polychora' : 'faceted';
+    }
+    const assetPreference = overrides.assetPreference || element.dataset.visualizerAsset || systemType;
+    const weight = overrides.weight ?? computeWeight(element);
+    const immediate = overrides.immediate ?? elementIsInViewport(element);
+    return { systemType, assetPreference, weight, immediate };
+  };
+
+  const updateDimensions = (element, config) => {
+    if (!(element instanceof HTMLElement)) {
+      return;
+    }
+    const weight = typeof config?.weight === 'number' ? config.weight : computeWeight(element);
+    if (typeof weight !== 'number' || Number.isNaN(weight)) {
+      return;
+    }
+    element.dataset.visualizerWeight = weight.toFixed(3);
+    const bleed = Math.max(1.22, weight + 0.18);
+    element.style.setProperty('--visualizer-bleed', bleed.toFixed(3));
+    element.style.setProperty('--visualizer-scale', (bleed + 0.14).toFixed(3));
+    if (controller && typeof controller.refreshCard === 'function') {
+      controller.refreshCard(element, { systemType: element.dataset.vib34d });
+    }
+  };
+
+  const ensureResizeObserver = (element) => {
+    if (typeof ResizeObserver === 'undefined' || !(element instanceof HTMLElement)) {
+      return;
+    }
+    if (resizeObservers.has(element)) {
+      return;
+    }
+    const observer = new ResizeObserver(() => {
+      updateDimensions(element, { systemType: element.dataset.vib34d });
+    });
+    observer.observe(element);
+    resizeObservers.set(element, observer);
+  };
+
+  const flushPending = () => {
+    if (!controller) {
+      return;
+    }
+    if (typeof controller.scanForCards === 'function') {
+      controller.scanForCards();
+    }
+    if (!pendingObservations.size) {
+      return;
+    }
+    const entries = Array.from(pendingObservations.entries());
+    pendingObservations.clear();
+    entries.forEach(([element, options]) => {
+      if (!element || !element.isConnected) {
+        return;
+      }
+      controller.observeCard(element, { ...options, immediate: true });
+      controller.refreshCard(element, { systemType: element.dataset.vib34d });
+    });
+  };
+
+  const apply = (element, overrides = {}) => {
+    if (!(element instanceof HTMLElement)) {
+      return null;
+    }
+    const config = resolveConfig(element, overrides);
+    if (config.systemType) {
+      element.dataset.vib34d = config.systemType;
+    }
+    element.dataset.visualizerCard = 'true';
+    element.setAttribute('data-visualizer-card', 'true');
+    if (config.assetPreference) {
+      element.dataset.visualizerAsset = config.assetPreference;
+    }
+    updateDimensions(element, config);
+    ensureResizeObserver(element);
+
+    const observeOptions = { systemType: config.systemType, immediate: config.immediate };
+    if (controller && typeof controller.observeCard === 'function') {
+      controller.observeCard(element, observeOptions);
+    } else {
+      pendingObservations.set(element, observeOptions);
+    }
+
+    return config;
+  };
+
+  const release = (element) => {
+    if (!(element instanceof HTMLElement)) {
+      return;
+    }
+    pendingObservations.delete(element);
+    const observer = resizeObservers.get(element);
+    if (observer) {
+      observer.disconnect();
+      resizeObservers.delete(element);
+    }
+    if (controller && typeof controller.unobserveCard === 'function') {
+      controller.unobserveCard(element);
+    }
+  };
+
+  const connect = (instance) => {
+    if (!instance || controller === instance) {
+      if (!controller && instance) {
+        controller = instance;
+        flushPending();
+      }
+      return;
+    }
+    controller = instance;
+    flushPending();
+  };
+
+  window.addEventListener('vib34d-card-system:ready', (event) => {
+    const instance = event?.detail?.controller || window.vib34dCardSystem || null;
+    connect(instance);
+  });
+
+  if (controller) {
+    flushPending();
+  }
+
+  return {
+    apply,
+    release,
+    resolveConfig,
+    computeWeight,
+    connect,
+    elementIsInViewport
+  };
+})();
+
+cssWebMasterGlobals.vib34dIntegration = vib34dIntegration;
+window.__CSS_WEB_MASTER_VIB34D_INTEGRATION__ = vib34dIntegration;
+
 const syncBrandAssets = (siteCode) => {
   const resolved = resolveBrandAssets(siteCode);
   const meta =
@@ -1331,6 +1545,16 @@ function createState(element, index) {
   state.element.dataset.supportDistance = 'far';
   state.element.dataset.globalCardVisible = 'true';
   state.element.style.setProperty('--card-visibility', '1');
+
+  if (vib34dIntegration && typeof vib34dIntegration.apply === 'function') {
+    try {
+      vib34dIntegration.apply(element);
+      state.cleanupCallbacks.push(() => vib34dIntegration.release(element));
+    } catch (error) {
+      console.warn('⚠️ Failed to attach VIB34D integration to card', error);
+    }
+  }
+
   state.group = attachToGroup(state);
   const observer = ensureVisibilityObserver();
   if (observer) {
@@ -1660,6 +1884,11 @@ function step() {
   let weightedX = 0;
   let weightedY = 0;
   let totalFocus = 0;
+  const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 1;
+  const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 1;
+  let focusLeader = null;
+  let focusLeaderWeight = 0;
+  let pairEnergy = 0;
   const toRemove = [];
 
   cardStates.forEach((state, element) => {
@@ -1706,6 +1935,11 @@ function step() {
     const supportStrength = supportBase * (0.3 + visibilityFactor * 0.7);
     const twistDeg = state.twist.current;
     const pulse = Math.max(0, state.pulse.current);
+
+    if (focusStrength > focusLeaderWeight) {
+      focusLeader = state;
+      focusLeaderWeight = focusStrength;
+    }
 
     element.style.setProperty('--card-focus-x', state.pointer.smoothX.toFixed(4));
     element.style.setProperty('--card-focus-y', state.pointer.smoothY.toFixed(4));
@@ -1796,33 +2030,124 @@ function step() {
     continueAnimation = true;
   }
 
-  const focusX = totalFocus > 0 ? weightedX / totalFocus : 0.5;
-  const focusY = totalFocus > 0 ? weightedY / totalFocus : 0.5;
-  const focusAmount = Math.min(1, totalFocus);
+  let focusX = totalFocus > 0 ? weightedX / totalFocus : 0.5;
+  let focusY = totalFocus > 0 ? weightedY / totalFocus : 0.5;
+  let focusAmount = Math.min(1, totalFocus);
+
+  let primaryState = null;
+  if (activeCardState && cardStates.has(activeCardState.element)) {
+    primaryState = activeCardState;
+  }
+  if (!primaryState && focusLeader) {
+    primaryState = focusLeader;
+  }
+
+  const clampUnit = (value) => Math.max(0, Math.min(1, value));
+
+  let primaryPoint = null;
+  let primaryWeight = focusLeaderWeight;
+  if (primaryState) {
+    primaryWeight = Math.max(primaryWeight, Math.max(0, primaryState.focus.current));
+    const rect = primaryState.element.getBoundingClientRect();
+    if (rect && rect.width > 0 && rect.height > 0) {
+      const centerX = normalise(rect.left + rect.width / 2, 0, viewportWidth);
+      const centerY = normalise(rect.top + rect.height / 2, 0, viewportHeight);
+      primaryPoint = {
+        x: clampUnit(centerX),
+        y: clampUnit(centerY)
+      };
+      focusX = focusX * 0.4 + primaryPoint.x * 0.6;
+      focusY = focusY * 0.4 + primaryPoint.y * 0.6;
+      focusAmount = Math.max(focusAmount, Math.min(1, primaryWeight));
+    }
+  }
+
+  let partnerState = null;
+  let partnerWeight = 0;
+  if (primaryState && primaryState.group) {
+    const groupState = groupStates.get(primaryState.group);
+    if (groupState) {
+      groupState.cards.forEach((candidate) => {
+        if (candidate === primaryState) {
+          return;
+        }
+        const candidateSupport = Math.max(candidate.support.current, candidate.support.target);
+        const candidateFocus = Math.max(candidate.focus.current, candidate.focus.target);
+        const candidateVisibility = candidate.isVisible ? 1 : Math.max(0, candidate.visibilityRatio || 0);
+        const score = candidateSupport * 0.7 + candidateFocus * 0.25 + candidateVisibility * 0.1;
+        if (score > partnerWeight) {
+          partnerWeight = score;
+          partnerState = candidate;
+        }
+      });
+    }
+  }
+
+  const referencePoint = primaryPoint || { x: focusX, y: focusY };
+  let pairVectorX = referencePoint.x - 0.5;
+  let pairVectorY = 0.5 - referencePoint.y;
+  let alignmentDistance = Math.sqrt(pairVectorX * pairVectorX + pairVectorY * pairVectorY);
+  let pairWeight = Math.max(focusAmount, primaryWeight);
+
+  if (primaryPoint) {
+    pairVectorX = primaryPoint.x - 0.5;
+    pairVectorY = 0.5 - primaryPoint.y;
+    alignmentDistance = Math.sqrt(pairVectorX * pairVectorX + pairVectorY * pairVectorY);
+  }
+
+  if (partnerState && partnerWeight > 0.02) {
+    const rect = partnerState.element.getBoundingClientRect();
+    if (rect && rect.width > 0 && rect.height > 0) {
+      const partnerCenterX = clampUnit(normalise(rect.left + rect.width / 2, 0, viewportWidth));
+      const partnerCenterY = clampUnit(normalise(rect.top + rect.height / 2, 0, viewportHeight));
+      const deltaX = partnerCenterX - referencePoint.x;
+      const deltaY = partnerCenterY - referencePoint.y;
+      pairVectorX = Math.max(-1, Math.min(1, deltaX));
+      pairVectorY = Math.max(-1, Math.min(1, referencePoint.y - partnerCenterY));
+      alignmentDistance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+      pairWeight = Math.max(pairWeight, partnerWeight);
+    }
+  } else if (primaryState && primaryState.group) {
+    const groupState = groupStates.get(primaryState.group);
+    if (groupState) {
+      const deltaX = groupState.pointer.currentX - referencePoint.x;
+      const deltaY = groupState.pointer.currentY - referencePoint.y;
+      if (Math.abs(deltaX) > 0.001 || Math.abs(deltaY) > 0.001) {
+        pairVectorX = Math.max(-1, Math.min(1, deltaX));
+        pairVectorY = Math.max(-1, Math.min(1, referencePoint.y - groupState.pointer.currentY));
+        alignmentDistance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+        pairWeight = Math.max(pairWeight, groupState.focus.current);
+      }
+    }
+  }
+
   globalState.focus.targetX = focusX;
   globalState.focus.targetY = focusY;
   globalState.focus.targetAmount = focusAmount;
 
-  const focusPresence = focusAmount > 0.08;
+  pairEnergy = Math.min(1, Math.max(0, pairWeight));
+  const focusPresence = pairEnergy > 0.06;
   const scrollEnergy = Math.abs(globalState.scroll.current);
-  const tiltBase = focusPresence ? 0.35 + globalState.synergy.current * 0.2 : 0;
-  const scrollInfluence = focusPresence ? globalState.scroll.current * 0.06 : 0;
+  const partnerAlignmentBoost = Math.min(0.22, alignmentDistance * 0.5);
+  const synergyBoost = globalState.synergy.current * 0.18;
+  const tiltBase = focusPresence ? Math.min(0.32, 0.12 + pairEnergy * 0.22 + partnerAlignmentBoost + synergyBoost) : 0;
+  const scrollInfluence = focusPresence ? globalState.scroll.current * 0.04 : 0;
 
   if (focusPresence || scrollEnergy > 0.08) {
-    globalState.tilt.targetX = (focusX - 0.5) * tiltBase + scrollInfluence;
-    globalState.tilt.targetY = (0.5 - focusY) * tiltBase - scrollInfluence * 0.6;
+    globalState.tilt.targetX = pairVectorX * tiltBase + scrollInfluence;
+    globalState.tilt.targetY = pairVectorY * tiltBase - scrollInfluence * 0.5;
   } else {
     globalState.tilt.targetX = 0;
     globalState.tilt.targetY = 0;
   }
 
-  const synergyWeight = globalState.synergy.current * 0.35;
-  const momentumWeight = Math.min(0.3, scrollEnergy * 0.5);
-  const bendBase = focusPresence ? focusAmount * 0.45 : 0;
+  const synergyWeight = globalState.synergy.current * 0.28;
+  const momentumWeight = Math.min(0.24, scrollEnergy * 0.4);
+  const bendBase = focusPresence ? Math.min(0.55, pairEnergy * 0.35 + partnerAlignmentBoost * 0.4) : 0;
   globalState.bend.target = Math.min(0.6, bendBase + synergyWeight + momentumWeight);
 
-  const tiltDelta = (globalState.tilt.targetX - globalState.tilt.targetY) * 0.22;
-  globalState.warp.target = Math.max(-0.35, Math.min(0.35, tiltDelta));
+  const tiltDelta = (globalState.tilt.targetX - globalState.tilt.targetY) * 0.18;
+  globalState.warp.target = Math.max(-0.28, Math.min(0.28, tiltDelta));
 
   globalState.focus.currentX += (globalState.focus.targetX - globalState.focus.currentX) * 0.12;
   globalState.focus.currentY += (globalState.focus.targetY - globalState.focus.currentY) * 0.12;
@@ -1832,8 +2157,11 @@ function step() {
   globalState.bend.current += (globalState.bend.target - globalState.bend.current) * 0.14;
   globalState.warp.current += (globalState.warp.target - globalState.warp.current) * 0.14;
 
-  const tiltMagnitude = Math.sqrt((globalState.tilt.currentX ** 2) + (globalState.tilt.currentY ** 2)) * 0.6;
-  const tiltStrength = Math.min(0.45, tiltMagnitude + globalState.bend.current * 0.3);
+  const tiltMagnitude = Math.sqrt((globalState.tilt.currentX ** 2) + (globalState.tilt.currentY ** 2));
+  const tiltStrength = Math.min(
+    0.38,
+    tiltMagnitude * 0.55 + globalState.bend.current * 0.25 + Math.min(0.18, pairEnergy * 0.18)
+  );
 
   const focusDelta = globalState.focus.currentAmount - globalState.focus.lastAmount;
   globalState.focus.trend += (focusDelta - globalState.focus.trend) * 0.28;
@@ -1933,6 +2261,56 @@ function observeMutations() {
   observer.observe(document.body, { childList: true, subtree: true });
 }
 
+const GLOBAL_CARD_MOTION_ENABLE_ATTRIBUTE = 'data-enable-global-card-motion';
+const GLOBAL_CARD_MOTION_DISABLE_ATTRIBUTE = 'data-disable-global-card-motion';
+let hasLoggedGlobalMotionDisabled = false;
+
+function elementHasTruthyDataAttribute(element, attribute) {
+  if (!element || !element.hasAttribute(attribute)) {
+    return false;
+  }
+  const rawValue = element.getAttribute(attribute);
+  if (rawValue === null) {
+    return false;
+  }
+  const value = rawValue.trim().toLowerCase();
+  return value === '' || value === 'true' || value === '1' || value === attribute;
+}
+
+function resolveCardMotionGateElements() {
+  const elements = [document.documentElement];
+  if (document.body) {
+    elements.push(document.body);
+  }
+  return elements.filter(Boolean);
+}
+
+function isGlobalCardMotionOptedIn() {
+  const gateElements = resolveCardMotionGateElements();
+  const hasOptOut = gateElements.some((element) =>
+    elementHasTruthyDataAttribute(element, GLOBAL_CARD_MOTION_DISABLE_ATTRIBUTE)
+  );
+  if (hasOptOut) {
+    return false;
+  }
+  return gateElements.some((element) =>
+    elementHasTruthyDataAttribute(element, GLOBAL_CARD_MOTION_ENABLE_ATTRIBUTE)
+  );
+}
+
+function logGlobalMotionDisabled(reason) {
+  if (hasLoggedGlobalMotionDisabled) {
+    return;
+  }
+  hasLoggedGlobalMotionDisabled = true;
+  try {
+    console.info(`⏸️ Global card orchestrator disabled: ${reason}`);
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.log('Global card orchestrator disabled.');
+  }
+}
+
 async function initialise() {
   preparePageProfile(activePageProfile);
   ensureStylesheet('styles/global-card-synergy.css', 'global-card-synergy');
@@ -1951,8 +2329,18 @@ async function initialise() {
   await ensureCardSystem();
 }
 
+const maybeInitialise = () => {
+  if (isGlobalCardMotionOptedIn()) {
+    initialise();
+  } else {
+    logGlobalMotionDisabled(
+      `add ${GLOBAL_CARD_MOTION_ENABLE_ATTRIBUTE} to <html> or <body> to opt in.`
+    );
+  }
+};
+
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initialise, { once: true });
+  document.addEventListener('DOMContentLoaded', maybeInitialise, { once: true });
 } else {
-  initialise();
+  maybeInitialise();
 }
