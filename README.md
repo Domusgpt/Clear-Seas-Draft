@@ -2,8 +2,11 @@
 
 The repository now serves as the **CSS-Web-Master** control surface for the Clear Seas family of properties. It retains every
 historical Clear Seas Draft experience while layering documentation, orchestration guides, and asset registries so new landing
-pages—like **paraerator.com**, **vib3code.com**, and future CSS destinations—can inherit the same choreography with minimal
+pages—like **parserator.com**, **vib3code.com**, and future CSS destinations—can inherit the same choreography with minimal
 duplication.
+
+Runtime globals now expose both `__CSS_WEB_MASTER_*` and legacy `__CLEAR_SEAS_*` namespaces, and shared typography/color tokens
+live in `styles/css-web-master-tokens.css` so each property can reskin the choreography without forking the master styles.
 
 ### ✅ Deployment Snapshot
 - **6 Main HTML Versions**: Baseline production-ready experiences.
@@ -55,9 +58,13 @@ Additional CSS-Web-Master documentation is tracked in:
 - [`docs/css-web-master-system-overview.md`](docs/css-web-master-system-overview.md) – explains the multi-site orchestration
   model, shared registries, and how to extend the system for new CSS properties.
 - [`docs/css-web-master-gap-analysis.md`](docs/css-web-master-gap-analysis.md) – outlines Clear Seas-specific assumptions to
-  generalize before production rollouts on paraerator.com or vib3code.com.
+  generalize before production rollouts on parserator.com or vib3code.com.
 - [`docs/dev-updates/2025-05-07-css-web-master-transition.md`](docs/dev-updates/2025-05-07-css-web-master-transition.md) –
   developer log detailing the latest transition steps and recommended next moves.
+- [`styles/css-web-master-tokens.css`](styles/css-web-master-tokens.css) – neutral design tokens consumed by consolidated
+  stylesheets for per-site overrides.
+- [`docs/html-version-test-report.md`](docs/html-version-test-report.md) – latest smoke-test results for every HTML build and the
+  outstanding defects to close before CSS-Web-Master goes live.
 
 ---
 © 2025 Paul Phillips - Clear Seas Solutions LLC
