@@ -103,7 +103,7 @@ class EnhancedMasterConductor {
         hover: {
           self: { 
             scale: 1.08, 
-            rotateY: 5, 
+            rotateX: -5,
             z: 80,
             visualizer: { chaos: 0.8, speed: 0.03 }
           },
@@ -228,12 +228,11 @@ class EnhancedMasterConductor {
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
     
-    const rotateY = (x / rect.width - 0.5) * 20; // Max 10 degrees
     const rotateX = -(y / rect.height - 0.5) * 20; // Max 10 degrees
-    
+
     // Update CSS custom properties for smooth tilt
     element.style.setProperty('--tilt-x', `${rotateX}deg`);
-    element.style.setProperty('--tilt-y', `${rotateY}deg`);
+    element.style.setProperty('--tilt-y', '0deg');
   }
 
   triggerClickReaction(elementData) {
@@ -252,15 +251,13 @@ class EnhancedMasterConductor {
   }
 
   applyElementTransform(element, transformData) {
-    const { scale = 1, rotateX = 0, rotateY = 0, z = 0 } = transformData;
-    
+    const { scale = 1, rotateX = 0, z = 0 } = transformData;
+
     element.style.transform = `
-      scale(${scale}) 
-      translateZ(${z}px) 
-      rotateX(${rotateX}deg) 
-      rotateY(${rotateY}deg)
+      scale(${scale})
+      translateZ(${z}px)
+      rotateX(${rotateX}deg)
       rotateX(var(--tilt-x, 0deg))
-      rotateY(var(--tilt-y, 0deg))
     `;
     
     // Add glow effect
@@ -268,7 +265,7 @@ class EnhancedMasterConductor {
   }
 
   resetElementTransform(element) {
-    element.style.transform = 'scale(1) translateZ(0) rotateX(0deg) rotateY(0deg)';
+    element.style.transform = 'scale(1) translateZ(0) rotateX(0deg)';
     element.classList.remove('is-hovering');
     element.style.removeProperty('--tilt-x');
     element.style.removeProperty('--tilt-y');

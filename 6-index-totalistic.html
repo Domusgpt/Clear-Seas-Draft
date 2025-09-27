@@ -46,8 +46,7 @@
             transform: 
                 translateY(var(--float-y, 0px))
                 scale(var(--card-scale, 1))
-                rotateX(calc(var(--card-tilt-x, 0deg) + var(--tilt-x)))
-                rotateY(calc(var(--card-tilt-y, 0deg) + var(--tilt-y)))
+                rotateX(calc(var(--card-tilt-x, 0deg) + var(--tilt-x))) + var(--tilt-y)))
                 translateZ(var(--float-z, 0px));
         }
         
@@ -135,8 +134,7 @@
         .unified-card.is-hovering {
             transform: 
                 translateZ(var(--pop-out-translate-z)) 
-                rotateX(var(--card-tilt-x, 0deg)) 
-                rotateY(var(--card-tilt-y, 0deg))
+                rotateX(var(--card-tilt-x, 0deg)))
                 scale(var(--pop-out-scale));
             box-shadow: 
                 0 20px 60px rgba(0, 0, 0, 0.4),
@@ -664,11 +662,10 @@
                 const x = event.clientX - rect.left;
                 const y = event.clientY - rect.top;
                 
-                const rotateY = ((x / rect.width) - 0.5) * 20; // Max 10 degrees
                 const rotateX = -((y / rect.height) - 0.5) * 20; // Max 10 degrees
-                
+
                 card.style.setProperty('--card-tilt-x', `${rotateX}deg`);
-                card.style.setProperty('--card-tilt-y', `${rotateY}deg`);
+                card.style.setProperty('--card-tilt-y', '0deg');
             }
             
             switchHeroSystem(system) {
@@ -961,5 +958,7 @@
             }
         });
     </script>
+
+    <script type="module" src="scripts/global-page-orchestrator.js"></script>
 </body>
 </html><!-- GitHub Pages deployment trigger Thu Sep  4 11:46:16 EDT 2025 -->

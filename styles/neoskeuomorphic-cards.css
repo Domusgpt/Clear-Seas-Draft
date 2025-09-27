@@ -58,7 +58,7 @@
   
   transform: 
     perspective(800px)
-    rotateY(calc(25deg * var(--bend-intensity) * var(--tilt-strength)))
+    rotateX(calc(-20deg * var(--bend-intensity) * var(--tilt-strength)))
     rotateX(calc(5deg * (var(--mouse-y) - 50) / 50 * var(--tilt-strength)))
     translateZ(calc(var(--bend-intensity) * 30px + var(--card-energy) * 10px))
     scale(calc(1 + var(--card-energy) * 0.05));
@@ -81,7 +81,7 @@
   
   transform: 
     perspective(600px)
-    rotateY(calc(15deg + (var(--mouse-x) - 50) * 0.2deg))
+    rotateX(calc((50 - var(--mouse-x, 50)) * 0.2deg - 5deg))
     rotateX(calc((var(--mouse-y) - 50) * -0.15deg))
     scaleX(calc(1 + abs(var(--mouse-x) - 50) * 0.008))
     scaleY(calc(1 + abs(var(--mouse-y) - 50) * 0.006))
@@ -104,7 +104,7 @@
   
   transform: 
     perspective(400px)
-    rotateY(calc(35deg + (var(--mouse-x) - 50) * 0.4deg))
+    rotateX(calc((50 - var(--mouse-x, 50)) * 0.4deg - 10deg))
     rotateX(calc((var(--mouse-y) - 50) * -0.6deg))
     rotateZ(calc((var(--mouse-x) - 50) * 0.2deg))
     scaleX(calc(1.05 + abs(var(--mouse-x) - 50) * 0.01))
@@ -132,7 +132,7 @@
   
   transform: 
     perspective(1000px)
-    rotateY(calc(10deg * var(--bend-intensity)))
+    rotateX(calc(-10deg * var(--bend-intensity)))
     rotateX(calc(3deg * (var(--mouse-y) - 50) / 50))
     translateZ(calc(var(--bend-intensity) * 15px))
     scale(calc(1 + var(--card-energy) * 0.02));
@@ -385,7 +385,7 @@
     &:hover {
       transform: 
         perspective(1000px)
-        rotateY(calc(10deg * var(--bend-intensity)))
+        rotateX(calc(-10deg * var(--bend-intensity)))
         rotateX(calc(2deg * (var(--mouse-y) - 50) / 50))
         translateZ(calc(var(--bend-intensity) * 15px))
         scale(1.02);

@@ -831,8 +831,8 @@ class PresetLaboratory {
 }
 
 @keyframes polytopal-rotation {
-  from { transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg); }
-  to { transform: rotateX(360deg) rotateY(360deg) rotateZ(360deg); }
+  from { transform: rotateX(0deg) rotateZ(0deg); }
+  to { transform: rotateX(360deg) rotateZ(360deg); }
 }
     `;
   }

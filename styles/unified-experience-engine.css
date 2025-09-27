@@ -87,14 +87,12 @@ html {
   transform: 
     translateY(calc(var(--scroll-progress) * -20px))
     rotateX(calc(var(--mouse-y) * 5deg))
-    rotateY(calc(var(--mouse-x) * 5deg))
     scale(calc(1 + var(--energy-intensity) * 0.05));
 }
 
 .card-hover-active {
   transform: 
     translateZ(20px) 
-    rotateY(calc(var(--mouse-influence) * 8deg))
     scale(1.05);
   filter: brightness(1.1) saturate(1.2);
   box-shadow: 

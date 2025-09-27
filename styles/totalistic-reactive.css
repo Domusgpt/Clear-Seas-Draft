@@ -91,7 +91,7 @@ section[data-scene-active="true"] {
     translateY(calc(var(--card-energy) * -8px))
     scale(calc(1 + var(--card-energy) * 0.02))
     rotateX(calc(var(--mouse-y) * var(--card-energy) * 2deg))
-    rotateY(calc(var(--mouse-x) * var(--card-energy) * 2deg));
+    rotateX(calc(var(--mouse-x) * var(--card-energy) * -1deg));
     
   filter: 
     brightness(calc(1 + var(--card-energy) * 0.2))
@@ -228,7 +228,7 @@ h1:hover, h2:hover, h3:hover {
   transform: 
     scale(calc(1 + var(--visualizer-energy) * 0.05))
     rotateX(calc(var(--mouse-y) * var(--visualizer-energy) * 1deg))
-    rotateY(calc(var(--mouse-x) * var(--visualizer-energy) * 1deg));
+    rotateX(calc(var(--mouse-x) * var(--visualizer-energy) * -0.5deg));
     
   transition: all var(--reactive-duration-slow) ease;
 }

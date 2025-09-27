@@ -1033,6 +1033,89 @@ class BackgroundFieldController {
     }
 }
 
+const BRAND_LIBRARY_DEFAULTS = {
+    overlays: [
+        'assets/Screenshot_20250430-141821.png',
+        'assets/Screenshot_20250430-142002~2.png',
+        'assets/Screenshot_20250430-142024~2.png',
+        'assets/Screenshot_20250430-142032~2.png',
+        'assets/Screenshot_20241012-073718.png',
+        'assets/file_0000000006fc6230a8336bfa1fcebd89.png',
+        'assets/file_0000000054a06230817873012865d150.png',
+        'assets/file_00000000fc08623085668cf8b5e0a1e5.png',
+        'assets/image_8 (1).png'
+    ],
+    videos: [
+        '20250505_1321_Neon Blossom Transformation_simple_compose_01jtgqf5vjevn8nbrnsx8yd5fs.mp4',
+        '20250505_1726_Noir Filament Mystery_simple_compose_01jth5f1kwe9r9zxqet54bz3q0.mp4',
+        '20250506_0014_Gemstone Coral Transformation_remix_01jthwv071e06vmjd0mn60zm3s.mp4',
+        '20250506_0014_Gemstone Coral Transformation_remix_01jthwv0c4fxk8m0e79ry2t4ke.mp4',
+        '1746496560073.mp4',
+        '1746500614769.mp4',
+        '1746576068221.mp4'
+    ],
+    logos: [
+        'assets/clear-seas-logo-aurora.svg',
+        'assets/clear-seas-monogram.svg'
+    ]
+};
+
+function ensureSharedBrandLibrary() {
+    const mergeUnique = (target, source) => {
+        if (!Array.isArray(source)) {
+            return target;
+        }
+        source.forEach((item) => {
+            if (typeof item === 'string' && !target.includes(item)) {
+                target.push(item);
+            }
+        });
+        return target;
+    };
+
+    const existing = window.ClearSeasBrandLibrary || { overlays: [], videos: [], logos: [], cursor: 0 };
+    mergeUnique(existing.overlays, BRAND_LIBRARY_DEFAULTS.overlays);
+    mergeUnique(existing.videos, BRAND_LIBRARY_DEFAULTS.videos);
+    mergeUnique(existing.logos, BRAND_LIBRARY_DEFAULTS.logos);
+
+    if (!Number.isFinite(existing.cursor)) {
+        existing.cursor = 0;
+    }
+
+    const getPool = (preference) => {
+        const pref = (preference || '').toLowerCase();
+        if (pref.startsWith('video')) {
+            return existing.videos;
+        }
+        if (pref.startsWith('logo')) {
+            return existing.logos.length ? existing.logos : existing.overlays;
+        }
+        if (pref.startsWith('overlay') || pref.startsWith('image') || pref.startsWith('brand')) {
+            return existing.overlays.length ? existing.overlays : existing.logos;
+        }
+        return [...existing.videos, ...existing.overlays, ...existing.logos];
+    };
+
+    const acquire = (preference) => {
+        const pool = getPool(preference);
+        if (!pool.length) {
+            return null;
+        }
+        const index = Math.abs(existing.cursor) % pool.length;
+        existing.cursor += 1;
+        const src = pool[index];
+        const type = typeof src === 'string' && src.toLowerCase().endsWith('.mp4') ? 'video' : 'image';
+        return { src, type };
+    };
+
+    existing.acquire = acquire;
+    window.ClearSeasBrandLibrary = existing;
+    window.clearSeasAcquireBrandAsset = acquire;
+    return existing;
+}
+
+ensureSharedBrandLibrary();
+
 function easeOutCubic(x) {
     return 1 - Math.pow(1 - x, 3);
 }
@@ -1279,26 +1362,78 @@ function initialiseSectionTracking() {
 
 function createTiltController(elements, options = {}) {
     const targets = Array.from(elements);
+    if (!targets.length) {
+        return { enable() {}, disable() {} };
+    }
+
     const defaultStrength = options.strength || 6;
     const handlers = new WeakMap();
+    const scrollState = {
+        y: window.scrollY,
+        velocity: 0,
+        raf: null,
+        pending: false
+    };
+
+    const applyScroll = () => {
+        scrollState.pending = false;
+        const currentY = window.scrollY;
+        const delta = currentY - scrollState.y;
+        scrollState.y = currentY;
+        const normalizedVelocity = (window.innerHeight || 1) > 0 ? delta / window.innerHeight : 0;
+        scrollState.velocity = scrollState.velocity * 0.82 + normalizedVelocity * 0.18;
+
+        const scrollRotation = Math.max(Math.min(scrollState.velocity * (options.scrollStrength || 18), 18), -18);
+        const parallax = Math.max(Math.min(scrollState.velocity * (options.parallaxStrength || 320), 320), -320);
+        const rotXW = scrollRotation * 2.6;
+        const rotYW = scrollRotation * -1.8;
+        const rotZW = scrollRotation * 1.2;
+
+        targets.forEach((element) => {
+            element.style.setProperty('--tilt-scroll', `${scrollRotation.toFixed(3)}deg`);
+            element.style.setProperty('--visualizer-parallax', `${parallax.toFixed(3)}px`);
+            element.style.setProperty('--visualizer-rot-xw', `${rotXW.toFixed(3)}deg`);
+            element.style.setProperty('--visualizer-rot-yw', `${rotYW.toFixed(3)}deg`);
+            element.style.setProperty('--visualizer-rot-zw', `${rotZW.toFixed(3)}deg`);
+            element.style.setProperty('--scroll-velocity', scrollState.velocity.toFixed(4));
+        });
+
+        window.dispatchEvent(new CustomEvent('clear-seas-scroll-tilt', {
+            detail: {
+                rotation: scrollRotation,
+                velocity: scrollState.velocity
+            }
+        }));
+    };
+
+    const scheduleScroll = () => {
+        if (scrollState.pending) {
+            return;
+        }
+        scrollState.pending = true;
+        scrollState.raf = requestAnimationFrame(applyScroll);
+    };
 
     const enable = () => {
         targets.forEach((element) => {
             const strength = Number(element.dataset.tiltStrength || defaultStrength);
             const onMove = (event) => {
                 const rect = element.getBoundingClientRect();
-                const x = (event.clientX - rect.left) / rect.width;
-                const y = (event.clientY - rect.top) / rect.height;
+                const x = rect.width ? (event.clientX - rect.left) / rect.width : 0.5;
+                const y = rect.height ? (event.clientY - rect.top) / rect.height : 0.5;
                 const clampedX = Math.min(Math.max(x, 0), 1);
                 const clampedY = Math.min(Math.max(y, 0), 1);
                 const rotateX = (0.5 - clampedY) * strength;
-                const rotateY = (clampedX - 0.5) * strength;
                 element.style.setProperty('--tilt-x', `${rotateX.toFixed(2)}deg`);
-                element.style.setProperty('--tilt-y', `${rotateY.toFixed(2)}deg`);
+                element.style.setProperty('--tilt-y', '0deg');
+                element.style.setProperty('--tilt-x-value', rotateX.toFixed(4));
+                element.style.setProperty('--tilt-y-value', '0');
             };
             const onLeave = () => {
                 element.style.setProperty('--tilt-x', '0deg');
                 element.style.setProperty('--tilt-y', '0deg');
+                element.style.setProperty('--tilt-x-value', '0');
+                element.style.setProperty('--tilt-y-value', '0');
             };
 
             element.addEventListener('pointermove', onMove);
@@ -1306,6 +1441,9 @@ function createTiltController(elements, options = {}) {
             element.addEventListener('pointerup', onLeave);
             handlers.set(element, { onMove, onLeave });
         });
+
+        window.addEventListener('scroll', scheduleScroll, { passive: true });
+        scheduleScroll();
     };
 
     const disable = () => {
@@ -1319,8 +1457,24 @@ function createTiltController(elements, options = {}) {
             element.removeEventListener('pointerup', entry.onLeave);
             element.style.setProperty('--tilt-x', '0deg');
             element.style.setProperty('--tilt-y', '0deg');
+            element.style.setProperty('--tilt-x-value', '0');
+            element.style.setProperty('--tilt-y-value', '0');
+            element.style.setProperty('--tilt-scroll', '0deg');
+            element.style.setProperty('--visualizer-parallax', '0px');
+            element.style.setProperty('--visualizer-rot-xw', '0deg');
+            element.style.setProperty('--visualizer-rot-yw', '0deg');
+            element.style.setProperty('--visualizer-rot-zw', '0deg');
+            element.style.setProperty('--scroll-velocity', '0');
             handlers.delete(element);
         });
+
+        window.removeEventListener('scroll', scheduleScroll);
+        if (scrollState.raf) {
+            cancelAnimationFrame(scrollState.raf);
+        }
+        scrollState.pending = false;
+        scrollState.raf = null;
+        scrollState.velocity = 0;
     };
 
     return { enable, disable };
@@ -1869,6 +2023,291 @@ function initialiseTimelines() {
     });
 }
 
+function initialiseCardVisualizers() {
+    const selectors = [
+        '.canvas-card',
+        '.stacked-card',
+        '.hero__module',
+        '.flow-step',
+        '.flow-thread',
+        '.system-card',
+        '.variant-card',
+        '.signal-card',
+        '.signal-node',
+        '.resource-card',
+        '.micro-card',
+        '.metric'
+    ];
+
+    const candidates = new Set();
+    selectors.forEach((selector) => {
+        document.querySelectorAll(selector).forEach((element) => candidates.add(element));
+    });
+
+    const cards = Array.from(candidates).filter((card) => card && !card.dataset.visualizerAttached);
+    if (!cards.length) {
+        return;
+    }
+
+    const acquireAsset = typeof window.clearSeasAcquireBrandAsset === 'function'
+        ? window.clearSeasAcquireBrandAsset
+        : () => null;
+
+    const instances = new WeakMap();
+    const observer = 'IntersectionObserver' in window
+        ? new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                const state = instances.get(entry.target);
+                if (!state) {
+                    return;
+                }
+                state.visible = entry.isIntersecting;
+                if (entry.isIntersecting) {
+                    state.startField();
+                    state.targetFocus = Math.max(state.targetFocus, 0.42);
+                } else if (!state.hover) {
+                    state.stopField();
+                    state.targetFocus = Math.min(state.targetFocus, 0.2);
+                }
+            });
+        }, { threshold: 0.25, rootMargin: '-12% 0px -12% 0px' })
+        : null;
+
+    cards.forEach((card, index) => {
+        card.dataset.visualizerAttached = 'true';
+        card.classList.add('visualizer-host');
+
+        const weight = Number(card.dataset.visualizerWeight || card.dataset.visualizerScale || '1.12');
+        const bleed = Number.isFinite(weight) ? Math.max(1.18, weight + 0.22) : 1.28;
+        const scale = bleed + 0.16;
+        card.style.setProperty('--visualizer-bleed', bleed.toFixed(3));
+        card.style.setProperty('--visualizer-scale', scale.toFixed(3));
+        if (!card.style.getPropertyValue('--brand-rotation')) {
+            card.style.setProperty('--brand-rotation', `${(Math.random() * 38 - 19).toFixed(2)}deg`);
+        }
+
+        const shell = document.createElement('div');
+        shell.className = 'visualizer-shell';
+        shell.setAttribute('aria-hidden', 'true');
+
+        const canvas = document.createElement('canvas');
+        canvas.className = 'visualizer-shell__canvas';
+        shell.appendChild(canvas);
+
+        const assetPreference = card.dataset.visualizerAsset || card.dataset.element || (index % 3 === 0 ? 'video' : 'overlay');
+        const asset = acquireAsset(assetPreference);
+
+        let brandHost = null;
+        let brandMedia = null;
+
+        if (asset && asset.src) {
+            brandHost = document.createElement('div');
+            brandHost.className = 'visualizer-shell__brand';
+            brandHost.dataset.brandType = asset.type;
+
+            if (asset.type === 'video') {
+                brandHost.classList.add('visualizer-shell__brand--video');
+                const video = document.createElement('video');
+                video.className = 'visualizer-shell__brand-media';
+                video.src = asset.src;
+                video.muted = true;
+                video.autoplay = true;
+                video.loop = true;
+                video.playsInline = true;
+                video.setAttribute('muted', '');
+                video.setAttribute('playsinline', '');
+                video.addEventListener('loadeddata', () => {
+                    video.play().catch(() => {});
+                }, { once: true });
+                brandHost.appendChild(video);
+                brandMedia = video;
+            } else {
+                brandHost.classList.add('visualizer-shell__brand--image');
+                brandHost.style.setProperty('--brand-image', `url(${asset.src})`);
+            }
+
+            shell.appendChild(brandHost);
+        }
+
+        card.insertBefore(shell, card.firstChild);
+
+        const state = {
+            card,
+            canvas,
+            shell,
+            brandHost,
+            brandMedia,
+            hover: false,
+            visible: false,
+            started: false,
+            focus: 0.18,
+            targetFocus: 0.24,
+            pulse: 0,
+            pointerX: 0.5,
+            pointerY: 0.5,
+            raf: null,
+            fieldController: null,
+            resizeObserver: null
+        };
+
+        const hologram = ReactiveHologramField.create(canvas);
+        if (hologram) {
+            state.fieldController = {
+                start() {
+                    hologram.start();
+                },
+                stop() {
+                    hologram.stop();
+                },
+                update(focusX, focusY, intensity) {
+                    hologram.setPointer(focusX, focusY);
+                    hologram.setFocus(focusX, focusY, intensity);
+                    hologram.setMode(intensity > 0.75 ? 'active' : 'holographic');
+                },
+                destroy() {
+                    hologram.stop();
+                }
+            };
+        } else {
+            const fallback = new OrbitalField(canvas);
+            state.fieldController = {
+                start() {
+                    fallback.start();
+                },
+                stop() {
+                    fallback.stop();
+                },
+                update(_focusX, _focusY, intensity) {
+                    fallback.setIntensity(0.52 + intensity * 0.45);
+                },
+                destroy() {
+                    fallback.stop();
+                }
+            };
+        }
+
+        const updateCanvasResolution = () => {
+            const rect = card.getBoundingClientRect();
+            if (!rect.width || !rect.height) {
+                return;
+            }
+            const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+            const bleedFactor = Number(card.style.getPropertyValue('--visualizer-bleed')) || bleed;
+            const resolutionScale = bleedFactor + 0.42;
+            const width = Math.max(1, Math.round(rect.width * resolutionScale * dpr));
+            const height = Math.max(1, Math.round(rect.height * resolutionScale * dpr));
+            if (canvas.width !== width) {
+                canvas.width = width;
+            }
+            if (canvas.height !== height) {
+                canvas.height = height;
+            }
+        };
+
+        updateCanvasResolution();
+        state.resizeObserver = new ResizeObserver(updateCanvasResolution);
+        state.resizeObserver.observe(card);
+
+        const startField = () => {
+            if (state.started || !state.fieldController) {
+                return;
+            }
+            state.fieldController.start();
+            state.started = true;
+        };
+
+        const stopField = () => {
+            if (!state.started || !state.fieldController) {
+                return;
+            }
+            state.fieldController.stop();
+            state.started = false;
+        };
+
+        state.startField = startField;
+        state.stopField = stopField;
+
+        const setPointer = (event) => {
+            const rect = card.getBoundingClientRect();
+            const x = rect.width ? (event.clientX - rect.left) / rect.width : 0.5;
+            const y = rect.height ? (event.clientY - rect.top) / rect.height : 0.5;
+            state.pointerX = Math.min(Math.max(x, 0), 1);
+            state.pointerY = Math.min(Math.max(y, 0), 1);
+        };
+
+        const handleMove = (event) => {
+            setPointer(event);
+            state.targetFocus = Math.max(state.targetFocus, 0.92);
+        };
+
+        const handleEnter = () => {
+            state.hover = true;
+            state.targetFocus = Math.max(state.targetFocus, 1.05);
+            startField();
+        };
+
+        const handleLeave = () => {
+            state.hover = false;
+            state.targetFocus = Math.max(0.22, state.visible ? 0.4 : 0.18);
+            if (!state.visible) {
+                stopField();
+            }
+        };
+
+        const handleDown = () => {
+            state.pulse = 1;
+            state.targetFocus = Math.max(state.targetFocus, 1.12);
+            if (state.brandMedia) {
+                state.brandMedia.play().catch(() => {});
+            }
+        };
+
+        card.addEventListener('pointermove', handleMove);
+        card.addEventListener('pointerenter', handleEnter);
+        card.addEventListener('pointerleave', handleLeave);
+        card.addEventListener('pointerdown', handleDown);
+        card.addEventListener('focusin', handleEnter);
+        card.addEventListener('focusout', handleLeave);
+
+        const animate = () => {
+            const baseTarget = state.hover ? 1.05 : state.visible ? 0.45 : 0.2;
+            state.targetFocus += (baseTarget - state.targetFocus) * 0.08;
+            state.focus += (state.targetFocus - state.focus) * 0.14;
+            state.pulse *= 0.9;
+
+            const focusValue = Math.max(0, state.focus);
+            card.style.setProperty('--focus-intensity', focusValue.toFixed(3));
+            card.style.setProperty('--focus-pulse', state.pulse.toFixed(3));
+            card.style.setProperty('--focus-pointer-x', state.pointerX.toFixed(3));
+            card.style.setProperty('--focus-pointer-y', state.pointerY.toFixed(3));
+
+            if (state.fieldController) {
+                state.fieldController.update(state.pointerX, state.pointerY, Math.min(1.4, focusValue + 0.45));
+            }
+
+            if (state.brandMedia && state.brandMedia instanceof HTMLVideoElement) {
+                const scrollVelocity = Number(card.style.getPropertyValue('--scroll-velocity') || 0);
+                const playbackRate = 0.85 + focusValue * 0.45 + Math.abs(scrollVelocity) * 0.2;
+                state.brandMedia.playbackRate = Math.min(1.8, Math.max(0.7, playbackRate));
+            }
+
+            state.raf = requestAnimationFrame(animate);
+        };
+
+        state.raf = requestAnimationFrame(animate);
+
+        instances.set(card, state);
+
+        if (observer) {
+            observer.observe(card);
+        } else {
+            state.visible = true;
+            startField();
+            state.targetFocus = Math.max(state.targetFocus, 0.4);
+        }
+    });
+}
+
 function updateFooterYear() {
     const target = document.querySelector('[data-year]');
     if (target) {
@@ -1896,6 +2335,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    initialiseCardVisualizers();
     initialiseStackedShowcase();
     initialiseParallaxGroups();
     initialiseSparkInteractions();

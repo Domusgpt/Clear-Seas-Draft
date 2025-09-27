@@ -288,7 +288,7 @@ class UnifiedScrollMasterController {
       const zDepth = distanceFromCenter * 500 + scroll.phase * 200;
       
       // FLUID ROTATION based on scroll velocity
-      const rotY = scroll.velocity * 0.5 + distanceFromCenter * 20;
+      const rotY = 0;
       const rotX = scroll.acceleration * 0.3;
       const rotZ = Math.sin(scroll.phase * Math.PI * 2 + cardData.phase) * 5;
       
@@ -304,7 +304,6 @@ class UnifiedScrollMasterController {
         translateZ(${zDepth}px)
         translateY(${waveOffset}px)
         rotateX(${rotX}deg)
-        rotateY(${rotY}deg)
         rotateZ(${rotZ}deg)
         scale(${scale})
       `;
@@ -596,11 +595,11 @@ const cinematicCSS = `
 <style>
 @keyframes emerge {
   from {
-    transform: translateZ(-1000px) scale(0) rotateY(-180deg);
+    transform: translateZ(-1000px) scale(0) rotateX(-30deg);
     opacity: 0;
   }
   to {
-    transform: translateZ(0) scale(1) rotateY(0);
+    transform: translateZ(0) scale(1) rotateX(0deg);
     opacity: 1;
   }
 }

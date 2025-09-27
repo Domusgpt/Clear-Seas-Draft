@@ -81,7 +81,6 @@
     translateZ(var(--card-depth))
     translateY(calc((1 - var(--visibility-ratio)) * 100px))
     rotateX(calc((0.5 - var(--parallax-y)) * 15deg))
-    rotateY(calc(var(--scroll-velocity) * 0.1deg))
     scale(calc(0.8 + var(--visibility-ratio) * 0.2));
   
   opacity: calc(0.3 + var(--visibility-ratio) * 0.7);
@@ -241,8 +240,8 @@
 }
 
 @keyframes ufo-spin {
-  from { transform: rotateY(0deg) rotateX(10deg); }
-  to { transform: rotateY(360deg) rotateX(10deg); }
+  from { transform: rotateX(10deg); }
+  to { transform: rotateX(370deg); }
 }
 
 /* UFO disc */
