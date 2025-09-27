@@ -1,394 +1,552 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-disable-global-orchestrator>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clear Seas Solutions - Orthogonal Depth Progression</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clear Seas – Orthogonal Visualizer Choreography</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet"
+  />
+  <script src="scripts/vib34d-geometric-tilt-system.js" defer></script>
+  <script src="scripts/orthogonal-depth-progression.js" defer></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-    <!-- VIB34D Professional Typography -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    :root {
+      color-scheme: dark;
+      --clear-seas-font-body: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --clear-seas-font-mono: 'JetBrains Mono', 'SFMono-Regular', Menlo, monospace;
+      --holo-bg: radial-gradient(circle at 50% 50%, rgba(0, 255, 255, 0.15), rgba(0, 0, 0, 0.8));
+      --card-border: rgba(0, 255, 255, 0.25);
+      --card-glow: rgba(0, 255, 255, 0.4);
+      --card-depth: 1600px;
+      --card-tilt-strength: 16deg;
+      --section-accent: #00ffff;
+      --section-secondary: #ff00ff;
+      --section-tertiary: #7c45ff;
+    }
 
-    <!-- VIB34D GEOMETRIC TILT SYSTEM -->
-    <script src="scripts/vib34d-geometric-tilt-system.js" defer></script>
+    body {
+      font-family: var(--clear-seas-font-body);
+      background: #04040a;
+      color: #f5f7ff;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      perspective: var(--card-depth);
+      perspective-origin: 50% 50%;
+    }
 
-    <!-- ORTHOGONAL DEPTH PROGRESSION ENGINE -->
-    <script src="scripts/orthogonal-depth-progression.js" defer></script>
+    .depth-progression-root {
+      position: relative;
+      width: min(92vw, 1400px);
+      height: min(90vh, 880px);
+      transform-style: preserve-3d;
+      perspective: inherit;
+    }
 
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+    .holographic-background {
+      position: absolute;
+      inset: -12vh -12vw;
+      z-index: 0;
+      filter: saturate(1.2) brightness(0.9);
+    }
 
-        :root {
-            --clear-seas-primary: #00ffff;
-            --clear-seas-secondary: #ff00ff;
-            --quantum-cyan: #00d4ff;
-            --neural-purple: #8a2be2;
-            --holographic-pink: #ff1493;
-            --void-black: #0a0a0a;
-            --depth-perspective: 1200px;
-        }
+    .hypergrid-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background: linear-gradient(
+          90deg,
+          rgba(255, 255, 255, 0.05) 0,
+          transparent 55%
+        ),
+        linear-gradient(
+          rgba(255, 255, 255, 0.05) 0,
+          transparent 55%
+        );
+      mix-blend-mode: screen;
+      opacity: 0.08;
+      transform: translateZ(-600px) scale3d(1.6, 1.6, 1);
+    }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(180deg, #000 0%, #0a0a0a 50%, #000 100%);
-            color: white;
-            overflow: hidden; /* NO TRADITIONAL SCROLLING */
-            height: 100vh;
-            perspective: var(--depth-perspective);
-            perspective-origin: center center;
-        }
+    .depth-progression-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      z-index: 2;
+    }
 
-        /* ORTHOGONAL PROGRESSION CONTAINER */
-        .depth-progression-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100vh;
-            transform-style: preserve-3d;
-            perspective: var(--depth-perspective);
-        }
+    .progression-section {
+      position: absolute;
+      inset: 0;
+      transform-style: preserve-3d;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 600ms ease;
+    }
 
-        /* DEPTH PROGRESSION CARD SYSTEM */
-        .progression-card {
-            position: absolute;
-            width: 90vw;
-            max-width: 800px;
-            height: 70vh;
-            left: 50%;
-            top: 50%;
-            transform-origin: center center;
-            transform-style: preserve-3d;
-            border-radius: 20px;
-            background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(255, 0, 255, 0.05));
-            border: 2px solid rgba(0, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
-            transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            cursor: pointer;
-        }
+    .progression-section.is-active {
+      opacity: 1;
+      pointer-events: auto;
+    }
 
-        /* DEPTH PROGRESSION STATES */
-        .progression-card.far-depth {
-            transform: translate(-50%, -50%) translateZ(-800px) scale(0.3);
-            opacity: 0.1;
-            filter: blur(3px);
-        }
+    .progression-card {
+      position: absolute;
+      width: clamp(280px, 70vw, 860px);
+      height: clamp(360px, 65vh, 720px);
+      left: 50%;
+      top: 50%;
+      transform-style: preserve-3d;
+      transform-origin: center;
+      border-radius: 22px;
+      backdrop-filter: blur(24px);
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: linear-gradient(140deg, rgba(0, 0, 0, 0.35), rgba(8, 8, 18, 0.85));
+      transition: transform 760ms cubic-bezier(0.23, 0.72, 0.28, 0.99),
+        opacity 640ms ease,
+        filter 800ms ease,
+        border 420ms ease,
+        box-shadow 480ms ease;
+      --tilt-x: 0deg;
+      --tilt-y: 0deg;
+      --tilt-z: 0deg;
+      --depth-offset: -800px;
+      --card-scale: 0.36;
+      transform: translate3d(-50%, -50%, var(--depth-offset)) rotateX(var(--tilt-x))
+        rotateY(var(--tilt-y)) rotateZ(var(--tilt-z)) scale3d(var(--card-scale), var(--card-scale), 1);
+      filter: brightness(0.5) blur(3px);
+      opacity: 0;
+    }
 
-        .progression-card.approaching {
-            transform: translate(-50%, -50%) translateZ(-400px) scale(0.6);
-            opacity: 0.4;
-            filter: blur(1px);
-        }
+    .progression-card.is-approaching {
+      --depth-offset: -320px;
+      --card-scale: 0.68;
+      opacity: 0.45;
+      filter: brightness(0.8) blur(1.4px);
+    }
 
-        .progression-card.focused {
-            transform: translate(-50%, -50%) translateZ(0px) scale(1.0);
-            opacity: 1.0;
-            filter: blur(0px);
-            border-color: var(--clear-seas-primary);
-            box-shadow:
-                0 0 30px rgba(0, 255, 255, 0.3),
-                0 0 60px rgba(0, 255, 255, 0.1);
-        }
+    .progression-card.is-focused {
+      --depth-offset: 0px;
+      --card-scale: 1;
+      opacity: 1;
+      filter: brightness(1) blur(0);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      box-shadow: 0 22px 68px rgba(0, 0, 0, 0.46), 0 0 40px var(--card-glow);
+    }
 
-        .progression-card.exiting {
-            transform: translate(-50%, -50%) translateZ(400px) scale(1.5);
-            opacity: 0.2;
-            filter: blur(2px);
-        }
+    .progression-card.is-exiting-forward {
+      --depth-offset: 420px;
+      --card-scale: 1.22;
+      opacity: 0;
+      filter: brightness(1.5) blur(2.2px) saturate(1.4);
+      box-shadow: 0 0 60px rgba(255, 255, 255, 0.4),
+        0 0 140px rgba(0, 255, 220, 0.25);
+    }
 
-        .progression-card.destroyed {
-            transform: translate(-50%, -50%) translateZ(800px) scale(2.0) rotateX(45deg) rotateY(45deg);
-            opacity: 0;
-            filter: blur(5px);
-            pointer-events: none;
-        }
+    .progression-card.is-destroyed {
+      --depth-offset: 900px;
+      --card-scale: 0.2;
+      opacity: 0;
+      filter: blur(8px) saturate(0.4);
+      pointer-events: none;
+    }
 
-        /* CARD CONTENT SYSTEM */
-        .card-header {
-            position: relative;
-            padding: 40px;
-            text-align: center;
-            z-index: 2;
-        }
+    .card-content {
+      position: relative;
+      z-index: 3;
+      padding: clamp(28px, 5vh, 48px) clamp(32px, 5vw, 64px);
+      display: grid;
+      gap: clamp(12px, 2vh, 20px);
+      align-content: start;
+    }
 
-        .card-title {
-            font-size: 2.5rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--clear-seas-primary), var(--clear-seas-secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 20px;
-            transition: all 0.6s ease;
-        }
+    .card-meta {
+      font-family: var(--clear-seas-font-mono);
+      font-size: 0.9rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.6);
+    }
 
-        .card-description {
-            font-size: 1.2rem;
-            color: rgba(255, 255, 255, 0.8);
-            line-height: 1.6;
-            margin-bottom: 30px;
-        }
+    .card-title {
+      font-size: clamp(1.8rem, 4.2vw, 3.4rem);
+      font-weight: 700;
+      background: linear-gradient(120deg, var(--section-accent), var(--section-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 12px rgba(0, 255, 255, 0.35);
+      transition: text-shadow 420ms ease, filter 420ms ease;
+    }
 
-        /* PORTAL-STYLE TEXT VISUALIZERS */
-        .portal-text-visualizer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border-radius: inherit;
-            opacity: 0;
-            transition: opacity 0.8s ease;
-            z-index: 1;
-        }
+    .progression-card.is-exiting-forward .card-title {
+      filter: saturate(1.8) brightness(1.4);
+      text-shadow: 0 0 32px rgba(255, 255, 255, 0.85), 0 0 80px rgba(0, 255, 200, 0.65);
+    }
 
-        .progression-card.focused .portal-text-visualizer {
-            opacity: 0.8;
-        }
+    .card-description {
+      font-size: clamp(1rem, 1.8vw, 1.3rem);
+      line-height: 1.7;
+      color: rgba(240, 247, 255, 0.78);
+      max-width: 54ch;
+    }
 
-        .progression-card.focused .card-title {
-            text-shadow: 0 0 20px var(--clear-seas-primary);
-            transform: scale(1.05);
-        }
+    .card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 8px;
+    }
 
-        /* VIB34D TILT CANVAS SYSTEM */
-        .vib34d-tilt-canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border-radius: inherit;
-            pointer-events: none;
-            z-index: 0;
-        }
+    .card-tag {
+      font-family: var(--clear-seas-font-mono);
+      font-size: 0.68rem;
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: rgba(250, 255, 255, 0.66);
+      letter-spacing: 0.12em;
+    }
 
-        /* GEOMETRIC TILT INDICATOR */
-        .tilt-indicator {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 10px 15px;
-            background: rgba(0, 255, 255, 0.1);
-            border: 1px solid rgba(0, 255, 255, 0.3);
-            border-radius: 10px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.9rem;
-            z-index: 1000;
-        }
+    .portal-visualizer,
+    .card-visualizer {
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      overflow: hidden;
+    }
 
-        /* PROGRESSION CONTROLS */
-        .progression-controls {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 15px;
-            z-index: 1000;
-        }
+    .card-visualizer canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      filter: saturate(1.4) contrast(1.1);
+    }
 
-        .progression-btn {
-            padding: 12px 24px;
-            background: rgba(0, 255, 255, 0.1);
-            border: 2px solid var(--clear-seas-primary);
-            border-radius: 8px;
-            color: var(--clear-seas-primary);
-            font-family: 'Inter', sans-serif;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
+    .portal-visualizer::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        circle at 50% 50%,
+        rgba(255, 255, 255, 0.12),
+        transparent 70%
+      );
+      opacity: 0.35;
+    }
 
-        .progression-btn:hover {
-            background: rgba(0, 255, 255, 0.2);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 255, 255, 0.3);
-        }
+    .hypercube-fold-filter {
+      position: absolute;
+      inset: 0;
+      z-index: 4;
+      pointer-events: none;
+      mix-blend-mode: screen;
+      opacity: 0;
+      background: conic-gradient(
+        from 180deg,
+        rgba(0, 255, 255, 0.3),
+        rgba(255, 0, 255, 0.2),
+        rgba(0, 180, 255, 0.4),
+        rgba(255, 255, 255, 0.15)
+      );
+      transition: opacity 420ms ease;
+    }
 
-        /* DESTRUCTION ANIMATION EFFECTS */
-        @keyframes cardDestruction {
-            0% {
-                transform: translate(-50%, -50%) translateZ(0px) scale(1.0);
-                opacity: 1;
-                filter: blur(0px);
-            }
-            50% {
-                transform: translate(-50%, -50%) translateZ(200px) scale(1.3) rotateY(180deg);
-                opacity: 0.5;
-                filter: blur(1px) hue-rotate(60deg);
-            }
-            100% {
-                transform: translate(-50%, -50%) translateZ(600px) scale(0.1) rotateX(90deg) rotateY(360deg);
-                opacity: 0;
-                filter: blur(8px) hue-rotate(120deg);
-            }
-        }
+    .depth-progression-root.is-folding .hypercube-fold-filter {
+      opacity: 0.55;
+    }
 
-        .progression-card.destruction-quantum {
-            animation: cardDestruction 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
-        }
+    .depth-progression-root.is-folding .depth-progression-container {
+      animation: hypercubeFold 980ms cubic-bezier(0.55, 0.18, 0.15, 1) forwards;
+    }
 
-        @keyframes cardDestructionHolographic {
-            0% {
-                transform: translate(-50%, -50%) translateZ(0px) scale(1.0);
-                opacity: 1;
-                filter: blur(0px);
-            }
-            25% {
-                transform: translate(-50%, -50%) translateZ(100px) scale(1.1);
-                opacity: 0.8;
-                filter: blur(0px) saturate(2);
-            }
-            75% {
-                transform: translate(-50%, -50%) translateZ(400px) scale(2.0) rotateZ(45deg);
-                opacity: 0.2;
-                filter: blur(3px) saturate(3) hue-rotate(180deg);
-            }
-            100% {
-                transform: translate(-50%, -50%) translateZ(800px) scale(0.05) rotateZ(180deg);
-                opacity: 0;
-                filter: blur(10px) saturate(5);
-            }
-        }
+    @keyframes hypercubeFold {
+      0% {
+        transform: translateZ(0) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1);
+        filter: saturate(1) brightness(1);
+      }
+      40% {
+        transform: translateZ(-260px) rotateX(-22deg) rotateY(24deg) scale3d(0.78, 0.78, 1);
+        filter: saturate(1.2) brightness(1.1);
+      }
+      80% {
+        transform: translateZ(340px) rotateX(58deg) rotateY(-46deg) scale3d(0.28, 0.28, 1);
+        filter: saturate(2.2) brightness(1.35) blur(2px);
+      }
+      100% {
+        transform: translateZ(-120px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1);
+        filter: saturate(1.6) brightness(1.25);
+      }
+    }
 
-        .progression-card.destruction-holographic {
-            animation: cardDestructionHolographic 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-        }
+    .progression-ui {
+      position: absolute;
+      inset: 24px;
+      z-index: 5;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: none;
+      font-family: var(--clear-seas-font-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-size: 0.78rem;
+      color: rgba(255, 255, 255, 0.4);
+    }
 
-        @keyframes cardDestructionFaceted {
-            0% {
-                transform: translate(-50%, -50%) translateZ(0px) scale(1.0) rotateX(0deg);
-                opacity: 1;
-                filter: blur(0px);
-            }
-            100% {
-                transform: translate(-50%, -50%) translateZ(-600px) scale(3.0) rotateX(-90deg);
-                opacity: 0;
-                filter: blur(5px) brightness(3);
-            }
-        }
+    .progression-ui span {
+      background: rgba(255, 255, 255, 0.04);
+      padding: 12px 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(12px);
+    }
 
-        .progression-card.destruction-faceted {
-            animation: cardDestructionFaceted 1.0s cubic-bezier(0.6, -0.28, 0.735, 0.045) forwards;
-        }
+    .section-indicator {
+      display: flex;
+      gap: 12px;
+    }
 
-        /* RESPONSIVE DESIGN */
-        @media (max-width: 768px) {
-            .progression-card {
-                width: 95vw;
-                height: 80vh;
-            }
+    .section-indicator .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.18);
+      transition: transform 320ms ease, background 320ms ease;
+    }
 
-            .card-title {
-                font-size: 2rem;
-            }
+    .section-indicator .dot.is-active {
+      background: var(--section-accent);
+      transform: scale(1.4);
+      box-shadow: 0 0 12px var(--section-accent);
+    }
 
-            .card-description {
-                font-size: 1rem;
-            }
-        }
-    </style>
+    @media (max-width: 768px) {
+      body {
+        align-items: stretch;
+        justify-content: stretch;
+      }
+
+      .depth-progression-root {
+        width: 100vw;
+        height: 100vh;
+      }
+
+      .progression-card {
+        width: calc(100vw - 48px);
+        height: calc(100vh - 120px);
+      }
+
+      .progression-ui {
+        flex-direction: column;
+        gap: 16px;
+        inset: 20px;
+      }
+    }
+  </style>
 </head>
 <body>
+  <div class="depth-progression-root" id="orthogonalRoot">
+    <canvas class="holographic-background" id="holographicBackground"></canvas>
+    <div class="hypergrid-overlay" aria-hidden="true"></div>
+    <div class="hypercube-fold-filter" aria-hidden="true"></div>
 
-    <!-- GEOMETRIC TILT INDICATOR -->
-    <div class="tilt-indicator">
-        <div>Tilt X: <span id="tilt-x">0</span>°</div>
-        <div>Tilt Y: <span id="tilt-y">0</span>°</div>
-        <div>4D Rotation: <span id="rot4d">Active</span></div>
+    <div class="progression-ui">
+      <span id="sectionLabel">Holographic Genesis</span>
+      <div class="section-indicator" id="sectionIndicator" aria-hidden="true"></div>
+      <span id="cardLabel">Card 1 of 3</span>
     </div>
 
-    <!-- ORTHOGONAL DEPTH PROGRESSION CONTAINER -->
-    <div class="depth-progression-container" id="progressionContainer">
-
-        <!-- CARD 1: QUANTUM SYSTEMS -->
-        <div class="progression-card far-depth" data-vib34d="quantum" data-destruction="quantum">
-            <canvas class="vib34d-tilt-canvas" id="quantum-tilt-canvas"></canvas>
-            <div class="portal-text-visualizer" id="quantum-portal"></div>
-            <div class="card-header">
-                <h2 class="card-title">Quantum Processing Architecture</h2>
-                <p class="card-description">
-                    Advanced quantum lattice systems with 4D geometric tilt responsiveness.
-                    Experience real-time parameter modulation through device orientation.
-                </p>
+    <div class="depth-progression-container" id="depthContainer">
+      <section class="progression-section is-active" data-section="genesis">
+        <article
+          class="progression-card"
+          data-visualizer="lattice"
+          data-density="1"
+          data-speed="1"
+        >
+          <div class="portal-visualizer"></div>
+          <div class="card-visualizer"></div>
+          <div class="card-content">
+            <div class="card-meta">Phase 01 – Genesis</div>
+            <h2 class="card-title">Holographic Dawn Construct</h2>
+            <p class="card-description">
+              Emergent orthogonal stacks stabilize as the choreography activates. Depth-weighted beams align with
+              the viewport to establish the initial resonance field.
+            </p>
+            <div class="card-tags">
+              <span class="card-tag">SYNTHESIS</span>
+              <span class="card-tag">VIB34D</span>
+              <span class="card-tag">ORTHOGONAL</span>
             </div>
-        </div>
-
-        <!-- CARD 2: HOLOGRAPHIC SYSTEMS -->
-        <div class="progression-card far-depth" data-vib34d="holographic" data-destruction="holographic">
-            <canvas class="vib34d-tilt-canvas" id="holographic-tilt-canvas"></canvas>
-            <div class="portal-text-visualizer" id="holographic-portal"></div>
-            <div class="card-header">
-                <h2 class="card-title">Holographic Visualization Matrix</h2>
-                <p class="card-description">
-                    Multi-dimensional holographic projections responding to geometric tilt.
-                    Portal-style text integration with depth perception.
-                </p>
+          </div>
+        </article>
+        <article
+          class="progression-card"
+          data-visualizer="lattice"
+          data-density="1.4"
+          data-speed="1.2"
+        >
+          <div class="portal-visualizer"></div>
+          <div class="card-visualizer"></div>
+          <div class="card-content">
+            <div class="card-meta">Phase 02 – Genesis</div>
+            <h2 class="card-title">Vector Convergence Array</h2>
+            <p class="card-description">
+              Vector planes interlock through phased tilts. 4D axes respond to user presence, warping lattice density
+              as pulses sync with the hypergrid backdrop.
+            </p>
+            <div class="card-tags">
+              <span class="card-tag">TILT</span>
+              <span class="card-tag">VECTOR</span>
+              <span class="card-tag">INTERLOCK</span>
             </div>
-        </div>
-
-        <!-- CARD 3: FACETED SYSTEMS -->
-        <div class="progression-card far-depth" data-vib34d="faceted" data-destruction="faceted">
-            <canvas class="vib34d-tilt-canvas" id="faceted-tilt-canvas"></canvas>
-            <div class="portal-text-visualizer" id="faceted-portal"></div>
-            <div class="card-header">
-                <h2 class="card-title">Faceted Geometric Engine</h2>
-                <p class="card-description">
-                    Precise geometric processing with orthogonal Z-axis progression.
-                    Professional avant-garde visualization architecture.
-                </p>
+          </div>
+        </article>
+        <article
+          class="progression-card"
+          data-visualizer="lattice"
+          data-density="1.8"
+          data-speed="1.35"
+        >
+          <div class="portal-visualizer"></div>
+          <div class="card-visualizer"></div>
+          <div class="card-content">
+            <div class="card-meta">Phase 03 – Genesis</div>
+            <h2 class="card-title">Spectral Gate Initiation</h2>
+            <p class="card-description">
+              Harmonic voids open as the genesis cards complete their cycle. Concentric interference ripples through
+              the lattice, priming the fold into the next domain.
+            </p>
+            <div class="card-tags">
+              <span class="card-tag">INTERFERENCE</span>
+              <span class="card-tag">PORTAL</span>
+              <span class="card-tag">FOLD READY</span>
             </div>
-        </div>
+          </div>
+        </article>
+      </section>
 
-        <!-- CARD 4: NEURAL SYSTEMS -->
-        <div class="progression-card far-depth" data-vib34d="quantum" data-destruction="quantum">
-            <canvas class="vib34d-tilt-canvas" id="neural-tilt-canvas"></canvas>
-            <div class="portal-text-visualizer" id="neural-portal"></div>
-            <div class="card-header">
-                <h2 class="card-title">Neural Architecture Systems</h2>
-                <p class="card-description">
-                    AI-driven geometric cognition with tilt-responsive parameters.
-                    Emerging from the depths of computational space.
-                </p>
+      <section class="progression-section" data-section="vector-wake">
+        <article class="progression-card" data-visualizer="flux" data-density="1.1" data-speed="0.9">
+          <div class="portal-visualizer"></div>
+          <div class="card-visualizer"></div>
+          <div class="card-content">
+            <div class="card-meta">Phase 04 – Vector Wake</div>
+            <h2 class="card-title">Transpatial Flux Loom</h2>
+            <p class="card-description">
+              After the first fold, field strands knit a loom of reactive threads. Motion inherits the prior cadence but
+              bends toward a chromatic wake.
+            </p>
+            <div class="card-tags">
+              <span class="card-tag">FLUX</span>
+              <span class="card-tag">THREADS</span>
+              <span class="card-tag">CARRYOVER</span>
             </div>
-        </div>
+          </div>
+        </article>
+        <article class="progression-card" data-visualizer="flux" data-density="1.6" data-speed="1.45">
+          <div class="portal-visualizer"></div>
+          <div class="card-visualizer"></div>
+          <div class="card-content">
+            <div class="card-meta">Phase 05 – Vector Wake</div>
+            <h2 class="card-title">Waveframe Memory Bloom</h2>
+            <p class="card-description">
+              As the cards advance the waveframe remembers the previous lattices, manifesting color inversion fringes
+              while tilts amplify the 4D rotation harmonics.
+            </p>
+            <div class="card-tags">
+              <span class="card-tag">MEMORY</span>
+              <span class="card-tag">4D ROTOR</span>
+              <span class="card-tag">AMPLIFY</span>
+            </div>
+          </div>
+        </article>
+        <article class="progression-card" data-visualizer="flux" data-density="2.05" data-speed="1.7">
+          <div class="portal-visualizer"></div>
+          <div class="card-visualizer"></div>
+          <div class="card-content">
+            <div class="card-meta">Phase 06 – Vector Wake</div>
+            <h2 class="card-title">Chromatic Wake Collapse</h2>
+            <p class="card-description">
+              Exit acceleration sparks glitch-saturated moiré as the cards breach the screen. Colors flare to neon white
+              before dissolving into the etheric recall.
+            </p>
+            <div class="card-tags">
+              <span class="card-tag">GLITCH</span>
+              <span class="card-tag">MOIRÉ</span>
+              <span class="card-tag">RECALL</span>
+            </div>
+          </div>
+        </article>
+      </section>
 
+      <section class="progression-section" data-section="hypercube-resolve">
+        <article class="progression-card" data-visualizer="pulse" data-density="0.95" data-speed="0.7">
+          <div class="portal-visualizer"></div>
+          <div class="card-visualizer"></div>
+          <div class="card-content">
+            <div class="card-meta">Phase 07 – Hypercube Resolve</div>
+            <h2 class="card-title">Hypercube Recall Signal</h2>
+            <p class="card-description">
+              The system folds inward, revealing the recall signal guiding cards home. Density tapers while velocity
+              rises, generating shimmering interference halos.
+            </p>
+            <div class="card-tags">
+              <span class="card-tag">RECALL</span>
+              <span class="card-tag">HALO</span>
+              <span class="card-tag">CALIBRATION</span>
+            </div>
+          </div>
+        </article>
+        <article class="progression-card" data-visualizer="pulse" data-density="1.35" data-speed="1.15">
+          <div class="portal-visualizer"></div>
+          <div class="card-visualizer"></div>
+          <div class="card-content">
+            <div class="card-meta">Phase 08 – Hypercube Resolve</div>
+            <h2 class="card-title">Quantum Echo Triangulation</h2>
+            <p class="card-description">
+              Tetrahedral echoes spin through a chroma prism. Tilts determine echo cadence while the background
+              hypergrid modulates geometry.
+            </p>
+            <div class="card-tags">
+              <span class="card-tag">ECHO</span>
+              <span class="card-tag">PRISM</span>
+              <span class="card-tag">RESPONSIVE</span>
+            </div>
+          </div>
+        </article>
+        <article class="progression-card" data-visualizer="pulse" data-density="1.95" data-speed="1.85">
+          <div class="portal-visualizer"></div>
+          <div class="card-visualizer"></div>
+          <div class="card-content">
+            <div class="card-meta">Phase 09 – Hypercube Resolve</div>
+            <h2 class="card-title">Final Ether Reformation</h2>
+            <p class="card-description">
+              The finale releases the cards into digital ether. Their edges ignite, speed spikes, density collapses,
+              and the background prism rewrites its geometry into the next reality.
+            </p>
+            <div class="card-tags">
+              <span class="card-tag">REWRITE</span>
+              <span class="card-tag">ETHER</span>
+              <span class="card-tag">COMPLETE</span>
+            </div>
+          </div>
+        </article>
+      </section>
     </div>
-
-    <!-- PROGRESSION CONTROLS -->
-    <div class="progression-controls">
-        <button class="progression-btn" onclick="progressionSystem.previousCard()">◀ Previous</button>
-        <button class="progression-btn" onclick="progressionSystem.nextCard()">Next ▶</button>
-        <button class="progression-btn" onclick="progressionSystem.toggleAutoProgress()">Auto Progress</button>
-    </div>
-
-    <!-- INITIALIZATION SCRIPT -->
-    <script>
-        // Initialize VIB34D Geometric Tilt + Orthogonal Depth Progression System
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('🎯 Initializing VIB34D Orthogonal Depth Progression System...');
-
-            // Initialize geometric tilt system
-            if (window.VIB34DGeometricTiltSystem) {
-                window.geometricTiltSystem = new VIB34DGeometricTiltSystem();
-            }
-
-            // Initialize orthogonal depth progression
-            if (window.OrthogonalDepthProgression) {
-                window.progressionSystem = new OrthogonalDepthProgression();
-            }
-
-            console.log('✅ VIB34D Systems initialized - Professional Avant-garde Mode Active');
-        });
-    </script>
-
-
-    <script type="module" src="scripts/global-page-orchestrator.js"></script>
+  </div>
 </body>
 </html>

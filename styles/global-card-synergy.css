@@ -11,6 +11,8 @@
   --global-tilt-strength: 0;
   --global-warp: 0;
   --global-tilt-skew: 0;
+  --global-layout-x: 0.5;
+  --global-layout-y: 0.5;
   --global-focus-trend: 0;
   --global-scroll-speed: 0;
   --global-scroll-direction: 0;
@@ -159,8 +161,16 @@ html[data-global-page-family="labs"] {
   --card-focus-strength: 0;
   --card-support-intensity: 0;
   --card-scroll-momentum: 0;
+  --card-layout-offset-x: 0;
+  --card-layout-offset-y: 0;
+  --card-parallax-x: 0;
+  --card-parallax-y: 0;
+  --card-viewport-x: 0.5;
+  --card-viewport-y: 0.5;
+  --card-viewport-coverage: 0;
   --card-twist: 0deg;
   --card-pulse: 0;
+  --card-rotation-phase: 0;
   --card-overlay-shift: 0px;
   --card-visibility-factor: var(--card-visibility, 1);
   --support-distance-z: 0px;
@@ -236,11 +246,12 @@ html[data-global-page-family="labs"] {
   transform: perspective(1600px)
     rotateX(calc(
       (0.5 - var(--card-focus-y)) * 22deg +
-      var(--card-scroll-momentum) * 4deg +
+      var(--card-layout-offset-y) * 20deg +
       var(--shared-tilt-y-signal) * 16deg
     ))
     rotateY(calc(
-      (var(--card-focus-x) - 0.5) * 20deg +
+      (var(--card-focus-x) - 0.5) * 20deg -
+      var(--card-layout-offset-x) * 22deg +
       var(--shared-tilt-x-signal) * 18deg
     ))
     rotateZ(calc(
@@ -258,10 +269,12 @@ html[data-global-page-family="labs"] {
     ))
     translateX(calc(
       (var(--card-focus-x) - 0.5) * 22px +
+      var(--card-layout-offset-x) * -26px +
       var(--shared-scroll-direction-signal) * var(--shared-scroll-speed-signal) * 16px
     ))
     translateY(calc(
       (var(--card-focus-y) - 0.5) * -18px +
+      var(--card-layout-offset-y) * -22px +
       var(--shared-focus-trend-signal) * -16px
     ))
     scale(calc(
@@ -278,11 +291,12 @@ html[data-global-page-family="labs"] {
   transform: perspective(1500px)
     rotateX(calc(
       (0.5 - var(--card-focus-y)) * 18deg +
-      var(--card-scroll-momentum) * 2deg +
+      var(--card-layout-offset-y) * 16deg +
       var(--shared-tilt-y-signal) * 14deg
     ))
     rotateY(calc(
-      (var(--card-focus-x) - 0.5) * 18deg +
+      (var(--card-focus-x) - 0.5) * 18deg -
+      var(--card-layout-offset-x) * 18deg +
       var(--shared-tilt-x-signal) * 14deg
     ))
     rotateZ(calc(
@@ -295,6 +309,8 @@ html[data-global-page-family="labs"] {
       var(--shared-bend-signal) * 16px +
       var(--shared-focus-signal) * 12px
     ))
+    translateX(calc((var(--card-layout-offset-x) * -18px) + (var(--card-focus-x) - 0.5) * 12px))
+    translateY(calc((var(--card-layout-offset-y) * -18px) + (var(--card-focus-y) - 0.5) * -10px))
     scale(calc(0.98 + var(--card-support-intensity) * 0.02 + var(--shared-synergy-signal) * 0.03));
 }
 
@@ -305,11 +321,12 @@ html[data-global-page-family="labs"] {
   transform: perspective(1550px)
     rotateX(calc(
       (0.5 - var(--card-focus-y)) * 20deg +
-      var(--card-scroll-momentum) * 3deg +
+      var(--card-layout-offset-y) * 18deg +
       var(--shared-tilt-y-signal) * 15deg
     ))
     rotateY(calc(
-      (var(--card-focus-x) - 0.5) * 19deg +
+      (var(--card-focus-x) - 0.5) * 19deg -
+      var(--card-layout-offset-x) * 20deg +
       var(--shared-tilt-x-signal) * 16deg
     ))
     rotateZ(calc(
@@ -322,6 +339,8 @@ html[data-global-page-family="labs"] {
       var(--shared-bend-signal) * 18px +
       var(--shared-focus-signal) * 16px
     ))
+    translateX(calc((var(--card-focus-x) - 0.5) * 18px + var(--card-layout-offset-x) * -20px))
+    translateY(calc((var(--card-focus-y) - 0.5) * -14px + var(--card-layout-offset-y) * -20px))
     scale(calc(1 + var(--card-support-intensity) * 0.015 + var(--shared-synergy-signal) * 0.035));
 }
 
@@ -368,15 +387,20 @@ html[data-global-page-family="labs"] {
     perspective(calc(1600px - var(--global-bend-intensity) * 320px))
     rotateX(calc(
       (0.5 - var(--card-focus-y)) * 26deg +
-      var(--card-scroll-momentum) * 6deg +
+      var(--card-layout-offset-y) * 24deg +
       var(--global-tilt-y) * 24deg
     ))
     rotateY(calc(
-      (var(--card-focus-x) - 0.5) * 28deg +
+      (var(--card-focus-x) - 0.5) * 28deg -
+      var(--card-layout-offset-x) * 26deg +
       var(--global-tilt-x) * 26deg
     ))
-    rotateZ(calc(var(--card-twist) + var(--global-warp) * 8deg))
-    translateZ(calc(var(--card-focus-strength) * 48px + var(--support-distance-z) + var(--global-bend-intensity) * 24px))
+    rotateZ(calc(var(--card-twist) + var(--global-warp) * 6deg))
+    translate3d(
+      calc(var(--card-layout-offset-x) * -28px),
+      calc(var(--card-layout-offset-y) * -24px),
+      calc(var(--card-focus-strength) * 48px + var(--support-distance-z) + var(--global-bend-intensity) * 24px)
+    )
     scale(calc(1 + var(--card-focus-strength) * 0.06 + var(--card-support-intensity) * 0.03 + var(--global-bend-intensity) * 0.02));
   box-shadow:
     0 30px 70px rgba(8, 12, 32, calc((0.25 + var(--card-focus-strength) * 0.35) * (0.5 + var(--card-visibility-factor) * 0.5))),
@@ -404,10 +428,14 @@ html[data-global-page-family="labs"] {
     blur(calc((0.4 - var(--card-focus-strength) * 0.3 - var(--group-synergy, 0) * 0.1 - var(--global-tilt-strength) * 0.08 + (1 - var(--card-visibility-factor)) * 0.2) * 18px))
     var(--brand-overlay-filter, brightness(1));
   transform:
-    translateZ(calc(18px + var(--card-focus-strength) * 36px + var(--group-synergy, 0) * 24px + var(--support-distance-z) * 0.4 + var(--brand-overlay-depth, 0px) + var(--global-bend-intensity) * 32px))
-    rotateX(calc(var(--card-scroll-momentum) * -1.8deg + var(--group-synergy, 0) * -1.2deg + var(--global-tilt-y) * -18deg))
-    rotateY(calc(var(--card-scroll-momentum) * 1.6deg + var(--group-synergy, 0) * 1.1deg + var(--global-tilt-x) * 18deg))
-    rotateZ(calc(var(--brand-overlay-rotate, 0deg) + var(--global-warp) * 10deg));
+    translate3d(
+      calc(var(--card-layout-offset-x) * -22px + var(--card-parallax-x, 0) * -18px),
+      calc(var(--card-layout-offset-y) * -20px + var(--card-parallax-y, 0) * -16px),
+      calc(18px + var(--card-focus-strength) * 36px + var(--group-synergy, 0) * 24px + var(--support-distance-z) * 0.4 + var(--brand-overlay-depth, 0px) + var(--global-bend-intensity) * 32px)
+    )
+    rotateX(calc(var(--card-layout-offset-y) * -22deg + var(--group-synergy, 0) * -1.2deg + var(--global-tilt-y) * -18deg))
+    rotateY(calc(var(--card-layout-offset-x) * 22deg + var(--group-synergy, 0) * 1.1deg + var(--global-tilt-x) * 18deg))
+    rotateZ(calc(var(--brand-overlay-rotate, 0deg) + var(--global-warp) * 8deg));
   transition: opacity 0.5s ease, filter 0.6s ease, transform 0.6s ease;
 }
 
@@ -447,10 +475,14 @@ html[data-global-page-family="labs"] {
   width: calc(136% + var(--global-bend-intensity) * 18%);
   height: calc(136% + var(--global-bend-intensity) * 18%);
   transform:
-    translateZ(calc(-36px + var(--card-focus-strength) * -18px - var(--group-synergy, 0) * 16px + var(--support-distance-z) * -0.6 + var(--card-canvas-depth, 0px) - var(--global-bend-intensity) * 28px))
-    rotateX(calc((0.5 - var(--card-focus-y)) * 18deg + var(--card-scroll-momentum) * 4deg + var(--group-synergy, 0) * 2deg + var(--global-tilt-y) * 20deg))
-    rotateY(calc((var(--card-focus-x) - 0.5) * 18deg + var(--group-synergy, 0) * -2deg + var(--global-tilt-x) * 20deg))
-    rotateZ(calc(var(--card-rotation-phase, 0) * 18deg + var(--global-warp) * 12deg))
+    translate3d(
+      calc(var(--card-parallax-x, 0) * -40px + var(--card-rotation-phase, 0) * -12px),
+      calc(var(--card-parallax-y, 0) * -34px + var(--card-rotation-phase, 0) * 10px),
+      calc(-36px + var(--card-focus-strength) * -18px - var(--group-synergy, 0) * 16px + var(--support-distance-z) * -0.6 + var(--card-canvas-depth, 0px) - var(--global-bend-intensity) * 28px)
+    )
+    rotateX(calc((0.5 - var(--card-focus-y)) * 18deg + var(--card-layout-offset-y, 0) * 20deg + var(--group-synergy, 0) * 2deg + var(--global-tilt-y) * 20deg))
+    rotateY(calc((var(--card-focus-x) - 0.5) * 18deg - var(--card-layout-offset-x, 0) * 22deg + var(--group-synergy, 0) * -2deg + var(--global-tilt-x) * 20deg))
+    rotateZ(calc(var(--global-warp) * 8deg))
     scale3d(
       calc(1 + var(--card-canvas-scale, 0) + var(--global-bend-intensity) * 0.04),
       calc(1 + var(--card-canvas-scale, 0) + var(--global-bend-intensity) * 0.04),
