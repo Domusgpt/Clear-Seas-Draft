@@ -63,6 +63,8 @@ Additional CSS-Web-Master documentation is tracked in:
   developer log detailing the latest transition steps and recommended next moves.
 - [`styles/css-web-master-tokens.css`](styles/css-web-master-tokens.css) – neutral design tokens consumed by consolidated
   stylesheets for per-site overrides.
+- [`docs/html-version-test-report.md`](docs/html-version-test-report.md) – latest smoke-test results for every HTML build and the
+  outstanding defects to close before CSS-Web-Master goes live.
 
 ---
 © 2025 Paul Phillips - Clear Seas Solutions LLC
