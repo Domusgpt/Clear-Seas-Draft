@@ -35,12 +35,39 @@
 
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(180deg, #000 0%, #0a0a0a 50%, #000 100%);
             color: white;
             overflow: hidden; /* NO TRADITIONAL SCROLLING */
             height: 100vh;
             perspective: var(--depth-perspective);
             perspective-origin: center center;
+            background: radial-gradient(circle at top left, rgba(0, 255, 255, 0.18), transparent 55%),
+                        radial-gradient(circle at bottom right, rgba(255, 0, 255, 0.14), transparent 45%),
+                        #020309;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: -40vh -40vw;
+            background: conic-gradient(from 90deg,
+                        rgba(0, 255, 255, 0.06),
+                        rgba(255, 0, 255, 0.12),
+                        rgba(0, 255, 255, 0.04));
+            filter: blur(120px);
+            opacity: 0.75;
+            transform: scale(1.05);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: -20vh -20vw;
+            background: radial-gradient(circle, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.95));
+            mix-blend-mode: multiply;
+            pointer-events: none;
+            z-index: 1;
         }
 
         /* ORTHOGONAL PROGRESSION CONTAINER */
@@ -52,6 +79,57 @@
             height: 100vh;
             transform-style: preserve-3d;
             perspective: var(--depth-perspective);
+            z-index: 5;
+        }
+
+        .depth-backdrop {
+            position: fixed;
+            inset: 0;
+            overflow: hidden;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .depth-backdrop::before {
+            content: '';
+            position: absolute;
+            inset: -40%;
+            background: radial-gradient(circle, rgba(0, 255, 255, 0.08), transparent 60%);
+            transform: rotate(12deg) scale(1.2);
+            transition: transform 1.2s ease, opacity 1.2s ease;
+            opacity: var(--backdrop-intensity, 0.4);
+        }
+
+        .depth-backdrop::after {
+            content: '';
+            position: absolute;
+            inset: -30%;
+            background: conic-gradient(from 45deg, rgba(255, 0, 255, 0.12), rgba(0, 255, 255, 0.06), rgba(255, 0, 255, 0.12));
+            mix-blend-mode: screen;
+            filter: blur(120px);
+            opacity: 0.35;
+            transition: opacity 0.9s ease;
+        }
+
+        .depth-backdrop-grid {
+            position: absolute;
+            inset: -5%;
+            background-image: linear-gradient(rgba(0, 255, 255, 0.08) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(255, 0, 255, 0.08) 1px, transparent 1px);
+            background-size: calc(60px * var(--grid-scale, 1)) calc(60px * var(--grid-scale, 1));
+            transform: perspective(1200px) rotateX(var(--grid-tilt-x, 50deg)) rotateZ(var(--grid-tilt-z, -2deg)) translateZ(-200px) translateY(20vh);
+            filter: blur(0.8px);
+            opacity: var(--grid-opacity, 0.45);
+            transition: transform 0.9s cubic-bezier(0.19, 1, 0.22, 1), opacity 0.9s ease;
+        }
+
+        .depth-backdrop canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            opacity: var(--backdrop-canvas-opacity, 0.55);
+            mix-blend-mode: screen;
         }
 
         /* DEPTH PROGRESSION CARD SYSTEM */
@@ -65,28 +143,53 @@
             transform-origin: center center;
             transform-style: preserve-3d;
             border-radius: 20px;
-            background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(255, 0, 255, 0.05));
-            border: 2px solid rgba(0, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
+            background: linear-gradient(145deg, rgba(0, 255, 255, 0.16), rgba(255, 0, 255, 0.08));
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            box-shadow:
+                0 25px 80px rgba(0, 0, 0, 0.55),
+                0 0 0 1px rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(18px) saturate(140%);
             transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             cursor: pointer;
+            overflow: hidden;
+            isolation: isolate;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 32px 48px;
+            --card-reactive-translate-x: 0px;
+            --card-reactive-translate-y: 0px;
+            --card-reactive-tilt-x: 0deg;
+            --card-reactive-tilt-y: 0deg;
         }
 
         /* DEPTH PROGRESSION STATES */
         .progression-card.far-depth {
-            transform: translate(-50%, -50%) translateZ(-800px) scale(0.3);
+            transform: translate(-50%, -50%) translateZ(-800px) scale(0.3)
+                translateX(var(--card-reactive-translate-x))
+                translateY(var(--card-reactive-translate-y))
+                rotateX(var(--card-reactive-tilt-y))
+                rotateY(calc(-1 * var(--card-reactive-tilt-x)));
             opacity: 0.1;
             filter: blur(3px);
         }
 
         .progression-card.approaching {
-            transform: translate(-50%, -50%) translateZ(-400px) scale(0.6);
+            transform: translate(-50%, -50%) translateZ(-400px) scale(0.6)
+                translateX(var(--card-reactive-translate-x))
+                translateY(var(--card-reactive-translate-y))
+                rotateX(var(--card-reactive-tilt-y))
+                rotateY(calc(-1 * var(--card-reactive-tilt-x)));
             opacity: 0.4;
             filter: blur(1px);
         }
 
         .progression-card.focused {
-            transform: translate(-50%, -50%) translateZ(0px) scale(1.0);
+            transform: translate(-50%, -50%) translateZ(0px) scale(1.0)
+                translateX(var(--card-reactive-translate-x))
+                translateY(var(--card-reactive-translate-y))
+                rotateX(var(--card-reactive-tilt-y))
+                rotateY(calc(-1 * var(--card-reactive-tilt-x)));
             opacity: 1.0;
             filter: blur(0px);
             border-color: var(--clear-seas-primary);
@@ -96,13 +199,19 @@
         }
 
         .progression-card.exiting {
-            transform: translate(-50%, -50%) translateZ(400px) scale(1.5);
+            transform: translate(-50%, -50%) translateZ(400px) scale(1.5)
+                translateX(var(--card-reactive-translate-x))
+                translateY(var(--card-reactive-translate-y))
+                rotateX(var(--card-reactive-tilt-y))
+                rotateY(calc(-1 * var(--card-reactive-tilt-x)));
             opacity: 0.2;
             filter: blur(2px);
         }
 
         .progression-card.destroyed {
-            transform: translate(-50%, -50%) translateZ(800px) scale(2.0) rotateX(45deg) rotateY(45deg);
+            transform: translate(-50%, -50%) translateZ(800px) scale(2.0) rotateX(45deg) rotateY(45deg)
+                translateX(var(--card-reactive-translate-x))
+                translateY(var(--card-reactive-translate-y));
             opacity: 0;
             filter: blur(5px);
             pointer-events: none;
@@ -111,9 +220,12 @@
         /* CARD CONTENT SYSTEM */
         .card-header {
             position: relative;
-            padding: 40px;
-            text-align: center;
             z-index: 2;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            height: 100%;
+            gap: 28px;
         }
 
         .card-title {
@@ -125,13 +237,32 @@
             background-clip: text;
             margin-bottom: 20px;
             transition: all 0.6s ease;
+            letter-spacing: 0.02em;
         }
 
         .card-description {
-            font-size: 1.2rem;
-            color: rgba(255, 255, 255, 0.8);
-            line-height: 1.6;
-            margin-bottom: 30px;
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.78);
+            line-height: 1.8;
+            max-width: 32ch;
+        }
+
+        .card-meta-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px;
+            color: rgba(255, 255, 255, 0.72);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .progression-card.focused .card-meta-grid {
+            opacity: 1;
+            transform: translateY(0);
         }
 
         /* PORTAL-STYLE TEXT VISUALIZERS */
@@ -171,44 +302,67 @@
         /* GEOMETRIC TILT INDICATOR */
         .tilt-indicator {
             position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 10px 15px;
-            background: rgba(0, 255, 255, 0.1);
-            border: 1px solid rgba(0, 255, 255, 0.3);
-            border-radius: 10px;
+            top: 24px;
+            right: 24px;
+            padding: 14px 20px;
+            background: rgba(4, 12, 24, 0.78);
+            border: 1px solid rgba(0, 255, 255, 0.25);
+            border-radius: 16px;
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.9rem;
+            font-size: 0.82rem;
             z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(18px);
+        }
+
+        .tilt-indicator__label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: rgba(255, 255, 255, 0.82);
+        }
+
+        .tilt-indicator__value {
+            color: var(--clear-seas-primary);
         }
 
         /* PROGRESSION CONTROLS */
         .progression-controls {
             position: fixed;
-            bottom: 30px;
+            bottom: 32px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
-            gap: 15px;
+            gap: 18px;
             z-index: 1000;
+            background: rgba(4, 12, 24, 0.6);
+            padding: 16px 28px;
+            border-radius: 20px;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            backdrop-filter: blur(18px);
+            box-shadow: 0 24px 40px rgba(0, 0, 0, 0.45);
         }
 
         .progression-btn {
-            padding: 12px 24px;
-            background: rgba(0, 255, 255, 0.1);
-            border: 2px solid var(--clear-seas-primary);
-            border-radius: 8px;
-            color: var(--clear-seas-primary);
+            padding: 12px 26px;
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.22), rgba(0, 82, 164, 0.58));
+            border: 1px solid rgba(0, 255, 255, 0.45);
+            border-radius: 999px;
+            color: white;
             font-family: 'Inter', sans-serif;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+            letter-spacing: 0.04em;
         }
 
         .progression-btn:hover {
-            background: rgba(0, 255, 255, 0.2);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 255, 255, 0.3);
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.35), rgba(0, 82, 164, 0.68));
+            transform: translateY(-3px);
+            box-shadow: 0 18px 35px rgba(0, 255, 255, 0.35);
         }
 
         /* DESTRUCTION ANIMATION EFFECTS */
@@ -297,11 +451,16 @@
 </head>
 <body>
 
+    <div class="depth-backdrop" id="depthBackdrop">
+        <canvas id="depthBackdropCanvas"></canvas>
+        <div class="depth-backdrop-grid" id="depthBackdropGrid"></div>
+    </div>
+
     <!-- GEOMETRIC TILT INDICATOR -->
     <div class="tilt-indicator">
-        <div>Tilt X: <span id="tilt-x">0</span>°</div>
-        <div>Tilt Y: <span id="tilt-y">0</span>°</div>
-        <div>4D Rotation: <span id="rot4d">Active</span></div>
+        <div class="tilt-indicator__label">Tilt X: <span class="tilt-indicator__value" id="tilt-x">0</span>°</div>
+        <div class="tilt-indicator__label">Tilt Y: <span class="tilt-indicator__value" id="tilt-y">0</span>°</div>
+        <div class="tilt-indicator__label">4D Rotation: <span class="tilt-indicator__value" id="rot4d">Active</span></div>
     </div>
 
     <!-- ORTHOGONAL DEPTH PROGRESSION CONTAINER -->
@@ -317,6 +476,11 @@
                     Advanced quantum lattice systems with 4D geometric tilt responsiveness.
                     Experience real-time parameter modulation through device orientation.
                 </p>
+                <div class="card-meta-grid">
+                    <div>Q-LATTICE</div>
+                    <div>INERTIA MAP</div>
+                    <div>ROT 4D CORE</div>
+                </div>
             </div>
         </div>
 
@@ -330,6 +494,11 @@
                     Multi-dimensional holographic projections responding to geometric tilt.
                     Portal-style text integration with depth perception.
                 </p>
+                <div class="card-meta-grid">
+                    <div>RAYFORM</div>
+                    <div>PRISM FLOW</div>
+                    <div>PARALLAX OPS</div>
+                </div>
             </div>
         </div>
 
@@ -343,6 +512,11 @@
                     Precise geometric processing with orthogonal Z-axis progression.
                     Professional avant-garde visualization architecture.
                 </p>
+                <div class="card-meta-grid">
+                    <div>CRYSTAL OPS</div>
+                    <div>ORTHO DEPTH</div>
+                    <div>REFINED EDGE</div>
+                </div>
             </div>
         </div>
 
@@ -356,6 +530,11 @@
                     AI-driven geometric cognition with tilt-responsive parameters.
                     Emerging from the depths of computational space.
                 </p>
+                <div class="card-meta-grid">
+                    <div>SYNAPSE</div>
+                    <div>FEEDBACK</div>
+                    <div>EMERGENCE</div>
+                </div>
             </div>
         </div>
 
