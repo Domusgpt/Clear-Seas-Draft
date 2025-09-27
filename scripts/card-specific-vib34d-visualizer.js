@@ -111,7 +111,10 @@ class CardSpecificVIB34DVisualizer {
     this.mouseIntensity = 0;
     this.clickIntensity = 0;
     this.reactivity = 1.0;
-    
+    this.externalRotations = { xw: 0, yw: 0, zw: 0 };
+    this.globalDynamics = { chaos: 0, moire: 0, density: 0, speed: 0, saturation: 0 };
+    this.scrollTilt = 0;
+
     // Animation state
     this.currentGeometry = Math.floor(Math.random() * 8);
     this.targetGeometry = this.currentGeometry;
@@ -230,6 +233,9 @@ class CardSpecificVIB34DVisualizer {
       uniform float u_rot4dZW;
       uniform float u_mouseIntensity;
       uniform float u_clickIntensity;
+      uniform float u_globalChaos;
+      uniform float u_moireIntensity;
+      uniform float u_saturationShift;
       
       varying vec2 v_uv;
       
@@ -397,15 +403,16 @@ class CardSpecificVIB34DVisualizer {
         
         // Card-specific color with HSV manipulation
         float hue = atan(u_color.r, u_color.g) + u_colorShift * 0.017453 + u_cardSeed * 6.28318;
-        float saturation = 0.8 + u_mouseIntensity * 0.2;
+        float saturation = clamp(0.8 + u_mouseIntensity * 0.2 + u_saturationShift, 0.0, 1.4);
         float brightness = u_intensity * (0.8 + lattice * 0.6);
-        
+
         vec3 color = hsv2rgb(vec3(hue, saturation, brightness));
-        
+
         // Add chaos effects for dramatic interactions
-        float chaosIntensity = u_mouseIntensity + u_clickIntensity * 0.5;
-        color += vec3(moirePattern(uv, chaosIntensity));
-        color = rgbGlitch(color, uv, chaosIntensity);
+        float chaosIntensity = u_mouseIntensity + u_clickIntensity * 0.5 + u_globalChaos;
+        float moire = moirePattern(uv, chaosIntensity * (1.0 + u_moireIntensity));
+        color += vec3(moire);
+        color = rgbGlitch(color, uv, chaosIntensity + u_moireIntensity * 0.3);
         
         // Click explosion effect
         if (u_clickIntensity > 0.5) {
@@ -439,7 +446,10 @@ class CardSpecificVIB34DVisualizer {
       rot4dYW: this.gl.getUniformLocation(this.program, 'u_rot4dYW'),
       rot4dZW: this.gl.getUniformLocation(this.program, 'u_rot4dZW'),
       mouseIntensity: this.gl.getUniformLocation(this.program, 'u_mouseIntensity'),
-      clickIntensity: this.gl.getUniformLocation(this.program, 'u_clickIntensity')
+      clickIntensity: this.gl.getUniformLocation(this.program, 'u_clickIntensity'),
+      globalChaos: this.gl.getUniformLocation(this.program, 'u_globalChaos'),
+      moireIntensity: this.gl.getUniformLocation(this.program, 'u_moireIntensity'),
+      saturationShift: this.gl.getUniformLocation(this.program, 'u_saturationShift')
     };
   }
   
@@ -512,13 +522,31 @@ class CardSpecificVIB34DVisualizer {
       const rect = this.cardElement.getBoundingClientRect();
       const x = (e.clientX - rect.left) / rect.width;
       const y = (e.clientY - rect.top) / rect.height;
-      
-      this.updateInteraction(x, y, 0.5);
-      
+
+      const tiltX = (0.5 - y) * 2;
+      const tiltY = (x - 0.5) * 2;
+      const pointerMagnitude = Math.min(1.2, Math.hypot(tiltX, tiltY));
+      const bendStrength = Math.min(1, 0.18 + pointerMagnitude * 0.6);
+      const bendTiltX = -tiltX * 12 * bendStrength;
+      const bendTiltY = tiltY * 14 * bendStrength;
+      const bendSkewX = -tiltY * 6 * bendStrength;
+      const bendSkewY = tiltX * 5 * bendStrength;
+      const bendTwist = tiltX * tiltY * 16 * bendStrength;
+      const bendDepth = bendStrength * 28;
+
+      this.updateInteraction(x, y, bendStrength);
+
       // Update CSS custom properties for card transforms
       this.cardElement.style.setProperty('--mouse-x', (x * 100) + '%');
       this.cardElement.style.setProperty('--mouse-y', (y * 100) + '%');
-      this.cardElement.style.setProperty('--bend-intensity', this.mouseIntensity);
+      this.cardElement.style.setProperty('--bend-intensity', bendStrength.toFixed(3));
+      this.cardElement.style.setProperty('--bend-tilt-x-deg', `${bendTiltX.toFixed(3)}deg`);
+      this.cardElement.style.setProperty('--bend-tilt-y-deg', `${bendTiltY.toFixed(3)}deg`);
+      this.cardElement.style.setProperty('--bend-skew-x-deg', `${bendSkewX.toFixed(3)}deg`);
+      this.cardElement.style.setProperty('--bend-skew-y-deg', `${bendSkewY.toFixed(3)}deg`);
+      this.cardElement.style.setProperty('--bend-twist-deg', `${bendTwist.toFixed(3)}deg`);
+      this.cardElement.style.setProperty('--bend-depth', `${bendDepth.toFixed(3)}px`);
+      this.cardElement.style.setProperty('--visualizer-bend-depth', `${(bendDepth * 0.6).toFixed(3)}px`);
     });
     
     // Click interactions
@@ -540,11 +568,18 @@ class CardSpecificVIB34DVisualizer {
       this.cardElement.classList.remove('visualizer-active');
       this.reactivity = 1.0;
       this.mouseIntensity *= 0.8; // Gradual fade
-      
+
       // Reset CSS transforms
       this.cardElement.style.setProperty('--mouse-x', '50%');
       this.cardElement.style.setProperty('--mouse-y', '50%');
       this.cardElement.style.setProperty('--bend-intensity', '0');
+      this.cardElement.style.setProperty('--bend-tilt-x-deg', '0deg');
+      this.cardElement.style.setProperty('--bend-tilt-y-deg', '0deg');
+      this.cardElement.style.setProperty('--bend-skew-x-deg', '0deg');
+      this.cardElement.style.setProperty('--bend-skew-y-deg', '0deg');
+      this.cardElement.style.setProperty('--bend-twist-deg', '0deg');
+      this.cardElement.style.setProperty('--bend-depth', '0px');
+      this.cardElement.style.setProperty('--visualizer-bend-depth', '0px');
     });
   }
   
@@ -552,6 +587,58 @@ class CardSpecificVIB34DVisualizer {
     this.mouseX = mouseX;
     this.mouseY = mouseY;
     this.mouseIntensity = intensity * this.roleParams.mouseReactivity * this.reactivity;
+  }
+
+  setExternalRotations(rotations = {}) {
+    if (!rotations) return;
+    const normalise = (value) => (Number.isFinite(value) ? value : 0);
+    this.externalRotations.xw = normalise(rotations.xw);
+    this.externalRotations.yw = normalise(rotations.yw);
+    this.externalRotations.zw = normalise(rotations.zw);
+    if (this.cardElement) {
+      this.cardElement.style.setProperty('--visualizer-rot-xw-rad', this.externalRotations.xw.toFixed(4));
+      this.cardElement.style.setProperty('--visualizer-rot-yw-rad', this.externalRotations.yw.toFixed(4));
+      this.cardElement.style.setProperty('--visualizer-rot-zw-rad', this.externalRotations.zw.toFixed(4));
+    }
+  }
+
+  setGlobalDynamics(dynamics = {}) {
+    if (!dynamics) return;
+    const clamp = (value, min = -Infinity, max = Infinity) => {
+      const num = Number(value);
+      if (!Number.isFinite(num)) return 0;
+      return Math.min(max, Math.max(min, num));
+    };
+
+    this.globalDynamics.chaos = clamp(dynamics.chaos, 0, 3);
+    this.globalDynamics.moire = clamp(dynamics.moire, 0, 3);
+    this.globalDynamics.density = clamp(dynamics.density, 0, 2);
+    this.globalDynamics.speed = clamp(dynamics.speed, 0, 2);
+    this.globalDynamics.saturation = clamp(dynamics.saturation, -0.5, 0.8);
+    if (this.cardElement) {
+      this.cardElement.style.setProperty('--visualizer-chaos-local', this.globalDynamics.chaos.toFixed(4));
+      this.cardElement.style.setProperty('--visualizer-moire-local', this.globalDynamics.moire.toFixed(4));
+      this.cardElement.style.setProperty('--visualizer-density-local', this.globalDynamics.density.toFixed(4));
+      this.cardElement.style.setProperty('--visualizer-speed-local', this.globalDynamics.speed.toFixed(4));
+      this.cardElement.style.setProperty('--visualizer-saturation-local', this.globalDynamics.saturation.toFixed(4));
+    }
+  }
+
+  setScrollTilt(value) {
+    const parsed = Number(value);
+    this.scrollTilt = Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  setGlobalMotion(motion = {}) {
+    if (motion.rotations) {
+      this.setExternalRotations(motion.rotations);
+    }
+    if (motion.dynamics) {
+      this.setGlobalDynamics(motion.dynamics);
+    }
+    if (motion.scrollTilt != null) {
+      this.setScrollTilt(motion.scrollTilt);
+    }
   }
   
   triggerClick(x, y) {
@@ -591,31 +678,48 @@ class CardSpecificVIB34DVisualizer {
     
     // Dynamic geometry morphing
     const geometryFloat = Math.sin(morphTime * 0.001) * 3.5 + 3.5; // 0-7 range
-    
+
     // Per-card color variations
-    const hueShift = (Math.sin(colorTime * 0.0008) * 180) + 
+    const hueShift = (Math.sin(colorTime * 0.0008) * 180) +
                     this.instanceParams.colorShift;
-    
+
+    const dynamics = this.globalDynamics || {};
+    const chaosDrive = Math.max(0, dynamics.chaos || 0);
+    const moireDrive = Math.max(0, dynamics.moire || 0);
+    const densityBoost = Math.max(0, dynamics.density || 0);
+    const speedBoost = Math.max(0, dynamics.speed || 0);
+    const saturationShift = Math.max(-0.5, Math.min(0.6, dynamics.saturation || 0));
+
     // Apply unique density fluctuations
-    const densityVariation = Math.sin(morphTime * 0.0012) * 
-                           this.behaviorProfile.densityFluctuation;
-    
-    // 4D rotations with time and mouse influence
-    const rot4dXW = time * 0.0003 + this.cardSeed * 6.28;
-    const rot4dYW = time * 0.0002 + this.cardSeed * 3.14;
-    const rot4dZW = time * 0.0005 + this.mouseIntensity * 3.14159;
-    
+    const densityVariation = Math.sin(morphTime * 0.0012) *
+                           this.behaviorProfile.densityFluctuation +
+                           moireDrive * 0.2 + densityBoost * 0.15;
+
+    // 4D rotations with global influence
+    const rotations = this.externalRotations || { xw: 0, yw: 0, zw: 0 };
+    const rot4dXW = time * 0.0003 + this.cardSeed * 6.28 + rotations.xw;
+    const rot4dYW = time * 0.0002 + this.cardSeed * 3.14 + rotations.yw;
+    const rot4dZW = time * 0.0005 + this.mouseIntensity * 3.14159 + rotations.zw + this.scrollTilt * 0.018;
+
+    const baseDensity = Math.max(1.0, 8.0 + densityBoost * 6.0 + moireDrive * 3.0 + Math.abs(rotations.xw) * 1.5 + Math.abs(rotations.yw) * 1.5);
+    const baseInstanceDensity = Math.max(0.2, this.roleParams.densityMult * this.instanceParams.densityMult * (1 + densityBoost * 0.6 + moireDrive * 0.35));
+    const baseSpeed = Math.max(0.05, this.roleParams.speedMult * (1 + speedBoost * 0.75 + chaosDrive * 0.3));
+    const baseInstanceSpeed = Math.max(0.1, this.instanceParams.speedMult * (1 + speedBoost * 0.55 + Math.abs(this.scrollTilt) * 0.02));
+
+    const globalChaos = Math.min(2.5, chaosDrive + moireDrive * 0.6 + Math.abs(this.scrollTilt) * 0.05);
+    const globalMoire = Math.min(3.0, moireDrive + densityBoost * 0.5 + Math.abs(rotations.zw) * 0.2);
+
     // Set uniforms
     this.gl.uniform2f(this.uniforms.resolution, this.canvas.width, this.canvas.height);
     this.gl.uniform1f(this.uniforms.time, time);
     this.gl.uniform2f(this.uniforms.mouse, this.mouseX, this.mouseY);
     this.gl.uniform1f(this.uniforms.geometry, geometryFloat);
-    this.gl.uniform1f(this.uniforms.density, 8.0);
-    this.gl.uniform1f(this.uniforms.speed, this.roleParams.speedMult);
+    this.gl.uniform1f(this.uniforms.density, baseDensity);
+    this.gl.uniform1f(this.uniforms.speed, baseSpeed);
     this.gl.uniform3f(this.uniforms.color, 0.0, 1.0, 1.0); // Cyan base
     this.gl.uniform1f(this.uniforms.intensity, this.roleParams.intensity * this.instanceParams.intensity);
-    this.gl.uniform1f(this.uniforms.instanceDensity, this.roleParams.densityMult * this.instanceParams.densityMult);
-    this.gl.uniform1f(this.uniforms.instanceSpeed, this.instanceParams.speedMult);
+    this.gl.uniform1f(this.uniforms.instanceDensity, baseInstanceDensity);
+    this.gl.uniform1f(this.uniforms.instanceSpeed, baseInstanceSpeed);
     this.gl.uniform1f(this.uniforms.colorShift, hueShift);
     this.gl.uniform1f(this.uniforms.cardSeed, this.cardSeed);
     this.gl.uniform1f(this.uniforms.densityVariation, densityVariation);
@@ -624,6 +728,9 @@ class CardSpecificVIB34DVisualizer {
     this.gl.uniform1f(this.uniforms.rot4dZW, rot4dZW);
     this.gl.uniform1f(this.uniforms.mouseIntensity, this.mouseIntensity);
     this.gl.uniform1f(this.uniforms.clickIntensity, this.clickIntensity);
+    this.gl.uniform1f(this.uniforms.globalChaos, globalChaos);
+    this.gl.uniform1f(this.uniforms.moireIntensity, globalMoire);
+    this.gl.uniform1f(this.uniforms.saturationShift, saturationShift);
     
     // Render
     this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
