@@ -31,15 +31,7 @@ const VIB34D_BRAND_LIBRARY_DEFAULTS = {
     'assets/file_00000000fc08623085668cf8b5e0a1e5.png',
     'assets/image_8 (1).png'
   ],
-  videos: [
-    '20250505_1321_Neon Blossom Transformation_simple_compose_01jtgqf5vjevn8nbrnsx8yd5fs.mp4',
-    '20250505_1726_Noir Filament Mystery_simple_compose_01jth5f1kwe9r9zxqet54bz3q0.mp4',
-    '20250506_0014_Gemstone Coral Transformation_remix_01jthwv071e06vmjd0mn60zm3s.mp4',
-    '20250506_0014_Gemstone Coral Transformation_remix_01jthwv0c4fxk8m0e79ry2t4ke.mp4',
-    '1746496560073.mp4',
-    '1746500614769.mp4',
-    '1746576068221.mp4'
-  ],
+  videos: [],
   logos: [
     'assets/clear-seas-logo-aurora.svg',
     'assets/clear-seas-monogram.svg'
@@ -151,6 +143,7 @@ function ensureVibSharedBrandLibrary() {
 class VIB34DContainedCardSystem {
   constructor() {
     this.cardVisualizers = new Map();
+    this.pendingObservations = new Map();
     this.observer = null;
     this.isInitialized = false;
 
@@ -261,13 +254,29 @@ class VIB34DContainedCardSystem {
 
     this.scanForCards();
     this.isInitialized = true;
+    this.flushPendingObservations();
     console.log('✅ VIB34D Contained Card System initialized');
   }
 
-  scanForCards() {
-    const cards = document.querySelectorAll('[data-vib34d], .tech-card, .unified-card');
-    cards.forEach(card => {
-      this.observer.observe(card);
+  flushPendingObservations() {
+    if (!this.pendingObservations.size) {
+      return;
+    }
+    const observations = Array.from(this.pendingObservations.entries());
+    this.pendingObservations.clear();
+    observations.forEach(([card, options]) => {
+      if (!card || !card.isConnected) {
+        return;
+      }
+      this.observeCard(card, options);
+    });
+  }
+
+  scanForCards(root) {
+    const scope = root instanceof HTMLElement ? root : document;
+    const cards = scope.querySelectorAll('[data-vib34d], .tech-card, .unified-card');
+    cards.forEach((card) => {
+      this.observeCard(card, { immediate: false });
     });
   }
 
@@ -294,6 +303,91 @@ class VIB34DContainedCardSystem {
       this.cardVisualizers.delete(card);
       console.log('🗑️ Destroyed card visualizer for:', card.id);
     }
+  }
+
+  isCardInViewport(card, margin = 60) {
+    if (!(card instanceof HTMLElement)) {
+      return false;
+    }
+    const rect = card.getBoundingClientRect();
+    const width = window.innerWidth || document.documentElement.clientWidth || 0;
+    const height = window.innerHeight || document.documentElement.clientHeight || 0;
+    return (
+      rect.bottom >= -margin &&
+      rect.top <= height + margin &&
+      rect.right >= -margin &&
+      rect.left <= width + margin
+    );
+  }
+
+  observeCard(card, options = {}) {
+    if (!(card instanceof HTMLElement)) {
+      return null;
+    }
+
+    const { systemType, immediate = true } = options;
+    if (systemType && !card.dataset.vib34d) {
+      card.dataset.vib34d = systemType;
+    }
+
+    if (!this.observer) {
+      this.pendingObservations.set(card, options);
+      return null;
+    }
+
+    this.observer.observe(card);
+
+    const shouldCreate =
+      this.isInitialized &&
+      !this.cardVisualizers.has(card) &&
+      (immediate === false ? this.isCardInViewport(card, 0) : immediate || this.isCardInViewport(card));
+
+    if (shouldCreate) {
+      this.createCardVisualizer(card);
+    }
+
+    return this.cardVisualizers.get(card) || null;
+  }
+
+  unobserveCard(card) {
+    if (!(card instanceof HTMLElement)) {
+      return;
+    }
+    this.pendingObservations.delete(card);
+    if (this.observer) {
+      this.observer.unobserve(card);
+    }
+    this.destroyCardVisualizer(card);
+  }
+
+  refreshCard(card, options = {}) {
+    if (!(card instanceof HTMLElement)) {
+      return;
+    }
+
+    const { systemType, reset = false } = options;
+
+    if (systemType && card.dataset.vib34d !== systemType) {
+      card.dataset.vib34d = systemType;
+      this.destroyCardVisualizer(card);
+    }
+
+    const visualizer = this.cardVisualizers.get(card);
+    if (!visualizer) {
+      this.observeCard(card, { systemType, immediate: true });
+      return;
+    }
+
+    if (typeof visualizer.resizeCanvases === 'function') {
+      visualizer.resizeCanvases();
+    }
+    if (reset && typeof visualizer.refreshBrandLayer === 'function') {
+      visualizer.refreshBrandLayer({ resetCycle: true });
+    }
+  }
+
+  getCardVisualizer(card) {
+    return this.cardVisualizers.get(card) || null;
   }
 
   getSystemTypeFromCard(card) {
@@ -997,12 +1091,34 @@ class VIB34DContainedVisualizer {
 }
 
   // Auto-initialize VIB34D Contained Card System
+  function announceVib34dReady(instance) {
+    if (!instance) {
+      return;
+    }
+    try {
+      requestAnimationFrame(() => {
+        global.dispatchEvent(
+          new CustomEvent('vib34d-card-system:ready', { detail: { controller: instance } })
+        );
+      });
+    } catch (error) {
+      console.warn('⚠️ Failed to announce VIB34D card system readiness', error);
+    }
+  }
+
+  function bootVib34dCardSystem() {
+    const instance = new VIB34DContainedCardSystem();
+    global.vib34dCardSystem = instance;
+    announceVib34dReady(instance);
+    return instance;
+  }
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-      global.vib34dCardSystem = new VIB34DContainedCardSystem();
+      bootVib34dCardSystem();
     });
   } else {
-    global.vib34dCardSystem = new VIB34DContainedCardSystem();
+    bootVib34dCardSystem();
   }
 
   // Export for manual use
