@@ -67,6 +67,15 @@ class CardSystemController {
       scrollSpeed: 0,
       focusTrend: 0,
       tiltSkew: 0,
+      rot4dXW: 0,
+      rot4dYW: 0,
+      rot4dZW: 0,
+      visualizerChaos: 0,
+      visualizerMoire: 0,
+      visualizerDensity: 0,
+      visualizerSpeed: 0,
+      visualizerSaturation: 0,
+      scrollTilt: 0,
       timestamp: performance.now()
     };
     this.handleBrandOverridesChanged = () => {
@@ -96,6 +105,15 @@ class CardSystemController {
         scrollSpeed: Number(detail.scrollSpeed) || 0,
         focusTrend: Number(detail.focusTrend) || 0,
         tiltSkew: Number(detail.tiltSkew) || 0,
+        rot4dXW: Number(detail.rot4dXW) || 0,
+        rot4dYW: Number(detail.rot4dYW) || 0,
+        rot4dZW: Number(detail.rot4dZW) || 0,
+        visualizerChaos: Math.max(0, Number(detail.visualizerChaos) || 0),
+        visualizerMoire: Math.max(0, Number(detail.visualizerMoire) || 0),
+        visualizerDensity: Math.max(0, Number(detail.visualizerDensity) || 0),
+        visualizerSpeed: Math.max(0, Number(detail.visualizerSpeed) || 0),
+        visualizerSaturation: Number(detail.visualizerSaturation) || 0,
+        scrollTilt: Number(detail.scrollTilt) || 0,
         timestamp: typeof detail.timestamp === 'number' ? detail.timestamp : performance.now()
       };
 
@@ -115,6 +133,15 @@ class CardSystemController {
         cardData.element.style.setProperty('--shared-scroll-speed', this.globalMotionState.scrollSpeed.toFixed(4));
         cardData.element.style.setProperty('--shared-focus-trend', this.globalMotionState.focusTrend.toFixed(4));
         cardData.element.style.setProperty('--shared-tilt-skew', this.globalMotionState.tiltSkew.toFixed(4));
+        cardData.element.style.setProperty('--shared-rot4d-xw', this.globalMotionState.rot4dXW.toFixed(4));
+        cardData.element.style.setProperty('--shared-rot4d-yw', this.globalMotionState.rot4dYW.toFixed(4));
+        cardData.element.style.setProperty('--shared-rot4d-zw', this.globalMotionState.rot4dZW.toFixed(4));
+        cardData.element.style.setProperty('--shared-visualizer-chaos', this.globalMotionState.visualizerChaos.toFixed(4));
+        cardData.element.style.setProperty('--shared-visualizer-moire', this.globalMotionState.visualizerMoire.toFixed(4));
+        cardData.element.style.setProperty('--shared-visualizer-density', this.globalMotionState.visualizerDensity.toFixed(4));
+        cardData.element.style.setProperty('--shared-visualizer-speed', this.globalMotionState.visualizerSpeed.toFixed(4));
+        cardData.element.style.setProperty('--shared-visualizer-saturation', this.globalMotionState.visualizerSaturation.toFixed(4));
+        cardData.element.style.setProperty('--shared-scroll-tilt', this.globalMotionState.scrollTilt.toFixed(4));
       });
     };
     window.addEventListener(this.globalMotionEvent, this.handleGlobalMotionUpdate);
@@ -268,6 +295,15 @@ class CardSystemController {
       brandOverrides,
       assetCycle: 0
     };
+
+    cardElement.style.setProperty('--visualizer-rot-xw-rad', '0');
+    cardElement.style.setProperty('--visualizer-rot-yw-rad', '0');
+    cardElement.style.setProperty('--visualizer-rot-zw-rad', '0');
+    cardElement.style.setProperty('--visualizer-chaos-local', '0');
+    cardElement.style.setProperty('--visualizer-moire-local', '0');
+    cardElement.style.setProperty('--visualizer-density-local', '0');
+    cardElement.style.setProperty('--visualizer-speed-local', '0');
+    cardElement.style.setProperty('--visualizer-saturation-local', '0');
     
     // Create visualizers for each role
     for (const role of config.roles) {
@@ -706,6 +742,15 @@ class CardSystemController {
     const sharedBend = Math.max(0, sharedMotion.bend || 0);
     const sharedWarp = sharedMotion.warp || 0;
     const sharedScroll = sharedMotion.scrollMomentum || 0;
+    const sharedRot4dXW = sharedMotion.rot4dXW || 0;
+    const sharedRot4dYW = sharedMotion.rot4dYW || 0;
+    const sharedRot4dZW = sharedMotion.rot4dZW || 0;
+    const sharedChaos = Math.max(0, sharedMotion.visualizerChaos || 0);
+    const sharedMoire = Math.max(0, sharedMotion.visualizerMoire || 0);
+    const sharedDensity = Math.max(0, sharedMotion.visualizerDensity || 0);
+    const sharedSpeed = Math.max(0, sharedMotion.visualizerSpeed || 0);
+    const sharedSaturation = sharedMotion.visualizerSaturation || 0;
+    const sharedScrollTilt = sharedMotion.scrollTilt || 0;
 
     const tiltBlendRatio = 0.35 + sharedTiltStrength * 0.25;
     const fusedTiltPitch = tiltX + sharedTiltY * tiltBlendRatio + sharedScroll * 0.16;
@@ -749,14 +794,49 @@ class CardSystemController {
       const baseYW = visualizer.variantParams?.rot4dYW || 0;
       const baseZW = visualizer.variantParams?.rot4dZW || 0;
       const focusEnergy = focus * 0.6 + synergyLift * 0.35;
+      const rotationMix = 0.6 + sharedTiltStrength * 0.35 + Math.min(0.5, Math.abs(momentum) * 0.25);
 
-      if (visualizer.externalRotations) {
-        visualizer.externalRotations.xw = baseXW + (-fusedTiltPitch * 0.55 + (momentum + sharedScroll) * 0.4) * focusEnergy;
-        visualizer.externalRotations.yw = baseYW + (fusedTiltPitch * 0.45 + (momentum + sharedScroll) * -0.35) * focusEnergy;
-        visualizer.externalRotations.zw = baseZW + (fusedTiltPitch * 0.35 + sharedWarp * 0.3) * focusEnergy;
+      const rotationPayload = {
+        xw: baseXW + sharedRot4dXW * 0.65 + (-fusedTiltPitch * 0.55 + (momentum + sharedScroll) * 0.4) * focusEnergy * rotationMix,
+        yw: baseYW + sharedRot4dYW * 0.65 + (fusedTiltPitch * 0.45 + (momentum + sharedScroll) * -0.35) * focusEnergy * rotationMix,
+        zw: baseZW + sharedRot4dZW * 0.55 + (fusedTiltPitch * 0.35 + sharedWarp * 0.3 + sharedScrollTilt * 0.22) * focusEnergy
+      };
+
+      cardData.element.style.setProperty('--visualizer-rot-xw-rad', rotationPayload.xw.toFixed(4));
+      cardData.element.style.setProperty('--visualizer-rot-yw-rad', rotationPayload.yw.toFixed(4));
+      cardData.element.style.setProperty('--visualizer-rot-zw-rad', rotationPayload.zw.toFixed(4));
+
+      if (typeof visualizer.setExternalRotations === 'function') {
+        visualizer.setExternalRotations(rotationPayload);
+      } else if (visualizer.externalRotations) {
+        visualizer.externalRotations.xw = rotationPayload.xw;
+        visualizer.externalRotations.yw = rotationPayload.yw;
+        visualizer.externalRotations.zw = rotationPayload.zw;
       }
 
-      if (typeof visualizer.scrollTiltTarget === 'number') {
+      const dynamicsPayload = {
+        chaos: sharedChaos + focus * 0.4 + Math.abs(momentum) * 0.3,
+        moire: sharedMoire + sharedBend * 0.4 + Math.abs(sharedTiltY) * 0.25,
+        density: sharedDensity + synergyLift * 0.5 + Math.abs(sharedScroll) * 0.25,
+        speed: sharedSpeed + Math.abs(momentum + sharedScroll) * 0.45 + sharedTiltStrength * 0.3,
+        saturation: sharedSaturation + focus * 0.25 + synergyLift * 0.2
+      };
+
+      cardData.element.style.setProperty('--visualizer-chaos-local', dynamicsPayload.chaos.toFixed(4));
+      cardData.element.style.setProperty('--visualizer-moire-local', dynamicsPayload.moire.toFixed(4));
+      cardData.element.style.setProperty('--visualizer-density-local', dynamicsPayload.density.toFixed(4));
+      cardData.element.style.setProperty('--visualizer-speed-local', dynamicsPayload.speed.toFixed(4));
+      cardData.element.style.setProperty('--visualizer-saturation-local', dynamicsPayload.saturation.toFixed(4));
+
+      if (typeof visualizer.setGlobalDynamics === 'function') {
+        visualizer.setGlobalDynamics(dynamicsPayload);
+      } else {
+        visualizer.globalDynamics = dynamicsPayload;
+      }
+
+      if (typeof visualizer.setScrollTilt === 'function') {
+        visualizer.setScrollTilt(sharedTiltTarget + sharedScrollTilt * 0.18);
+      } else if (typeof visualizer.scrollTiltTarget === 'number') {
         visualizer.scrollTiltTarget = sharedTiltTarget;
       }
     });

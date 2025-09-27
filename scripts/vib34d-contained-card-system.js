@@ -153,6 +153,15 @@ class VIB34DContainedCardSystem {
       scrollSpeed: 0,
       focusTrend: 0,
       tiltSkew: 0,
+      rot4dXW: 0,
+      rot4dYW: 0,
+      rot4dZW: 0,
+      visualizerChaos: 0,
+      visualizerMoire: 0,
+      visualizerDensity: 0,
+      visualizerSpeed: 0,
+      visualizerSaturation: 0,
+      scrollTilt: 0,
       timestamp: performance.now()
     };
     this.handleBrandOverridesChanged = () => {
@@ -357,6 +366,15 @@ class VIB34DContainedVisualizer {
       scrollSpeed: Math.max(0, Math.min(1, Number(motion.scrollSpeed) || 0)),
       focusTrend: Number.isFinite(motion.focusTrend) ? motion.focusTrend : 0,
       tiltSkew: Number.isFinite(motion.tiltSkew) ? motion.tiltSkew : 0,
+      rot4dXW: Number(motion.rot4dXW) || 0,
+      rot4dYW: Number(motion.rot4dYW) || 0,
+      rot4dZW: Number(motion.rot4dZW) || 0,
+      visualizerChaos: Math.max(0, Number(motion.visualizerChaos) || 0),
+      visualizerMoire: Math.max(0, Number(motion.visualizerMoire) || 0),
+      visualizerDensity: Math.max(0, Number(motion.visualizerDensity) || 0),
+      visualizerSpeed: Math.max(0, Number(motion.visualizerSpeed) || 0),
+      visualizerSaturation: Number(motion.visualizerSaturation) || 0,
+      scrollTilt: Number(motion.scrollTilt) || 0,
       timestamp: typeof motion.timestamp === 'number' ? motion.timestamp : performance.now()
     };
 
@@ -375,6 +393,15 @@ class VIB34DContainedVisualizer {
       this.card.style.setProperty('--shared-scroll-speed', normalized.scrollSpeed.toFixed(4));
       this.card.style.setProperty('--shared-focus-trend', normalized.focusTrend.toFixed(4));
       this.card.style.setProperty('--shared-tilt-skew', normalized.tiltSkew.toFixed(4));
+      this.card.style.setProperty('--shared-rot4d-xw', normalized.rot4dXW.toFixed(4));
+      this.card.style.setProperty('--shared-rot4d-yw', normalized.rot4dYW.toFixed(4));
+      this.card.style.setProperty('--shared-rot4d-zw', normalized.rot4dZW.toFixed(4));
+      this.card.style.setProperty('--shared-visualizer-chaos', normalized.visualizerChaos.toFixed(4));
+      this.card.style.setProperty('--shared-visualizer-moire', normalized.visualizerMoire.toFixed(4));
+      this.card.style.setProperty('--shared-visualizer-density', normalized.visualizerDensity.toFixed(4));
+      this.card.style.setProperty('--shared-visualizer-speed', normalized.visualizerSpeed.toFixed(4));
+      this.card.style.setProperty('--shared-visualizer-saturation', normalized.visualizerSaturation.toFixed(4));
+      this.card.style.setProperty('--shared-scroll-tilt', normalized.scrollTilt.toFixed(4));
     }
   }
 
@@ -400,6 +427,15 @@ class VIB34DContainedVisualizer {
     if (!this.card.style.getPropertyValue('--brand-rotation')) {
       this.card.style.setProperty('--brand-rotation', `${(Math.random() * 36 - 18).toFixed(2)}deg`);
     }
+
+    this.card.style.setProperty('--visualizer-rot-xw-rad', '0');
+    this.card.style.setProperty('--visualizer-rot-yw-rad', '0');
+    this.card.style.setProperty('--visualizer-rot-zw-rad', '0');
+    this.card.style.setProperty('--visualizer-chaos-local', '0');
+    this.card.style.setProperty('--visualizer-moire-local', '0');
+    this.card.style.setProperty('--visualizer-density-local', '0');
+    this.card.style.setProperty('--visualizer-speed-local', '0');
+    this.card.style.setProperty('--visualizer-saturation-local', '0');
 
     this.canvasContainer = document.createElement('div');
     this.canvasContainer.className = 'visualizer-shell vib34d-card-container';
@@ -723,18 +759,44 @@ class VIB34DContainedVisualizer {
     const globalWarp = motion.warp || 0;
     const globalSynergy = Math.max(0, motion.synergy || 0);
     const globalFocus = Math.max(0, motion.focusAmount || 0);
+    const globalRot4dXW = motion.rot4dXW || 0;
+    const globalRot4dYW = motion.rot4dYW || 0;
+    const globalRot4dZW = motion.rot4dZW || 0;
+    const globalChaos = Math.max(0, motion.visualizerChaos || 0);
+    const globalMoire = Math.max(0, motion.visualizerMoire || 0);
+    const globalDensity = Math.max(0, motion.visualizerDensity || 0);
+    const globalSpeed = Math.max(0, motion.visualizerSpeed || 0);
+    const globalSaturation = motion.visualizerSaturation || 0;
+    const globalScrollTilt = motion.scrollTilt || 0;
 
-    this.dynamicParams.rot4dXW = (this.mouseState.x - 0.5) * Math.PI + globalTiltY * Math.PI * 0.45;
-    this.dynamicParams.rot4dYW = (this.mouseState.y - 0.5) * Math.PI - globalTiltX * Math.PI * 0.45;
-    this.dynamicParams.rot4dZW = Math.sin(Date.now() * 0.001) * 0.2 + globalWarp * 0.4;
+    this.dynamicParams.rot4dXW = globalRot4dXW * 0.65 + (this.mouseState.x - 0.5) * Math.PI * 0.85 + globalTiltY * Math.PI * 0.45;
+    this.dynamicParams.rot4dYW = globalRot4dYW * 0.65 + (this.mouseState.y - 0.5) * Math.PI * 0.85 - globalTiltX * Math.PI * 0.45;
+    this.dynamicParams.rot4dZW = globalRot4dZW * 0.55 + Math.sin(Date.now() * 0.001) * 0.2 + globalWarp * 0.4 + globalScrollTilt * 0.22;
 
     // Dynamic parameter modulation based on mouse interaction
-    const morphModulation = this.parameters.morphFactor + (this.mouseState.y - 0.5) * 0.8 + globalSynergy * 0.35;
+    const morphModulation = this.parameters.morphFactor + (this.mouseState.y - 0.5) * 0.8 + globalSynergy * 0.35 + globalMoire * 0.2;
     const chaosModulation = this.parameters.chaos + (this.mouseState.x - 0.5) * 0.3 + globalWarp * 0.2;
-    const intensityModulation = this.parameters.intensity + (this.mouseState.intensity - 0.7) * 0.5 + globalFocus * 0.45;
+    const intensityModulation = this.parameters.intensity + (this.mouseState.intensity - 0.7) * 0.5 + globalFocus * 0.45 + globalChaos * 0.25;
 
     // Geometry morphing based on mouse movement (cycles through available geometries)
     const geometryFloat = this.parameters.geometry + (this.mouseState.x * 2.0) + globalSynergy * 1.2; // Allows geometry blending
+
+    const gridDensity = this.parameters.gridDensity * (1 + globalDensity * 0.6 + Math.abs(globalRot4dXW) * 0.15 + Math.abs(globalRot4dYW) * 0.15);
+    const chaosValue = Math.max(0, Math.min(1.0, chaosModulation + globalChaos * 0.5 + globalMoire * 0.4));
+    const speedValue = this.parameters.speed * (1 + globalSpeed * 0.8 + globalChaos * 0.3 + Math.abs(globalScrollTilt) * 0.12);
+    const saturationValue = Math.min(1.4, this.parameters.saturation + globalSaturation * 0.6 + (globalChaos + globalMoire) * 0.15);
+    const intensityValue = Math.max(0.3, Math.min(2.0, intensityModulation));
+
+    if (this.card) {
+      this.card.style.setProperty('--visualizer-rot-xw-rad', this.dynamicParams.rot4dXW.toFixed(4));
+      this.card.style.setProperty('--visualizer-rot-yw-rad', this.dynamicParams.rot4dYW.toFixed(4));
+      this.card.style.setProperty('--visualizer-rot-zw-rad', this.dynamicParams.rot4dZW.toFixed(4));
+      this.card.style.setProperty('--visualizer-chaos-local', (chaosValue + globalChaos * 0.25).toFixed(4));
+      this.card.style.setProperty('--visualizer-moire-local', (globalMoire + Math.abs(globalRot4dZW) * 0.2).toFixed(4));
+      this.card.style.setProperty('--visualizer-density-local', (globalDensity + Math.abs(globalRot4dXW) * 0.2).toFixed(4));
+      this.card.style.setProperty('--visualizer-speed-local', (globalSpeed + Math.abs(globalScrollTilt) * 0.2).toFixed(4));
+      this.card.style.setProperty('--visualizer-saturation-local', (saturationValue - this.parameters.saturation).toFixed(4));
+    }
 
     // Update VIB34D system with rich parameter set
     this.updateVIB34DParameters({
@@ -745,13 +807,13 @@ class VIB34DContainedVisualizer {
 
       // Core VIB34D parameters (base + modulation)
       geometry: Math.floor(geometryFloat) % 9, // Cycle through 0-8 geometries
-      gridDensity: this.parameters.gridDensity,
+      gridDensity: Math.max(6, gridDensity),
       morphFactor: Math.max(0, Math.min(3.0, morphModulation)),
-      chaos: Math.max(0, Math.min(1.0, chaosModulation)),
-      speed: this.parameters.speed,
+      chaos: chaosValue,
+      speed: Math.max(0.2, speedValue),
       hue: this.parameters.hue + (this.mouseState.x * 60), // Hue shift based on mouse
-      intensity: Math.max(0.3, Math.min(2.0, intensityModulation)),
-      saturation: this.parameters.saturation
+      intensity: intensityValue,
+      saturation: saturationValue
     });
 
     const tiltXDeg = (0.5 - this.mouseState.y) * 18 - globalTiltX * 22;

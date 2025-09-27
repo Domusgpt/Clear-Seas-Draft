@@ -690,9 +690,12 @@ const sharedMotion = window.__CLEAR_SEAS_GLOBAL_MOTION || (window.__CLEAR_SEAS_G
   scroll: 0,
   scrollDirection: 0,
   scrollSpeed: 0,
+  scrollTilt: 0,
   focusTrend: 0,
   tiltSkew: 0,
   synergy: 0,
+  rotation4d: { xw: 0, yw: 0, zw: 0 },
+  visualizer: { chaos: 0, moire: 0, density: 0, speed: 0, saturation: 0 },
   palette: null,
   collection: null,
   updatedAt: performance.now(),
@@ -723,7 +726,15 @@ function shouldDispatchMotionEvent(previous, next) {
     scrollMomentum: 0.001,
     scrollSpeed: 0.001,
     scrollDirection: 0.51,
-    synergy: 0.001
+    synergy: 0.001,
+    rot4dXW: 0.001,
+    rot4dYW: 0.001,
+    rot4dZW: 0.001,
+    visualizerChaos: 0.001,
+    visualizerMoire: 0.001,
+    visualizerDensity: 0.001,
+    visualizerSpeed: 0.001,
+    visualizerSaturation: 0.0006
   };
 
   return Object.keys(thresholds).some((key) => {
@@ -748,6 +759,15 @@ function maybeDispatchGlobalMotionEvent() {
     scrollSpeed: sharedMotion.scrollSpeed,
     scrollDirection: sharedMotion.scrollDirection,
     synergy: sharedMotion.synergy,
+    rot4dXW: sharedMotion.rotation4d.xw,
+    rot4dYW: sharedMotion.rotation4d.yw,
+    rot4dZW: sharedMotion.rotation4d.zw,
+    visualizerChaos: sharedMotion.visualizer.chaos,
+    visualizerMoire: sharedMotion.visualizer.moire,
+    visualizerDensity: sharedMotion.visualizer.density,
+    visualizerSpeed: sharedMotion.visualizer.speed,
+    visualizerSaturation: sharedMotion.visualizer.saturation,
+    scrollTilt: sharedMotion.scrollTilt,
     palette: sharedMotion.palette,
     collection: sharedMotion.collection,
     timestamp: sharedMotion.updatedAt
@@ -1786,6 +1806,27 @@ function step() {
   const focusTrend = globalState.focus.trend;
   const tiltSkew = globalState.tilt.currentX - globalState.tilt.currentY;
 
+  const rotationScale = 0.85 + compositeSynergyTarget * 0.35 + Math.min(0.6, Math.abs(focusTrend) * 0.8);
+  const rot4dXW = (globalState.tilt.currentY * Math.PI * rotationScale) + (globalState.scroll.current * 0.35);
+  const rot4dYW = (-globalState.tilt.currentX * Math.PI * rotationScale) + (focusTrend * Math.PI * 0.35);
+  const rot4dZW = (globalState.warp.current * Math.PI * 0.5) + (scrollDirection * scrollSpeed * Math.PI * 0.55);
+
+  const chaosDrive = Math.max(0, Math.min(2.2,
+    tiltStrength * 0.65 + Math.abs(globalState.scroll.current) * 0.4 + compositeSynergyTarget * 0.55
+  ));
+  const moireDrive = Math.max(0, Math.min(2.0,
+    Math.abs(rot4dXW) * 0.25 + Math.abs(rot4dYW) * 0.25 + Math.abs(rot4dZW) * 0.18 + Math.abs(globalState.warp.current) * 0.5
+  ));
+  const densityDrive = Math.max(0, Math.min(1.6,
+    compositeSynergyTarget * 0.6 + tiltStrength * 0.45 + moireDrive * 0.4
+  ));
+  const speedDrive = Math.max(0, Math.min(1.4,
+    scrollSpeed * 0.8 + tiltStrength * 0.45 + Math.abs(focusTrend) * 0.4
+  ));
+  const saturationDrive = Math.max(0, Math.min(0.5,
+    compositeSynergyTarget * 0.35 + tiltStrength * 0.25 + chaosDrive * 0.18
+  ));
+
   if (
     Math.abs(globalState.focus.currentX - globalState.focus.targetX) > 0.0008 ||
     Math.abs(globalState.focus.currentY - globalState.focus.targetY) > 0.0008 ||
@@ -1814,6 +1855,14 @@ function step() {
   root.style.setProperty('--global-focus-trend', focusTrend.toFixed(4));
   root.style.setProperty('--global-scroll-speed', scrollSpeed.toFixed(4));
   root.style.setProperty('--global-scroll-direction', scrollDirection.toFixed(0));
+  root.style.setProperty('--global-rot4d-xw', rot4dXW.toFixed(4));
+  root.style.setProperty('--global-rot4d-yw', rot4dYW.toFixed(4));
+  root.style.setProperty('--global-rot4d-zw', rot4dZW.toFixed(4));
+  root.style.setProperty('--global-visualizer-chaos', chaosDrive.toFixed(4));
+  root.style.setProperty('--global-visualizer-moire', moireDrive.toFixed(4));
+  root.style.setProperty('--global-visualizer-density', densityDrive.toFixed(4));
+  root.style.setProperty('--global-visualizer-speed', speedDrive.toFixed(4));
+  root.style.setProperty('--global-visualizer-saturation', saturationDrive.toFixed(4));
 
   sharedMotion.focus.x = globalState.focus.currentX;
   sharedMotion.focus.y = globalState.focus.currentY;
@@ -1826,9 +1875,18 @@ function step() {
   sharedMotion.scroll = globalState.scroll.current;
   sharedMotion.scrollDirection = scrollDirection;
   sharedMotion.scrollSpeed = scrollSpeed;
+  sharedMotion.scrollTilt = globalState.scroll.current;
   sharedMotion.synergy = globalState.synergy.current;
   sharedMotion.focusTrend = focusTrend;
   sharedMotion.tiltSkew = tiltSkew;
+  sharedMotion.rotation4d.xw = rot4dXW;
+  sharedMotion.rotation4d.yw = rot4dYW;
+  sharedMotion.rotation4d.zw = rot4dZW;
+  sharedMotion.visualizer.chaos = chaosDrive;
+  sharedMotion.visualizer.moire = moireDrive;
+  sharedMotion.visualizer.density = densityDrive;
+  sharedMotion.visualizer.speed = speedDrive;
+  sharedMotion.visualizer.saturation = saturationDrive;
   sharedMotion.updatedAt = performance.now();
 
   maybeDispatchGlobalMotionEvent();
@@ -1939,9 +1997,18 @@ function applyCatalogBaseline() {
     sharedMotion.scroll = 0;
     sharedMotion.scrollDirection = 0;
     sharedMotion.scrollSpeed = 0;
+    sharedMotion.scrollTilt = 0;
     sharedMotion.focusTrend = 0;
     sharedMotion.tiltSkew = 0;
     sharedMotion.synergy = 0;
+    sharedMotion.rotation4d.xw = 0;
+    sharedMotion.rotation4d.yw = 0;
+    sharedMotion.rotation4d.zw = 0;
+    sharedMotion.visualizer.chaos = 0;
+    sharedMotion.visualizer.moire = 0;
+    sharedMotion.visualizer.density = 0;
+    sharedMotion.visualizer.speed = 0;
+    sharedMotion.visualizer.saturation = 0;
     sharedMotion.updatedAt = performance.now();
   }
 }

@@ -233,7 +233,7 @@ body.loading * { animation-play-state: paused !important; transition: none !impo
     z-index: 0;
     overflow: visible;
     transform-style: preserve-3d;
-    filter: drop-shadow(0 28px 52px rgba(10, 24, 64, 0.52));
+    filter: var(--visualizer-shell-filter, drop-shadow(0 28px 52px rgba(10, 24, 64, 0.52)));
     will-change: transform, filter, opacity;
 }
 
@@ -245,22 +245,24 @@ body.loading * { animation-play-state: paused !important; transition: none !impo
     height: calc(118% * var(--visualizer-scale, 1.16));
     transform:
         translate(-50%, -50%)
-        rotateX(calc(var(--tilt-x, 0deg) + var(--tilt-scroll, 0deg) + var(--bend-tilt-x-deg, 0deg) * 0.55))
+        rotateX(calc(var(--tilt-x, 0deg) + var(--tilt-scroll, 0deg) + var(--bend-tilt-x-deg, 0deg) * 0.55 + var(--visualizer-rot-xw, 0deg)))
+        rotateY(var(--visualizer-rot-yw, 0deg))
         rotateZ(calc(var(--visualizer-rot-zw, 0deg) + var(--bend-twist-deg, 0deg) * 0.4))
         skewX(calc(var(--bend-skew-x-deg, 0deg) * 0.65))
         skewY(calc(var(--bend-skew-y-deg, 0deg) * 0.65))
         translate3d(
             0,
             calc(var(--tilt-x-value, 0) * 16px + var(--visualizer-parallax, 0px)),
-            calc(var(--focus-intensity, 0) * 34px + var(--visualizer-bend-depth, 0px))
+            calc(var(--focus-intensity, 0) * 34px + var(--visualizer-depth-lift, var(--visualizer-bend-depth, 0px)))
         );
     border-radius: 26px;
     opacity: calc(0.76 + var(--focus-intensity, 0) * 0.24);
     mix-blend-mode: screen;
-    filter:
+    filter: var(--visualizer-canvas-filter,
         saturate(calc(1.04 + var(--focus-intensity, 0) * 0.32))
         brightness(calc(1.04 + var(--focus-intensity, 0) * 0.26))
-        contrast(1.04);
+        contrast(1.04)
+    );
     transition: filter 320ms ease, opacity 280ms ease;
     backface-visibility: hidden;
     will-change: transform, opacity, filter;
