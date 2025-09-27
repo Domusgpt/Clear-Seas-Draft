@@ -41,6 +41,12 @@ export class VIB34DIntegratedEngine {
         // Animation state
         this.time = 0;
         this.animationId = null;
+
+        // Scroll tilt orchestration
+        this.scrollTilt = 0;
+        this.scrollTiltTarget = 0;
+        this.scrollTiltRaf = null;
+        this.lastScrollTiltOffsets = { xw: 0, yw: 0, zw: 0 };
         
         // Initialize system
         this.init();
@@ -486,6 +492,8 @@ export class VIB34DIntegratedEngine {
      * Update scroll effects (for universal reactivity system)
      */
     updateScroll(velocity) {
+        this.handleScrollTilt(velocity);
+
         this.visualizers.forEach(visualizer => {
             if (visualizer.updateScroll) {
                 visualizer.updateScroll(velocity);
@@ -499,6 +507,67 @@ export class VIB34DIntegratedEngine {
             const currentMorph = this.parameterManager.getParameter('morphFactor') || 1.0;
             this.parameterManager.setParameter('morphFactor', Math.max(0.1, currentMorph + velocity * 0.5));
         }
+    }
+
+    /**
+     * Translate scroll velocity into shared 4D rotation + CSS tilt cues
+     */
+    handleScrollTilt(velocity) {
+        if (!Number.isFinite(velocity)) return;
+
+        const normalized = Math.max(-1.2, Math.min(1.2, velocity * 0.35));
+        this.scrollTiltTarget += normalized;
+        this.scrollTiltTarget = Math.max(-2.5, Math.min(2.5, this.scrollTiltTarget));
+
+        if (!this.scrollTiltRaf) {
+            this.scrollTiltRaf = requestAnimationFrame(() => this.updateScrollTiltAnimation());
+        }
+    }
+
+    updateScrollTiltAnimation() {
+        this.scrollTilt += (this.scrollTiltTarget - this.scrollTilt) * 0.18;
+        this.scrollTiltTarget *= 0.86;
+
+        if (Math.abs(this.scrollTilt) < 0.0005) {
+            this.scrollTilt = 0;
+        }
+
+        this.applyScrollTiltToRotations();
+
+        document.documentElement.style.setProperty('--visualizer-scroll-tilt', this.scrollTilt.toFixed(4));
+        document.documentElement.style.setProperty('--visualizer-scroll-tilt-deg', `${(this.scrollTilt * 12).toFixed(2)}deg`);
+
+        if (Math.abs(this.scrollTilt) > 0.001 || Math.abs(this.scrollTiltTarget) > 0.001) {
+            this.scrollTiltRaf = requestAnimationFrame(() => this.updateScrollTiltAnimation());
+        } else {
+            this.scrollTiltRaf = null;
+            this.scrollTilt = 0;
+            this.scrollTiltTarget = 0;
+            this.applyScrollTiltToRotations(true);
+        }
+    }
+
+    applyScrollTiltToRotations(reset = false) {
+        const offsets = this.lastScrollTiltOffsets;
+        const currentXW = this.parameterManager.getParameter('rot4dXW') || 0;
+        const currentYW = this.parameterManager.getParameter('rot4dYW') || 0;
+        const currentZW = this.parameterManager.getParameter('rot4dZW') || 0;
+
+        const baseXW = currentXW - offsets.xw;
+        const baseYW = currentYW - offsets.yw;
+        const baseZW = currentZW - offsets.zw;
+
+        const newOffsets = reset ? { xw: 0, yw: 0, zw: 0 } : {
+            xw: this.scrollTilt * 0.42,
+            yw: this.scrollTilt * -0.28,
+            zw: this.scrollTilt * 0.19
+        };
+
+        this.lastScrollTiltOffsets = newOffsets;
+
+        this.parameterManager.setParameter('rot4dXW', baseXW + newOffsets.xw);
+        this.parameterManager.setParameter('rot4dYW', baseYW + newOffsets.yw);
+        this.parameterManager.setParameter('rot4dZW', baseZW + newOffsets.zw);
     }
     
     /**

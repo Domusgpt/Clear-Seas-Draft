@@ -240,6 +240,160 @@ body::after {
     z-index: -1;
 }
 
+:root,
+.visualizer-host,
+.canvas-card,
+.stacked-card,
+.hero__module,
+.flow-step,
+.flow-thread,
+.system-card,
+.variant-card,
+.signal-card,
+.signal-node,
+.resource-card,
+.micro-card,
+.metric {
+    --tilt-x: 0deg;
+    --tilt-y: 0deg;
+    --tilt-x-value: 0;
+    --tilt-y-value: 0;
+    --tilt-scroll: 0deg;
+    --visualizer-parallax: 0px;
+    --visualizer-rot-xw: 0deg;
+    --visualizer-rot-yw: 0deg;
+    --visualizer-rot-zw: 0deg;
+    --scroll-velocity: 0;
+    --focus-intensity: 0;
+    --focus-pulse: 0;
+    --focus-pointer-x: 0.5;
+    --focus-pointer-y: 0.5;
+    --visualizer-bleed: 1.28;
+    --visualizer-scale: 1.22;
+    --bend-intensity: 0;
+    --bend-tilt-x-deg: 0deg;
+    --bend-tilt-y-deg: 0deg;
+    --bend-skew-x-deg: 0deg;
+    --bend-skew-y-deg: 0deg;
+    --bend-twist-deg: 0deg;
+    --bend-depth: 0px;
+    --visualizer-bend-depth: 0px;
+    --lift-scale: 1;
+    --lift-translate-y: 0px;
+}
+
+.visualizer-host,
+.canvas-card,
+.stacked-card,
+.hero__module,
+.flow-step,
+.flow-thread,
+.system-card,
+.variant-card,
+.signal-card,
+.signal-node,
+.resource-card,
+.micro-card,
+.metric {
+    position: relative;
+    overflow: visible;
+    transform-style: preserve-3d;
+}
+
+.visualizer-host > :not(.visualizer-shell),
+.canvas-card > :not(.visualizer-shell),
+.stacked-card > :not(.visualizer-shell),
+.hero__module > :not(.visualizer-shell) {
+    position: relative;
+    z-index: 2;
+}
+
+.visualizer-shell {
+    position: absolute;
+    inset: calc(-16% * var(--visualizer-bleed, 1.32));
+    pointer-events: none;
+    z-index: 0;
+    overflow: visible;
+    transform-style: preserve-3d;
+    filter: drop-shadow(0 26px 48px rgba(20, 42, 96, 0.45));
+    will-change: transform, filter, opacity;
+}
+
+.visualizer-shell__canvas {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: calc(120% * var(--visualizer-scale, 1.2));
+    height: calc(120% * var(--visualizer-scale, 1.2));
+    transform:
+        translate(-50%, -50%)
+        rotateX(calc(var(--tilt-x, 0deg) + var(--tilt-scroll, 0deg) + var(--bend-tilt-x-deg, 0deg) * 0.55))
+        rotateZ(calc(var(--visualizer-rot-zw, 0deg) + var(--bend-twist-deg, 0deg) * 0.42))
+        skewX(calc(var(--bend-skew-x-deg, 0deg) * 0.65))
+        skewY(calc(var(--bend-skew-y-deg, 0deg) * 0.65))
+        translate3d(
+            calc(var(--tilt-y-value, 0) * -18px),
+            calc(var(--tilt-x-value, 0) * 18px + var(--visualizer-parallax, 0px)),
+            calc(var(--focus-intensity, 0) * 36px + var(--visualizer-bend-depth, 0px))
+        );
+    border-radius: 28px;
+    opacity: calc(0.78 + var(--focus-intensity, 0) * 0.22);
+    mix-blend-mode: screen;
+    filter:
+        saturate(calc(1.05 + var(--focus-intensity, 0) * 0.35))
+        brightness(calc(1.05 + var(--focus-intensity, 0) * 0.28))
+        contrast(1.05);
+    transition: filter 320ms ease, opacity 280ms ease;
+    backface-visibility: hidden;
+    will-change: transform, opacity, filter;
+}
+
+.visualizer-shell__brand {
+    position: absolute;
+    inset: calc(-28% * var(--visualizer-bleed, 1.2));
+    pointer-events: none;
+    transform-style: preserve-3d;
+    mix-blend-mode: screen;
+    opacity: calc(0.22 + var(--focus-intensity, 0) * 0.42 + var(--focus-pulse, 0) * 0.25);
+    transform:
+        rotate(var(--brand-rotation, 0deg))
+        translate3d(
+            calc(var(--tilt-y-value, 0) * -22px),
+            calc(var(--tilt-x-value, 0) * 22px),
+            calc(var(--focus-intensity, 0) * 42px)
+        );
+    transition:
+        transform 420ms cubic-bezier(0.22, 0.67, 0.3, 1),
+        opacity 320ms ease;
+    filter: saturate(calc(1.1 + var(--focus-intensity, 0) * 0.4)) drop-shadow(0 0 32px rgba(118, 198, 255, 0.35));
+    will-change: transform, opacity, filter;
+}
+
+.visualizer-shell__brand--image::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--brand-image, none);
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.visualizer-shell__brand--video .visualizer-shell__brand-media {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    mix-blend-mode: screen;
+    opacity: 0.78;
+    filter: saturate(1.15) brightness(1.1);
+    border-radius: 28px;
+}
+
+.visualizer-shell__brand-media {
+    display: block;
+    pointer-events: none;
+}
+
 :root[data-background-mode="quantum"] {
     --text-hue-gradient: linear-gradient(130deg, #7af0ff 0%, #ff74f9 44%, #ffd86c 78%, #7effeb 100%);
     --text-hue-glow: rgba(138, 224, 255, 0.4);
@@ -775,7 +929,15 @@ body::after {
     box-shadow: inset 0 0 0 1px rgba(122, 213, 255, 0.05), var(--shadow-soft);
     backdrop-filter: blur(16px);
     transition: transform var(--transition-fast), border-color var(--transition-fast);
-    transform: perspective(900px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y)) translateY(var(--lift-translate-y)) scale(var(--lift-scale));
+    transform:
+        perspective(900px)
+        rotateX(calc(var(--tilt-x) + var(--bend-tilt-x-deg, 0deg)))
+        rotateZ(var(--bend-twist-deg, 0deg))
+        skewX(var(--bend-skew-x-deg, 0deg))
+        skewY(var(--bend-skew-y-deg, 0deg))
+        translateY(var(--lift-translate-y))
+        translateZ(var(--bend-depth, 0px))
+        scale(var(--lift-scale));
 }
 
 .metric::after {
@@ -857,7 +1019,15 @@ body::after {
     box-shadow: var(--shadow-soft);
     backdrop-filter: blur(18px);
     overflow: hidden;
-    transform: perspective(1300px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y)) translateY(var(--lift-translate-y)) scale(var(--lift-scale));
+    transform:
+        perspective(1300px)
+        rotateX(calc(var(--tilt-x) + var(--bend-tilt-x-deg, 0deg)))
+        rotateZ(var(--bend-twist-deg, 0deg))
+        skewX(var(--bend-skew-x-deg, 0deg))
+        skewY(var(--bend-skew-y-deg, 0deg))
+        translateY(var(--lift-translate-y))
+        translateZ(var(--bend-depth, 0px))
+        scale(var(--lift-scale));
     transform-style: preserve-3d;
     transition: transform var(--transition-slow), box-shadow var(--transition-fast);
 }
@@ -996,7 +1166,15 @@ body::after {
     backdrop-filter: blur(18px);
     overflow: hidden;
     transition: transform var(--transition-slow), border-color var(--transition-fast), box-shadow var(--transition-fast);
-    transform: perspective(1200px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y)) translateY(var(--lift-translate-y)) scale(var(--lift-scale));
+    transform:
+        perspective(1200px)
+        rotateX(calc(var(--tilt-x) + var(--bend-tilt-x-deg, 0deg)))
+        rotateZ(var(--bend-twist-deg, 0deg))
+        skewX(var(--bend-skew-x-deg, 0deg))
+        skewY(var(--bend-skew-y-deg, 0deg))
+        translateY(var(--lift-translate-y))
+        translateZ(var(--bend-depth, 0px))
+        scale(var(--lift-scale));
 }
 
 .canvas-card::after {
@@ -1088,7 +1266,15 @@ body::after {
     border: 1px solid hsla(var(--card-secondary-hue), 78%, 60%, 0.4);
     box-shadow: 0 50px 110px rgba(10, 12, 36, 0.6);
     backdrop-filter: blur(22px) saturate(145%);
-    transform: perspective(1400px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y)) translateY(var(--stack-translate)) scale(var(--tilt-scale));
+    transform:
+        perspective(1400px)
+        rotateX(calc(var(--tilt-x) + var(--bend-tilt-x-deg, 0deg)))
+        rotateZ(var(--bend-twist-deg, 0deg))
+        skewX(var(--bend-skew-x-deg, 0deg))
+        skewY(var(--bend-skew-y-deg, 0deg))
+        translateY(var(--stack-translate))
+        translateZ(var(--bend-depth, 0px))
+        scale(var(--tilt-scale));
     opacity: 0.2;
     filter: blur(var(--stack-blur)) saturate(92%);
     transition: transform 680ms cubic-bezier(0.22, 0.61, 0.36, 1), opacity 520ms ease, filter 520ms ease, border-color 420ms ease, box-shadow 420ms ease, background 560ms ease;
@@ -1215,12 +1401,28 @@ body::after {
     0% {
         opacity: 1;
         filter: blur(0) saturate(118%);
-        transform: perspective(1400px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y)) translateY(0) scale(1);
+        transform:
+            perspective(1400px)
+            rotateX(calc(var(--tilt-x) + var(--bend-tilt-x-deg, 0deg)))
+            rotateZ(var(--bend-twist-deg, 0deg))
+            skewX(var(--bend-skew-x-deg, 0deg))
+            skewY(var(--bend-skew-y-deg, 0deg))
+            translateY(0)
+            translateZ(var(--bend-depth, 0px))
+            scale(1);
     }
     100% {
         opacity: 0;
         filter: blur(18px) saturate(80%);
-        transform: perspective(1400px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y)) translateY(-22%) scale(0.86);
+        transform:
+            perspective(1400px)
+            rotateX(calc(var(--tilt-x) + var(--bend-tilt-x-deg, 0deg)))
+            rotateZ(var(--bend-twist-deg, 0deg))
+            skewX(var(--bend-skew-x-deg, 0deg))
+            skewY(var(--bend-skew-y-deg, 0deg))
+            translateY(-22%)
+            translateZ(var(--bend-depth, 0px))
+            scale(0.86);
     }
 }
 
@@ -1259,7 +1461,15 @@ body::after {
     box-shadow: var(--shadow-lift);
     backdrop-filter: blur(16px);
     transition: transform var(--transition-slow), box-shadow var(--transition-fast);
-    transform: perspective(1100px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y)) translateY(var(--lift-translate-y)) scale(var(--lift-scale));
+    transform:
+        perspective(1100px)
+        rotateX(calc(var(--tilt-x) + var(--bend-tilt-x-deg, 0deg)))
+        rotateZ(var(--bend-twist-deg, 0deg))
+        skewX(var(--bend-skew-x-deg, 0deg))
+        skewY(var(--bend-skew-y-deg, 0deg))
+        translateY(var(--lift-translate-y))
+        translateZ(var(--bend-depth, 0px))
+        scale(var(--lift-scale));
 }
 
 .flow-step:hover,
@@ -1306,7 +1516,15 @@ body::after {
     overflow: hidden;
     box-shadow: var(--shadow-soft);
     transition: transform var(--transition-slow), border-color var(--transition-fast);
-    transform: perspective(1200px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y)) translateY(var(--lift-translate-y)) scale(var(--lift-scale));
+    transform:
+        perspective(1200px)
+        rotateX(calc(var(--tilt-x) + var(--bend-tilt-x-deg, 0deg)))
+        rotateZ(var(--bend-twist-deg, 0deg))
+        skewX(var(--bend-skew-x-deg, 0deg))
+        skewY(var(--bend-skew-y-deg, 0deg))
+        translateY(var(--lift-translate-y))
+        translateZ(var(--bend-depth, 0px))
+        scale(var(--lift-scale));
 }
 
 .case::before {
@@ -1402,7 +1620,15 @@ body::after {
     border: 1px solid rgba(100, 135, 255, 0.25);
     box-shadow: var(--shadow-lift);
     transition: transform var(--transition-slow), border-color var(--transition-fast);
-    transform: perspective(1100px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y)) translateY(var(--lift-translate-y)) scale(var(--lift-scale));
+    transform:
+        perspective(1100px)
+        rotateX(calc(var(--tilt-x) + var(--bend-tilt-x-deg, 0deg)))
+        rotateZ(var(--bend-twist-deg, 0deg))
+        skewX(var(--bend-skew-x-deg, 0deg))
+        skewY(var(--bend-skew-y-deg, 0deg))
+        translateY(var(--lift-translate-y))
+        translateZ(var(--bend-depth, 0px))
+        scale(var(--lift-scale));
 }
 
 .insight:hover,
@@ -1464,7 +1690,15 @@ body::after {
     border: 1px solid rgba(108, 150, 255, 0.28);
     box-shadow: var(--shadow-lift);
     backdrop-filter: blur(16px);
-    transform: perspective(1100px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y)) translateY(var(--lift-translate-y)) scale(var(--lift-scale));
+    transform:
+        perspective(1100px)
+        rotateX(calc(var(--tilt-x) + var(--bend-tilt-x-deg, 0deg)))
+        rotateZ(var(--bend-twist-deg, 0deg))
+        skewX(var(--bend-skew-x-deg, 0deg))
+        skewY(var(--bend-skew-y-deg, 0deg))
+        translateY(var(--lift-translate-y))
+        translateZ(var(--bend-depth, 0px))
+        scale(var(--lift-scale));
     transition: transform var(--transition-slow), border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
